@@ -1,281 +1,354 @@
 <!DOCTYPE html>
 <html lang="fa" dir="rtl">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>آتانا ERP - نسخه پایه</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>سیستم جامع بازرگانی آتانا</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- React & ReactDOM -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <!-- Babel -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
     <style>
-        :root {
-            --primary: #2563eb;
-            --bg-color: #f3f4f6;
-            --card-bg: #ffffff;
-            --border: #e5e7eb;
-            --text-main: #1f2937;
-        }
-        body {
-            font-family: Tahoma, Arial, sans-serif;
-            background-color: var(--bg-color);
-            color: var(--text-main);
-            margin: 0;
-            padding: 20px;
-        }
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-        }
-        h1, h2 { color: var(--primary); }
-        .card {
-            background-color: var(--card-bg);
-            border: 1px solid var(--border);
-            border-radius: 8px;
-            padding: 20px;
-            margin-bottom: 20px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-        }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 15px;
-            font-size: 14px;
-        }
-        th, td {
-            border: 1px solid var(--border);
-            padding: 10px;
-            text-align: center;
-        }
-        th { background-color: #f8fafc; }
-        input[type="number"], input[type="text"] {
-            width: 90%;
-            padding: 6px;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-            text-align: center;
-        }
-        .btn {
-            background-color: var(--primary);
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 5px;
-            cursor: pointer;
-            margin-top: 10px;
-            font-family: inherit;
-        }
-        .btn:hover { background-color: #1d4ed8; }
-        .hidden-col { display: none; }
-        .profit-box {
-            font-size: 20px;
-            font-weight: bold;
-            color: #059669;
-            margin-top: 15px;
-            padding: 15px;
-            background-color: #d1fae5;
-            border-radius: 5px;
-            text-align: center;
-        }
-        .controls label {
-            margin-left: 15px;
-            cursor: pointer;
-            font-weight: bold;
-        }
+        body { font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Tahoma, sans-serif; background-color: #f3f4f6; -webkit-tap-highlight-color: transparent; }
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
     </style>
 </head>
 <body>
+    <div id="root"></div>
 
-<div class="container">
-    <h1>سیستم مدیریت آتانا ERP</h1>
+    <script type="text/babel" data-type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js';
+        import { getAuth, signInAnonymously } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js';
+        import { getFirestore, collection, addDoc, onSnapshot, updateDoc, doc, deleteDoc } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js';
 
-    <div class="card">
-        <h2>۱. پکینگ‌لیست‌ساز (محاسبات خودکار)</h2>
-        <p>ابعاد (سانتی‌متر) و تعداد را وارد کنید تا CBM و وزن کل محاسبه شود.</p>
-        <table id="packingTable">
-            <thead>
-                <tr>
-                    <th>ردیف</th>
-                    <th>توضیحات کالا</th>
-                    <th>تعداد کارتن</th>
-                    <th>طول (cm)</th>
-                    <th>عرض (cm)</th>
-                    <th>ارتفاع (cm)</th>
-                    <th>وزن تکی (kg)</th>
-                    <th>CBM کل</th>
-                    <th>وزن کل (kg)</th>
-                </tr>
-            </thead>
-            <tbody id="packingBody">
-                <tr>
-                    <td>۱</td>
-                    <td><input type="text" value="کالای نمونه"></td>
-                    <td><input type="number" class="calc-input count" value="10" min="0"></td>
-                    <td><input type="number" class="calc-input length" value="50" min="0"></td>
-                    <td><input type="number" class="calc-input width" value="40" min="0"></td>
-                    <td><input type="number" class="calc-input height" value="30" min="0"></td>
-                    <td><input type="number" class="calc-input unit-weight" value="5" min="0"></td>
-                    <td class="row-cbm">0.000</td>
-                    <td class="row-weight">0</td>
-                </tr>
-            </tbody>
-            <tfoot>
-                <tr style="font-weight: bold; background-color: #f8fafc;">
-                    <td colspan="7" style="text-align: left;">جمع کل:</td>
-                    <td id="totalCBM">0.000</td>
-                    <td id="totalWeight">0</td>
-                </tr>
-            </tfoot>
-        </table>
-        <button class="btn" onclick="addRow()">+ افزودن ردیف جدید</button>
-    </div>
+        // تنظیمات دیتابیس اختصاصی شما
+        const firebaseConfig = {
+            apiKey: "AIzaSyAD9pbJbfz5i2rkdldTUeFc7GvCmgd2PrA",
+            authDomain: "atana-d41d7.firebaseapp.com",
+            projectId: "atana-d41d7",
+            storageBucket: "atana-d41d7.firebasestorage.app",
+            messagingSenderId: "735986567605",
+            appId: "1:735986567605:web:fdb82e9b1c4bf3d726b1fc"
+        };
 
-    <div class="card">
-        <h2>۲. تنظیمات نمایش فاکتور (Dynamic Invoice)</h2>
-        <div class="controls">
-            <label><input type="checkbox" id="toggleCBM" checked> نمایش ستون CBM</label>
-            <label><input type="checkbox" id="toggleWeight" checked> نمایش ستون وزن</label>
-            <label><input type="checkbox" id="toggleMark" checked> نمایش Shipping Mark</label>
-        </div>
-        
-        <table id="invoiceTable">
-            <thead>
-                <tr>
-                    <th>نام کالا</th>
-                    <th class="col-cbm">CBM</th>
-                    <th class="col-weight">وزن کل (kg)</th>
-                    <th class="col-mark">Shipping Mark</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr>
-                    <td>کالای نمونه</td>
-                    <td class="col-cbm">0.600</td>
-                    <td class="col-weight">50</td>
-                    <td class="col-mark">TEH-001</td>
-                </tr>
-            </tbody>
-        </table>
-    </div>
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
 
-    <div class="card">
-        <h2>۳. تحلیل سود فاکتور (Profit Analysis)</h2>
-        <table>
-            <tr>
-                <th>مبلغ دریافتی از مشتری (دلار)</th>
-                <th>هزینه حمل (دلار)</th>
-                <th>کمیسیون (دلار)</th>
-                <th>هزینه‌های داخلی (دلار)</th>
-            </tr>
-            <tr>
-                <td><input type="number" id="revenue" class="profit-input" value="5000"></td>
-                <td><input type="number" id="shipping" class="profit-input" value="1500"></td>
-                <td><input type="number" id="commission" class="profit-input" value="300"></td>
-                <td><input type="number" id="internal" class="profit-input" value="200"></td>
-            </tr>
-        </table>
-        <div class="profit-box">
-            سود خالص: <span id="netProfit">3000</span> دلار
-        </div>
-    </div>
+        const App = () => {
+            const [activeTab, setActiveTab] = React.useState('dashboard');
+            const [role, setRole] = React.useState('admin'); // admin, china_wh, sales, iran_cl
+            const [userId, setUserId] = React.useState(null);
+            
+            // Data States
+            const [customers, setCustomers] = React.useState([]);
+            const [shipments, setShipments] = React.useState([]);
+            const [loading, setLoading] = React.useState(true);
 
-</div>
+            // Modals
+            const [showCustomerModal, setShowCustomerModal] = React.useState(false);
+            const [showShipmentModal, setShowShipmentModal] = React.useState(false);
+            const [selectedCustomer, setSelectedCustomer] = React.useState(null);
 
-<script>
-    // --- منطق پکینگ لیست ---
-    function calculatePacking() {
-        const rows = document.querySelectorAll('#packingBody tr');
-        let totalCBM = 0;
-        let totalWeight = 0;
+            React.useEffect(() => {
+                signInAnonymously(auth).then((userCred) => {
+                    setUserId(userCred.user.uid);
+                }).catch(err => alert("خطای اتصال به دیتابیس: " + err.message));
+            }, []);
 
-        rows.forEach(row => {
-            const count = parseFloat(row.querySelector('.count').value) || 0;
-            const length = parseFloat(row.querySelector('.length').value) || 0;
-            const width = parseFloat(row.querySelector('.width').value) || 0;
-            const height = parseFloat(row.querySelector('.height').value) || 0;
-            const unitWeight = parseFloat(row.querySelector('.unit-weight').value) || 0;
+            React.useEffect(() => {
+                if (!userId) return;
+                
+                const custRef = collection(db, 'artifacts', 'atana-cargo', 'users', userId, 'customers');
+                const shipRef = collection(db, 'artifacts', 'atana-cargo', 'users', userId, 'shipments');
 
-            // محاسبه CBM: (طول * عرض * ارتفاع) / 1,000,000 * تعداد
-            const rowCBM = ((length * width * height) / 1000000) * count;
-            const rowTotalWeight = count * unitWeight;
+                const unsubCust = onSnapshot(custRef, (snap) => {
+                    const data = [];
+                    snap.forEach(doc => data.push({ id: doc.id, ...doc.data() }));
+                    setCustomers(data);
+                });
 
-            row.querySelector('.row-cbm').innerText = rowCBM.toFixed(3);
-            row.querySelector('.row-weight').innerText = rowTotalWeight.toFixed(2);
+                const unsubShip = onSnapshot(shipRef, (snap) => {
+                    const data = [];
+                    snap.forEach(doc => data.push({ id: doc.id, ...doc.data() }));
+                    setShipments(data.sort((a,b) => b.createdAt - a.createdAt));
+                    setLoading(false);
+                });
 
-            totalCBM += rowCBM;
-            totalWeight += rowTotalWeight;
-        });
+                return () => { unsubCust(); unsubShip(); };
+            }, [userId]);
 
-        document.getElementById('totalCBM').innerText = totalCBM.toFixed(3);
-        document.getElementById('totalWeight').innerText = totalWeight.toFixed(2);
-    }
+            // === توابع ثبت اطلاعات ===
+            const handleAddCustomer = async (e) => {
+                e.preventDefault();
+                const name = e.target.name.value;
+                const code = e.target.code.value;
+                if(!name || !code) return;
+                
+                await addDoc(collection(db, 'artifacts', 'atana-cargo', 'users', userId, 'customers'), {
+                    name, code, 
+                    balances: { CNY: 0, USD: 0, IRT: 0, AED: 0 },
+                    createdAt: Date.now()
+                });
+                e.target.reset();
+                setShowCustomerModal(false);
+            };
 
-    function addRow() {
-        const tbody = document.getElementById('packingBody');
-        const rowCount = tbody.children.length + 1;
-        const newRow = document.createElement('tr');
-        
-        newRow.innerHTML = `
-            <td>${rowCount}</td>
-            <td><input type="text" value="کالای جدید"></td>
-            <td><input type="number" class="calc-input count" value="0" min="0"></td>
-            <td><input type="number" class="calc-input length" value="0" min="0"></td>
-            <td><input type="number" class="calc-input width" value="0" min="0"></td>
-            <td><input type="number" class="calc-input height" value="0" min="0"></td>
-            <td><input type="number" class="calc-input unit-weight" value="0" min="0"></td>
-            <td class="row-cbm">0.000</td>
-            <td class="row-weight">0</td>
-        `;
-        tbody.appendChild(newRow);
-        attachCalcEvents(); // اتصال رویدادها به ردیف جدید
-    }
+            const handleAddShipment = async (e) => {
+                e.preventDefault();
+                const data = {
+                    customerId: e.target.customer.value,
+                    cbm: parseFloat(e.target.cbm.value) || 0,
+                    route: e.target.route.value,
+                    mark: e.target.mark.value,
+                    cost: parseFloat(e.target.cost.value) || 0, // هزینه شیپینگ
+                    price: parseFloat(e.target.price.value) || 0, // قیمت به مشتری
+                    status: 'در راه',
+                    createdAt: Date.now()
+                };
+                
+                await addDoc(collection(db, 'artifacts', 'atana-cargo', 'users', userId, 'shipments'), data);
+                e.target.reset();
+                setShowShipmentModal(false);
+            };
 
-    function attachCalcEvents() {
-        const inputs = document.querySelectorAll('.calc-input');
-        inputs.forEach(input => {
-            input.addEventListener('input', calculatePacking);
-        });
-    }
+            // === کامپوننت‌های داخلی ===
+            const Dashboard = () => {
+                // محاسبه تراز کل سیستم
+                let totalToman = 0; let totalYuan = 0;
+                customers.forEach(c => {
+                    totalToman += (c.balances?.IRT || 0);
+                    totalYuan += (c.balances?.CNY || 0);
+                });
 
-    // --- منطق فاکتور دینامیک ---
-    function toggleColumn(checkboxId, columnClass) {
-        const checkbox = document.getElementById(checkboxId);
-        const elements = document.querySelectorAll(columnClass);
-        
-        checkbox.addEventListener('change', function() {
-            elements.forEach(el => {
-                if(this.checked) {
-                    el.classList.remove('hidden-col');
-                } else {
-                    el.classList.add('hidden-col');
-                }
-            });
-        });
-    }
+                return (
+                    <div className="space-y-6 pb-20">
+                        <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+                            <h2 className="text-gray-500 text-sm font-bold mb-4">خلاصه تراز مالی (داشبورد)</h2>
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="bg-emerald-50 p-4 rounded-xl border border-emerald-100">
+                                    <p className="text-emerald-700 text-xs mb-1">مجموع طلب/دارایی (تومان)</p>
+                                    <p className="text-xl font-bold text-emerald-900">{totalToman.toLocaleString()}</p>
+                                </div>
+                                <div className="bg-blue-50 p-4 rounded-xl border border-blue-100">
+                                    <p className="text-blue-700 text-xs mb-1">مجموع یوان (در گردش)</p>
+                                    <p className="text-xl font-bold text-blue-900">¥ {totalYuan.toLocaleString()}</p>
+                                </div>
+                            </div>
+                        </div>
 
-    toggleColumn('toggleCBM', '.col-cbm');
-    toggleColumn('toggleWeight', '.col-weight');
-    toggleColumn('toggleMark', '.col-mark');
+                        {/* دسترسی سریع */}
+                        {role === 'admin' && (
+                            <div className="grid grid-cols-2 gap-4">
+                                <button onClick={() => setShowShipmentModal(true)} className="bg-slate-800 text-white p-4 rounded-xl shadow hover:bg-slate-700 flex flex-col items-center gap-2">
+                                    <i className="fa-solid fa-plane-departure text-2xl"></i>
+                                    <span>ثبت بار جدید</span>
+                                </button>
+                                <button onClick={() => setShowCustomerModal(true)} className="bg-white border border-gray-200 text-gray-800 p-4 rounded-xl shadow-sm hover:bg-gray-50 flex flex-col items-center gap-2">
+                                    <i className="fa-solid fa-user-plus text-2xl"></i>
+                                    <span>مشتری جدید</span>
+                                </button>
+                            </div>
+                        )}
+                    </div>
+                );
+            };
 
-    // --- منطق تحلیل سود ---
-    function calculateProfit() {
-        const revenue = parseFloat(document.getElementById('revenue').value) || 0;
-        const shipping = parseFloat(document.getElementById('shipping').value) || 0;
-        const commission = parseFloat(document.getElementById('commission').value) || 0;
-        const internal = parseFloat(document.getElementById('internal').value) || 0;
+            const Shipments = () => {
+                const getStatusColor = (createdAt, route) => {
+                    const daysPassed = Math.floor((Date.now() - createdAt) / (1000 * 60 * 60 * 24));
+                    const limit = route.includes('دبی') ? 30 : 60;
+                    if (daysPassed > limit - 3) return 'border-r-4 border-red-500 bg-red-50';
+                    if (daysPassed > limit - 10) return 'border-r-4 border-yellow-400 bg-yellow-50';
+                    return 'border-r-4 border-emerald-500 bg-white';
+                };
 
-        const netProfit = revenue - (shipping + commission + internal);
-        document.getElementById('netProfit').innerText = netProfit.toLocaleString();
-    }
+                return (
+                    <div className="space-y-4 pb-20">
+                        <div className="flex justify-between items-center mb-4">
+                            <h2 className="text-lg font-bold text-gray-800">مدیریت لجستیک و بارها</h2>
+                            {role !== 'iran_cl' && (
+                                <button onClick={() => setShowShipmentModal(true)} className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm"><i className="fa-solid fa-plus ml-1"></i> بار جدید</button>
+                            )}
+                        </div>
+                        
+                        {shipments.map(s => (
+                            <div key={s.id} className={`p-4 rounded-xl shadow-sm mb-3 ${getStatusColor(s.createdAt, s.route)}`}>
+                                <div className="flex justify-between items-start mb-2">
+                                    <div>
+                                        <p className="font-bold text-gray-800">{s.mark || 'بدون مارک'} <span className="text-xs bg-gray-200 text-gray-600 px-2 py-1 rounded ml-2">{s.route}</span></p>
+                                        <p className="text-xs text-gray-500 mt-1">CBM: {s.cbm} | ثبت: {new Date(s.createdAt).toLocaleDateString('fa-IR')}</p>
+                                    </div>
+                                    <span className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded font-bold">{s.status}</span>
+                                </div>
+                                
+                                {/* مخفی کردن بخش مالی برای انبار چین و ترخیص کار */}
+                                {(role === 'admin' || role === 'sales') && (
+                                    <div className="mt-3 pt-3 border-t flex justify-between text-sm">
+                                        <div className="text-gray-600">
+                                            فروش: <span className="font-bold text-green-700">¥ {s.price}</span>
+                                        </div>
+                                        {role === 'admin' && (
+                                            <div className="text-gray-600">
+                                                سود خالص: <span className="font-bold text-blue-700">¥ {s.price - s.cost}</span>
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
+                            </div>
+                        ))}
+                        {shipments.length === 0 && <p className="text-center text-gray-400 mt-10">باری در جریان نیست.</p>}
+                    </div>
+                );
+            };
 
-    const profitInputs = document.querySelectorAll('.profit-input');
-    profitInputs.forEach(input => {
-        input.addEventListener('input', calculateProfit);
-    });
+            const Customers = () => (
+                <div className="space-y-4 pb-20">
+                    <div className="flex justify-between items-center mb-4">
+                        <h2 className="text-lg font-bold text-gray-800">دفتر کل مشتریان (Ledger)</h2>
+                    </div>
+                    {customers.map(c => (
+                        <div key={c.id} className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 mb-3">
+                            <div className="flex justify-between items-center mb-3">
+                                <h3 className="font-bold text-gray-800">{c.name} <span className="text-xs bg-gray-100 px-2 rounded text-gray-500">{c.code}</span></h3>
+                                {role === 'admin' && <button className="text-blue-600 text-sm">تراکنش <i className="fa-solid fa-chevron-left"></i></button>}
+                            </div>
+                            
+                            {(role === 'admin' || role === 'sales') && (
+                                <div className="grid grid-cols-4 gap-2 text-center text-sm border-t pt-3">
+                                    <div><p className="text-gray-400 text-xs">یوان</p><p className="font-bold text-gray-700">{c.balances?.CNY || 0}</p></div>
+                                    <div><p className="text-gray-400 text-xs">دلار</p><p className="font-bold text-gray-700">{c.balances?.USD || 0}</p></div>
+                                    <div><p className="text-gray-400 text-xs">درهم</p><p className="font-bold text-gray-700">{c.balances?.AED || 0}</p></div>
+                                    <div><p className="text-gray-400 text-xs">تومان</p><p className="font-bold text-gray-700 text-xs">{c.balances?.IRT || 0}</p></div>
+                                </div>
+                            )}
+                        </div>
+                    ))}
+                </div>
+            );
 
-    // اجرای اولیه محاسبات هنگام لود صفحه
-    window.onload = function() {
-        attachCalcEvents();
-        calculatePacking();
-        calculateProfit();
-    };
-</script>
+            if (loading) return <div className="flex justify-center items-center h-screen text-gray-500">در حال همگام‌سازی با فایربیس...</div>;
 
+            return (
+                <div className="max-w-md mx-auto min-h-screen relative bg-gray-50">
+                    {/* Header */}
+                    <header className="bg-white shadow-sm p-4 sticky top-0 z-10 flex justify-between items-center">
+                        <h1 className="font-bold text-gray-800 text-lg">آتانا کارگو</h1>
+                        <select value={role} onChange={(e) => setRole(e.target.value)} className="text-xs bg-gray-100 p-2 rounded-lg border-none outline-none font-bold text-gray-600">
+                            <option value="admin">👨‍💼 مدیریت (کامل)</option>
+                            <option value="china_wh">📦 انبار چین (بدون قیمت)</option>
+                            <option value="sales">💰 فروش (بدون قیمت خرید)</option>
+                            <option value="iran_cl">🚚 ترخیص ایران</option>
+                        </select>
+                    </header>
+
+                    {/* Main Content */}
+                    <main className="p-4">
+                        {activeTab === 'dashboard' && <Dashboard />}
+                        {activeTab === 'shipments' && <Shipments />}
+                        {activeTab === 'customers' && <Customers />}
+                    </main>
+
+                    {/* Bottom Navigation */}
+                    <nav className="fixed bottom-0 w-full max-w-md bg-white border-t flex justify-around p-3 pb-safe shadow-lg z-20">
+                        <button onClick={() => setActiveTab('dashboard')} className={`flex flex-col items-center p-2 ${activeTab === 'dashboard' ? 'text-blue-600' : 'text-gray-400'}`}>
+                            <i className="fa-solid fa-chart-pie text-xl mb-1"></i>
+                            <span className="text-[10px] font-bold">داشبورد</span>
+                        </button>
+                        <button onClick={() => setActiveTab('shipments')} className={`flex flex-col items-center p-2 ${activeTab === 'shipments' ? 'text-blue-600' : 'text-gray-400'}`}>
+                            <i className="fa-solid fa-box text-xl mb-1"></i>
+                            <span className="text-[10px] font-bold">ارسال بار</span>
+                        </button>
+                        <button onClick={() => setActiveTab('customers')} className={`flex flex-col items-center p-2 ${activeTab === 'customers' ? 'text-blue-600' : 'text-gray-400'}`}>
+                            <i className="fa-solid fa-users text-xl mb-1"></i>
+                            <span className="text-[10px] font-bold">دفتر کل</span>
+                        </button>
+                    </nav>
+
+                    {/* Modal: New Shipment */}
+                    {showShipmentModal && (
+                        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
+                            <div className="bg-white rounded-2xl w-full max-w-sm p-6 shadow-2xl relative max-h-[90vh] overflow-y-auto">
+                                <button onClick={() => setShowShipmentModal(false)} className="absolute top-4 left-4 text-gray-400 hover:text-gray-800"><i className="fa-solid fa-times text-xl"></i></button>
+                                <h3 className="font-bold text-lg mb-4 text-gray-800 border-b pb-2">ثبت بار جدید (Shipment)</h3>
+                                
+                                <form onSubmit={handleAddShipment} className="space-y-4">
+                                    <div>
+                                        <label className="text-xs font-bold text-gray-600 block mb-1">مشتری</label>
+                                        <select name="customer" required className="w-full p-3 bg-gray-50 border rounded-xl text-sm">
+                                            <option value="">انتخاب کنید...</option>
+                                            {customers.map(c => <option key={c.id} value={c.id}>{c.name} ({c.code})</option>)}
+                                        </select>
+                                    </div>
+                                    <div className="grid grid-cols-2 gap-3">
+                                        <div>
+                                            <label className="text-xs font-bold text-gray-600 block mb-1">حجم اعلامی (CBM)</label>
+                                            <input type="number" step="0.01" name="cbm" required className="w-full p-3 bg-gray-50 border rounded-xl text-sm" placeholder="مثلا 2.5"/>
+                                        </div>
+                                        <div>
+                                            <label className="text-xs font-bold text-gray-600 block mb-1">مارک بار (Mark)</label>
+                                            <input type="text" name="mark" required className="w-full p-3 bg-gray-50 border rounded-xl text-sm" placeholder="ATN-01"/>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <label className="text-xs font-bold text-gray-600 block mb-1">مسیر و نوع بار</label>
+                                        <select name="route" className="w-full p-3 bg-gray-50 border rounded-xl text-sm">
+                                            <option value="LCL دبی">خرده‌بار (LCL) به دبی</option>
+                                            <option value="FCL دبی">کانتینر (FCL) به دبی</option>
+                                            <option value="LCL ایران">خرده‌بار (LCL) به ایران</option>
+                                            <option value="هوایی ایران">هوایی به ایران</option>
+                                        </select>
+                                    </div>
+                                    
+                                    {/* بخش مالی فقط برای مدیریت نمایش داده می‌شود */}
+                                    {(role === 'admin' || role === 'sales') && (
+                                        <div className="bg-blue-50 p-3 rounded-xl border border-blue-100 space-y-3">
+                                            <h4 className="text-xs font-bold text-blue-800">بخش مالی (یوان)</h4>
+                                            {role === 'admin' && (
+                                                <div>
+                                                    <label className="text-[10px] font-bold text-gray-500 block mb-1">هزینه واقعی شیپینگ (خرید شما)</label>
+                                                    <input type="number" name="cost" className="w-full p-2 bg-white border rounded-lg text-sm" placeholder="مثلا 1200"/>
+                                                </div>
+                                            )}
+                                            <div>
+                                                <label className="text-[10px] font-bold text-gray-500 block mb-1">قیمت اعلامی به مشتری (فروش شما)</label>
+                                                <input type="number" name="price" className="w-full p-2 bg-white border rounded-lg text-sm" placeholder="مثلا 1500"/>
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    <button type="submit" className="w-full bg-slate-800 text-white font-bold py-3 rounded-xl shadow-lg mt-2">ثبت و ایجاد شیپمنت</button>
+                                </form>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Modal: New Customer */}
+                    {showCustomerModal && (
+                        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
+                            <div className="bg-white rounded-2xl w-full max-w-sm p-6 shadow-2xl relative">
+                                <button onClick={() => setShowCustomerModal(false)} className="absolute top-4 left-4 text-gray-400 hover:text-gray-800"><i className="fa-solid fa-times text-xl"></i></button>
+                                <h3 className="font-bold text-lg mb-4 text-gray-800">تعریف مشتری جدید</h3>
+                                <form onSubmit={handleAddCustomer} className="space-y-4">
+                                    <input type="text" name="name" required placeholder="نام کامل مشتری" className="w-full p-3 bg-gray-50 border rounded-xl"/>
+                                    <input type="text" name="code" required placeholder="کد اختصاصی (مثلا CU-101)" className="w-full p-3 bg-gray-50 border rounded-xl"/>
+                                    <button type="submit" className="w-full bg-emerald-600 text-white font-bold py-3 rounded-xl shadow-lg">ذخیره مشتری</button>
+                                </form>
+                            </div>
+                        </div>
+                    )}
+                </div>
+            );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
 </body>
 </html>
