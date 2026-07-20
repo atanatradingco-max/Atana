@@ -3,286 +3,249 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>آتانا ERP - ثبت و پیگیری بار</title>
+    <title>آتانا ERP - ثبت بار ارسالی</title>
     <style>
-        :root {
-            --primary: #1e3a8a;
-            --success: #059669;
-            --warning: #d97706;
-            --danger: #dc2626;
-            --bg: #f8fafc;
-            --card: #ffffff;
-            --text: #0f172a;
-            --border: #e2e8f0;
-        }
+        @import url('https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;700&display=swap');
+        
         body {
-            font-family: Tahoma, Arial, sans-serif;
-            background-color: var(--bg);
-            color: var(--text);
+            font-family: 'Vazirmatn', Tahoma, sans-serif;
+            background-color: #f3f4f6;
             margin: 0;
-            padding: 15px;
-            font-size: 14px;
+            padding: 20px;
+            color: #1f2937;
         }
-        .container { max-width: 1000px; margin: 0 auto; }
-        h1 { color: var(--primary); font-size: 22px; text-align: center; margin-bottom: 20px; }
-        .card {
-            background: var(--card);
-            border: 1px solid var(--border);
+        
+        .container {
+            max-width: 1100px;
+            margin: 0 auto;
+            background: #ffffff;
             border-radius: 8px;
             padding: 20px;
-            margin-bottom: 20px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
         }
-        .section-title {
-            font-size: 16px;
-            font-weight: bold;
-            color: var(--primary);
-            border-bottom: 2px solid var(--border);
-            padding-bottom: 5px;
-            margin-top: 0;
-            margin-bottom: 15px;
-        }
-        .grid-3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 15px; }
-        .form-group { margin-bottom: 12px; display: flex; flex-direction: column; }
-        .form-group label { margin-bottom: 5px; font-weight: bold; }
-        input, select {
+
+        /* Top Section */
+        .select-customer {
+            width: 100%;
             padding: 8px;
-            border: 1px solid var(--border);
+            border: 1px solid #d1d5db;
             border-radius: 4px;
             font-family: inherit;
-            background: #fff;
+            margin-bottom: 10px;
         }
-        .btn {
-            background: var(--primary);
+
+        .btn-full {
+            width: 100%;
+            background-color: #3170b9;
             color: white;
             border: none;
-            padding: 10px 20px;
-            border-radius: 5px;
-            cursor: pointer;
-            font-weight: bold;
-            width: 100%;
-            margin-top: 15px;
-        }
-        .btn:hover { opacity: 0.9; }
-        .alert-box {
             padding: 12px;
-            border-radius: 4px;
-            margin-top: 10px;
-            font-weight: bold;
-            display: none;
-            text-align: center;
-        }
-        .alert-warning { background-color: #fef3c7; color: #92400e; border: 1px solid #fde68a; }
-        .profit-display {
-            background: #ecfdf5;
-            border: 1px solid #a7f3d0;
-            color: var(--success);
-            padding: 15px;
             border-radius: 6px;
-            text-align: center;
-            font-size: 18px;
+            font-size: 15px;
             font-weight: bold;
-            margin-top: 15px;
+            cursor: pointer;
+            margin-bottom: 15px;
+            font-family: inherit;
         }
-        .currency-badge { font-size: 11px; color: #64748b; margin-right: 5px; }
+
+        .selected-customer-box {
+            background-color: #f8fafc;
+            border: 1px solid #e2e8f0;
+            padding: 12px 15px;
+            border-radius: 6px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-weight: bold;
+            color: #1e40af;
+            margin-bottom: 20px;
+        }
+
+        /* Tabs */
+        .tabs {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            margin-bottom: 15px;
+            border-bottom: 1px solid #e2e8f0;
+            padding-bottom: 10px;
+        }
+
+        .tab {
+            padding: 8px 15px;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: bold;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            text-decoration: none;
+            color: #4b5563;
+        }
+
+        .tab.active {
+            background-color: #3170b9;
+            color: white;
+        }
+
+        /* Form Container */
+        .form-container {
+            background-color: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 20px;
+        }
+
+        .form-header {
+            font-size: 16px;
+            font-weight: bold;
+            color: #1e3a8a;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        /* Grid Layout */
+        .grid-4 {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            text-align: right;
+        }
+
+        .form-group label {
+            font-size: 12px;
+            font-weight: bold;
+            color: #475569;
+            margin-bottom: 6px;
+        }
+
+        .form-group input {
+            padding: 10px;
+            border: 1px solid #cbd5e1;
+            border-radius: 4px;
+            font-family: inherit;
+            font-size: 14px;
+            outline: none;
+            text-align: right;
+        }
+
+        .form-group input:focus {
+            border-color: #3170b9;
+            box-shadow: 0 0 0 2px rgba(49, 112, 185, 0.2);
+        }
+
+        /* Footer Link */
+        .footer-link {
+            display: flex;
+            justify-content: flex-end;
+            margin-top: 20px;
+            font-weight: bold;
+            color: #1e3a8a;
+            font-size: 14px;
+            align-items: center;
+            gap: 5px;
+            cursor: pointer;
+        }
+
+        @media (max-width: 900px) {
+            .grid-4 { grid-template-columns: repeat(2, 1fr); }
+        }
+        @media (max-width: 500px) {
+            .grid-4 { grid-template-columns: 1fr; }
+            .tabs { flex-wrap: wrap; justify-content: center; }
+        }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h1>آتانا ERP - ثبت محموله جدید (لجستیک)</h1>
-
-    <div class="card">
-        <div class="section-title">۱. اطلاعات پایه و فیزیکی بار</div>
-        <div class="grid-3">
-            <div class="form-group">
-                <label>کد یا نام مشتری:</label>
-                <input type="text" id="customerCode" placeholder="مثلا: ATC-101">
-            </div>
-            <div class="form-group">
-                <label>مسیر و نوع ارسال:</label>
-                <select id="routeType" onchange="updateETACalculation()">
-                    <option value="dubai_lcl">خرده‌بار (LCL) به دبی - حدود ۳۰ روز</option>
-                    <option value="dubai_fcl">کانتینر کامل (FCL) به دبی</option>
-                    <option value="iran_lcl">خرده‌بار (LCL) به ایران - حدود ۶۵ روز</option>
-                    <option value="iran_fcl">کانتینر کامل (FCL) به ایران</option>
-                </select>
-            </div>
-            <div class="form-group">
-                <label>حجم واقعی بار (مترمکعب/CBM):</label>
-                <input type="number" id="cbm" value="10" step="0.01" oninput="calculateProfit()">
-            </div>
-            <div class="form-group">
-                <label>تعداد کارتن:</label>
-                <input type="number" id="cartons" value="5">
-            </div>
-            <div class="form-group">
-                <label>وزن واقعی (کیلوگرم):</label>
-                <input type="number" id="weight" value="0">
-            </div>
-            <div class="form-group">
-                <label>نام شرکت حمل‌ونقل (فورواردر):</label>
-                <input type="text" id="forwarder" placeholder="نام فورواردر چین">
-            </div>
-        </div>
+    <select class="select-customer">
+        <option>علی حسن‌زاده Niari (ATC-101)</option>
+    </select>
+    
+    <button class="btn-full">👤 تعریف پرونده مشتری جدید</button>
+    
+    <div class="selected-customer-box">
+        <span>صنف: کارگو و بازرگانی (Atana Trading)</span>
+        <span style="font-size: 16px;">پرونده منتخب: <strong>علی حسن‌زاده Niari</strong></span>
     </div>
 
-    <div class="card">
-        <div class="section-title">۲. زمان‌بندی و آلارم هوشمند (ETA)</div>
-        <div class="grid-3">
-            <div class="form-group">
-                <label>تاریخ ارسال از چین:</label>
-                <input type="date" id="shipDate" onchange="updateETACalculation()">
-            </div>
-            <div class="form-group">
-                <label>تاریخ تقریبی رسیدن (ETA):</label>
-                <input type="text" id="etaDate" readonly style="background: #f1f5f9;">
-            </div>
-            <div class="form-group">
-                <label>وضعیت بار:</label>
-                <select id="shipmentStatus" onchange="toggleStatus()">
-                    <option value="in_transit">در راه (In Transit)</option>
-                    <option value="delivered">تحویل شد (Delivered) -> انتقال به آرشیو</option>
-                </select>
-            </div>
-        </div>
-        <div id="etaAlert" class="alert-box alert-warning"></div>
+    <div class="tabs">
+        <a href="#" class="tab">🧾 صدور فاکتور / ثبت سند مالی</a>
+        <a href="#" class="tab active">📦 ارسال بار جدید (لجستیک چین)</a>
+        <a href="#" class="tab">🚚 بارهای ارسال‌شده مشتری</a>
     </div>
 
-    <div class="card">
-        <div class="section-title">۳. فاکتور مالی دوگانه و محاسبه سود واقعی</div>
-        <div class="grid-3">
+    <div class="form-container">
+        <div class="form-header">📦 ثبت بار ارسالی جدید (لجستیک چین) و تولید اتوماتیک بدهی و کشتیرانی</div>
+        
+        <div class="grid-4">
             <div class="form-group">
-                <label>قیمت حمل فورواردر <span class="currency-badge">(هر CBM / یوان)</span>:</label>
-                <input type="number" id="costPerCbm" value="500" oninput="calculateProfit()">
+                <label>کد رهگیری شیپمنت (Shipment Code)</label>
+                <input type="text" value="125">
             </div>
             <div class="form-group">
-                <label>قیمت حمل اعلامی به مشتری <span class="currency-badge">(هر CBM / یوان)</span>:</label>
-                <input type="number" id="pricePerCbm" value="600" oninput="calculateProfit()">
+                <label>شماره فاکتور / شماره سند (Invoice No)</label>
+                <input type="text" value="255">
             </div>
             <div class="form-group">
-                <label>هزینه‌های داخلی چین <span class="currency-badge">(لیفتراک، کارگر / یوان)</span>:</label>
-                <input type="number" id="chinaInternalCost" value="0" oninput="calculateProfit()">
+                <label>نام و شرح کالا</label>
+                <input type="text" value="harhci">
             </div>
             <div class="form-group">
-                <label>هزینه پنهان مقصد (دبی/ایران) <span class="currency-badge">(درهم یا ارز مقصد)</span>:</label>
-                <input type="number" id="destinationCost" value="100" oninput="calculateProfit()">
+                <label>تعداد کارتن (عدد)</label>
+                <input type="text" value="5">
+            </div>
+
+            <div class="form-group">
+                <label>وزن بار (کیلوگرم)</label>
+                <input type="text" value="2500">
             </div>
             <div class="form-group">
-                <label>نرخ تبدیل ارز مقصد به یوان <span class="currency-badge">(مثلا هر درهم چند یوان)</span>:</label>
-                <input type="number" id="exchangeRate" value="2" oninput="calculateProfit()">
+                <label>حجم بار (CBM - متر مکعب)</label>
+                <input type="text" value="5">
             </div>
+            <div class="form-group">
+                <label>نرخ اعلامی به مشتری (یوان)</label>
+                <input type="text" value="500">
+            </div>
+            <div class="form-group">
+                <label>نام خط کشتیرانی (Shipping Line)</label>
+                <input type="text" value="liang">
+            </div>
+
+            <div class="form-group">
+                <label>نرخ کشتیرانی به من (خرید ما - یوان)</label>
+                <input type="text" value="400">
+            </div>
+            <div class="form-group">
+                <label>هزینه داخلی چین (یوان)</label>
+                <input type="text" value="50">
+            </div>
+            <div class="form-group">
+                <label>هزینه داخلی مقصد / ترخیص (تومان)</label>
+                <input type="text" value="0">
+            </div>
+            <div class="form-group">
+                </div>
         </div>
 
-        <div class="profit-display">
-            تراز حساب مشتری: <span id="clientTotal">0</span> یوان <br>
-            تراز حساب فورواردر (هزینه واقعی): <span id="forwarderTotal">0</span> یوان <br><br>
-            💸 سود خالص واقعی این بار: <span id="pureProfit">0</span> یوان
-        </div>
+        <button class="btn-full" style="margin-bottom: 0;">ارسال نهایی بار و ثبت زنجیره‌ای اسناد مالی</button>
     </div>
 
-    <button class="btn" onclick="saveShipment()">ثبت نهایی بار در سیستم</button>
+    <div class="footer-link">
+        📊 گردش تفصیلی پرونده مشتری فعال
+    </div>
 </div>
-
-<script>
-    // تنظیم تاریخ امروز به عنوان پیش‌فرض تاریخ ارسال
-    document.getElementById('shipDate').valueAsDate = new Date();
-
-    function updateETACalculation() {
-        const shipDateInput = document.getElementById('shipDate').value;
-        const routeType = document.getElementById('routeType').value;
-        const etaAlert = document.getElementById('etaAlert');
-        
-        if (!shipDateInput) return;
-
-        let shipDate = new Date(shipDateInput);
-        let daysToArrive = 30; // پیش‌فرض دبی
-        let alertDaysBefore = 3;
-
-        if (routeType.includes('iran')) {
-            daysToArrive = 65; // میانگین زمان ایران (بین ۵۵ تا ۷۵)
-            alertDaysBefore = 5;
-        }
-
-        // محاسبه تاریخ ETA
-        let etaDate = new Date(shipDate);
-        etaDate.setDate(etaDate.getDate() + daysToArrive);
-        document.getElementById('etaDate').value = etaDate.toISOString().split('T')[0];
-
-        // بررسی وضعیت آلارم بر اساس تاریخ فعلی سیستم
-        let today = new Date();
-        let timeDiff = etaDate.getTime() - today.getTime();
-        let daysRemaining = Math.ceil(timeDiff / (1000 * 3600 * 24));
-
-        if (document.getElementById('shipmentStatus').value === 'in_transit') {
-            etaAlert.style.display = 'block';
-            if (daysRemaining <= alertDaysBefore && daysRemaining >= 0) {
-                etaAlert.className = "alert-box alert-warning";
-                etaAlert.innerText = `⚠️ هشدار: ${daysRemaining} روز تا تاریخ تقریبی رسیدن بار باقی مانده! پیگیری از فورواردر یا اطلاع به مشتری انجام شود.`;
-            } else if (daysRemaining < 0) {
-                etaAlert.className = "alert-box alert-warning";
-                etaAlert.style.backgroundColor = "#fee2e2";
-                etaAlert.style.color = "#991b1b";
-                etaAlert.innerText = `🚨 تأخیر بار: بار باید ${Math.abs(daysRemaining)} روز پیش می‌رسید! وضعیت را فوری از شرکت حمل پیگیری کنید.`;
-            } else {
-                etaAlert.innerText = `${daysRemaining} روز تا زمان تقریبی رسیدن بار به مقصد باقی مانده است.`;
-                etaAlert.className = "alert-box alert-warning";
-                etaAlert.style.backgroundColor = "#e0f2fe";
-                etaAlert.style.color = "#0369a1";
-            }
-        } else {
-            etaAlert.style.display = 'none';
-        }
-    }
-
-    function calculateProfit() {
-        const cbm = parseFloat(document.getElementById('cbm').value) || 0;
-        const costPerCbm = parseFloat(document.getElementById('costPerCbm').value) || 0;
-        const pricePerCbm = parseFloat(document.getElementById('pricePerCbm').value) || 0;
-        const chinaInternal = parseFloat(document.getElementById('chinaInternalCost').value) || 0;
-        const destCost = parseFloat(document.getElementById('destinationCost').value) || 0;
-        const rate = parseFloat(document.getElementById('exchangeRate').value) || 1;
-
-        // حساب مشتری (قیمت اعلامی به مشتری ضربدر حجم)
-        const clientTotal = cbm * pricePerCbm;
-        
-        // هزینه مقصد تبدیل شده به یوان
-        const destCostInYuan = destCost * rate;
-        
-        // حساب فورواردر (هزینه حمل واقعی فورواردر + هزینه‌های داخلی چین + هزینه پنهان مقصد به یوان)
-        const forwarderTotal = (cbm * costPerCbm) + chinaInternal + destCostInYuan;
-
-        // سود واقعی
-        const pureProfit = clientTotal - forwarderTotal;
-
-        document.getElementById('clientTotal').innerText = clientTotal.toLocaleString();
-        document.getElementById('forwarderTotal').innerText = forwarderTotal.toLocaleString();
-        document.getElementById('pureProfit').innerText = pureProfit.toLocaleString();
-    }
-
-    function toggleStatus() {
-        const status = document.getElementById('shipmentStatus').value;
-        if (status === 'delivered') {
-            document.getElementById('etaAlert').style.display = 'block';
-            document.getElementById('etaAlert').className = "alert-box";
-            document.getElementById('etaAlert').style.backgroundColor = "#d1fae5";
-            document.getElementById('etaAlert').style.color = "#065f46";
-            document.getElementById('etaAlert').innerText = "✅ بار تحویل شد. با ثبت نهایی، این پرونده به آرشیو ماه جاری منتقل می‌شود.";
-        } else {
-            updateETACalculation();
-        }
-    }
-
-    function saveShipment() {
-        alert("اطلاعات بار با موفقیت در ساختار محلی پردازش شد. در مرحله بعد این داده‌ها مستقیماً به فایربیس ارسال خواهند شد.");
-    }
-
-    // اجرای اولیه محاسبات
-    window.onload = function() {
-        updateETACalculation();
-        calculateProfit();
-    };
-</script>
 
 </body>
 </html>
