@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>آتانا ERP - ثبت بار ارسالی</title>
+    <title>آتانا ERP - مدیریت کارگو و حسابداری</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;700&display=swap');
         
@@ -48,6 +48,10 @@
             font-family: inherit;
         }
 
+        .btn-dark {
+            background-color: #1e3a8a; /* رنگ دکمه مالی که تیره‌تر است */
+        }
+
         .selected-customer-box {
             background-color: #f8fafc;
             border: 1px solid #e2e8f0;
@@ -82,6 +86,7 @@
             gap: 5px;
             text-decoration: none;
             color: #4b5563;
+            transition: background-color 0.2s;
         }
 
         .tab.active {
@@ -95,12 +100,17 @@
             border: 1px solid #e2e8f0;
             border-radius: 8px;
             padding: 20px;
+            display: none; /* پیش‌فرض مخفی تا با جاوااسکریپت کنترل شود */
+        }
+
+        .form-container.active-form {
+            display: block; /* نمایش فرم فعال */
         }
 
         .form-header {
             font-size: 16px;
             font-weight: bold;
-            color: #1e3a8a;
+            color: #1f2937;
             margin-bottom: 20px;
             display: flex;
             align-items: center;
@@ -112,7 +122,7 @@
             display: grid;
             grid-template-columns: repeat(4, 1fr);
             gap: 15px;
-            margin-bottom: 20px;
+            margin-bottom: 15px;
         }
 
         .form-group {
@@ -128,7 +138,7 @@
             margin-bottom: 6px;
         }
 
-        .form-group input {
+        .form-group input, .form-group select {
             padding: 10px;
             border: 1px solid #cbd5e1;
             border-radius: 4px;
@@ -136,9 +146,10 @@
             font-size: 14px;
             outline: none;
             text-align: right;
+            background-color: white;
         }
 
-        .form-group input:focus {
+        .form-group input:focus, .form-group select:focus {
             border-color: #3170b9;
             box-shadow: 0 0 0 2px rgba(49, 112, 185, 0.2);
         }
@@ -180,60 +191,101 @@
     </div>
 
     <div class="tabs">
-        <a href="#" class="tab">🧾 صدور فاکتور / ثبت سند مالی</a>
-        <a href="#" class="tab active">📦 ارسال بار جدید (لجستیک چین)</a>
-        <a href="#" class="tab">🚚 بارهای ارسال‌شده مشتری</a>
+        <a id="tab-finance" class="tab active" onclick="switchTab('finance')">🧾 صدور فاکتور / ثبت سند مالی</a>
+        <a id="tab-logistic" class="tab" onclick="switchTab('logistic')">📦 ارسال بار جدید (لجستیک چین)</a>
+        <a class="tab">🚚 بارهای ارسال‌شده مشتری</a>
     </div>
 
-    <div class="form-container">
-        <div class="form-header">📦 ثبت بار ارسالی جدید (لجستیک چین) و تولید اتوماتیک بدهی و کشتیرانی</div>
+    <div id="form-finance" class="form-container active-form">
+        <div class="form-header">➕ ثبت سند جدید دریافت / پرداخت / فاکتور متفرقه</div>
+        
+        <div class="grid-4">
+            <div class="form-group">
+                <label>شرح تراکنش (بابت)</label>
+                <input type="text" placeholder="مثال: حواله خرید لوازم یدکی از کارخانه">
+            </div>
+            <div class="form-group">
+                <label>دسته‌بندی</label>
+                <select>
+                    <option>متفرقه</option>
+                    <option>دریافت از مشتری</option>
+                    <option>پرداخت به کارخانه</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>نوع ارز</label>
+                <select>
+                    <option>یوان (CNY)</option>
+                    <option>دلار (USD)</option>
+                    <option>درهم (AED)</option>
+                    <option>تومان (IRT)</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>مقدار ارز (دریافت مثبت / بدهی منفی)</label>
+                <input type="text" placeholder="مثال: -15000">
+            </div>
+        </div>
+        
+        <div class="grid-4">
+            <div class="form-group">
+                <label>نرخ برابری با یوان</label>
+                <input type="text" value="1">
+            </div>
+        </div>
+
+        <button class="btn-full btn-dark" style="margin-bottom: 0;">ثبت سند آنلاین در پرونده</button>
+    </div>
+
+    <div id="form-logistic" class="form-container">
+        <div class="form-header" style="color: #1e3a8a;">📦 ثبت بار ارسالی جدید (لجستیک چین) و تولید اتوماتیک بدهی</div>
         
         <div class="grid-4">
             <div class="form-group">
                 <label>کد رهگیری شیپمنت (Shipment Code)</label>
-                <input type="text" value="125">
+                <input type="text" placeholder="مثلا: 125">
             </div>
             <div class="form-group">
                 <label>شماره فاکتور / شماره سند (Invoice No)</label>
-                <input type="text" value="255">
+                <input type="text" placeholder="مثلا: 255">
             </div>
             <div class="form-group">
                 <label>نام و شرح کالا</label>
-                <input type="text" value="harhci">
+                <input type="text">
             </div>
             <div class="form-group">
                 <label>تعداد کارتن (عدد)</label>
-                <input type="text" value="5">
+                <input type="number">
             </div>
 
             <div class="form-group">
                 <label>وزن بار (کیلوگرم)</label>
-                <input type="text" value="2500">
+                <input type="number">
             </div>
             <div class="form-group">
                 <label>حجم بار (CBM - متر مکعب)</label>
-                <input type="text" value="5">
+                <input type="number">
             </div>
             <div class="form-group">
                 <label>نرخ اعلامی به مشتری (یوان)</label>
-                <input type="text" value="500">
+                <input type="number">
             </div>
             <div class="form-group">
                 <label>نام خط کشتیرانی (Shipping Line)</label>
-                <input type="text" value="liang">
+                <input type="text">
             </div>
 
             <div class="form-group">
                 <label>نرخ کشتیرانی به من (خرید ما - یوان)</label>
-                <input type="text" value="400">
+                <input type="number">
             </div>
             <div class="form-group">
                 <label>هزینه داخلی چین (یوان)</label>
-                <input type="text" value="50">
+                <input type="number">
             </div>
             <div class="form-group">
                 <label>هزینه داخلی مقصد / ترخیص (تومان)</label>
-                <input type="text" value="0">
+                <input type="number">
             </div>
             <div class="form-group">
                 </div>
@@ -246,6 +298,28 @@
         📊 گردش تفصیلی پرونده مشتری فعال
     </div>
 </div>
+
+<script>
+    // تابع برای جابجایی بین تب‌ها
+    function switchTab(tabName) {
+        // حذف کلاس active از همه تب‌ها
+        document.getElementById('tab-finance').classList.remove('active');
+        document.getElementById('tab-logistic').classList.remove('active');
+        
+        // مخفی کردن همه فرم‌ها
+        document.getElementById('form-finance').classList.remove('active-form');
+        document.getElementById('form-logistic').classList.remove('active-form');
+
+        // فعال کردن تب و فرم انتخاب شده
+        if (tabName === 'finance') {
+            document.getElementById('tab-finance').classList.add('active');
+            document.getElementById('form-finance').classList.add('active-form');
+        } else if (tabName === 'logistic') {
+            document.getElementById('tab-logistic').classList.add('active');
+            document.getElementById('form-logistic').classList.add('active-form');
+        }
+    }
+</script>
 
 </body>
 </html>
