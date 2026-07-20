@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>آتانا ERP - مدیریت کارگو و حسابداری</title>
+    <title>آتانا ERP - مدیریت کارگو و دفتر کل یکپارچه</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;700&display=swap');
         
@@ -48,9 +48,8 @@
             font-family: inherit;
         }
 
-        .btn-dark {
-            background-color: #1e3a8a; /* رنگ دکمه مالی که تیره‌تر است */
-        }
+        .btn-dark { background-color: #1e3a8a; }
+        .btn-success { background-color: #059669; }
 
         .selected-customer-box {
             background-color: #f8fafc;
@@ -86,7 +85,6 @@
             gap: 5px;
             text-decoration: none;
             color: #4b5563;
-            transition: background-color 0.2s;
         }
 
         .tab.active {
@@ -100,21 +98,16 @@
             border: 1px solid #e2e8f0;
             border-radius: 8px;
             padding: 20px;
-            display: none; /* پیش‌فرض مخفی تا با جاوااسکریپت کنترل شود */
+            display: none;
         }
 
-        .form-container.active-form {
-            display: block; /* نمایش فرم فعال */
-        }
+        .form-container.active-form { display: block; }
 
         .form-header {
             font-size: 16px;
             font-weight: bold;
             color: #1f2937;
             margin-bottom: 20px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
         }
 
         /* Grid Layout */
@@ -144,35 +137,44 @@
             border-radius: 4px;
             font-family: inherit;
             font-size: 14px;
-            outline: none;
-            text-align: right;
             background-color: white;
         }
 
-        .form-group input:focus, .form-group select:focus {
-            border-color: #3170b9;
-            box-shadow: 0 0 0 2px rgba(49, 112, 185, 0.2);
+        /* Ledger Table Section */
+        .ledger-section {
+            margin-top: 30px;
+            border-top: 2px dashed #cbd5e1;
+            padding-top: 20px;
         }
 
-        /* Footer Link */
-        .footer-link {
-            display: flex;
-            justify-content: flex-end;
-            margin-top: 20px;
+        .ledger-title {
+            font-size: 16px;
             font-weight: bold;
             color: #1e3a8a;
-            font-size: 14px;
-            align-items: center;
-            gap: 5px;
-            cursor: pointer;
+            margin-bottom: 15px;
+            display: flex;
+            justify-content: space-between;
         }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+            font-size: 13px;
+        }
+
+        th, td {
+            border: 1px solid #e2e8f0;
+            padding: 10px;
+            text-align: center;
+        }
+
+        th { background-color: #f1f5f9; color: #334155; }
+        .debit { color: #dc2626; font-weight: bold; } /* بدهکار */
+        .credit { color: #059669; font-weight: bold; } /* بستانکار */
 
         @media (max-width: 900px) {
             .grid-4 { grid-template-columns: repeat(2, 1fr); }
-        }
-        @media (max-width: 500px) {
-            .grid-4 { grid-template-columns: 1fr; }
-            .tabs { flex-wrap: wrap; justify-content: center; }
         }
     </style>
 </head>
@@ -193,130 +195,239 @@
     <div class="tabs">
         <a id="tab-finance" class="tab active" onclick="switchTab('finance')">🧾 صدور فاکتور / ثبت سند مالی</a>
         <a id="tab-logistic" class="tab" onclick="switchTab('logistic')">📦 ارسال بار جدید (لجستیک چین)</a>
-        <a class="tab">🚚 بارهای ارسال‌شده مشتری</a>
     </div>
 
     <div id="form-finance" class="form-container active-form">
         <div class="form-header">➕ ثبت سند جدید دریافت / پرداخت / فاکتور متفرقه</div>
-        
         <div class="grid-4">
             <div class="form-group">
                 <label>شرح تراکنش (بابت)</label>
-                <input type="text" placeholder="مثال: حواله خرید لوازم یدکی از کارخانه">
+                <input type="text" id="fin-desc" value="حواله خرید لوازم یدکی از کارخانه">
             </div>
             <div class="form-group">
                 <label>دسته‌بندی</label>
-                <select>
-                    <option>متفرقه</option>
-                    <option>دریافت از مشتری</option>
-                    <option>پرداخت به کارخانه</option>
+                <select id="fin-cat">
+                    <option value="دریافت از مشتری">دریافت از مشتری (تسویه)</option>
+                    <option value="متفرقه">متفرقه</option>
                 </select>
             </div>
             <div class="form-group">
                 <label>نوع ارز</label>
-                <select>
-                    <option>یوان (CNY)</option>
-                    <option>دلار (USD)</option>
-                    <option>درهم (AED)</option>
-                    <option>تومان (IRT)</option>
+                <select id="fin-currency">
+                    <option value="CNY">یوان (CNY)</option>
+                    <option value="USD">دلار (USD)</option>
+                    <option value="IRT">تومان (IRT)</option>
                 </select>
             </div>
             <div class="form-group">
                 <label>مقدار ارز (دریافت مثبت / بدهی منفی)</label>
-                <input type="text" placeholder="مثال: -15000">
+                <input type="number" id="fin-amount" value="15000">
             </div>
         </div>
-        
         <div class="grid-4">
             <div class="form-group">
                 <label>نرخ برابری با یوان</label>
-                <input type="text" value="1">
+                <input type="number" id="fin-rate" value="1">
             </div>
         </div>
-
-        <button class="btn-full btn-dark" style="margin-bottom: 0;">ثبت سند آنلاین در پرونده</button>
+        <button class="btn-full btn-dark" onclick="submitFinance()">ثبت سند آنلاین در پرونده</button>
     </div>
 
     <div id="form-logistic" class="form-container">
-        <div class="form-header" style="color: #1e3a8a;">📦 ثبت بار ارسالی جدید (لجستیک چین) و تولید اتوماتیک بدهی</div>
-        
+        <div class="form-header" style="color: #1e3a8a;">📦 ثبت بار ارسالی جدید (لجستیک چین) و تولید اتوماتیک بدهی زنجیره‌ای</div>
         <div class="grid-4">
             <div class="form-group">
                 <label>کد رهگیری شیپمنت (Shipment Code)</label>
-                <input type="text" placeholder="مثلا: 125">
+                <input type="text" id="log-shipcode" value="125">
             </div>
             <div class="form-group">
-                <label>شماره فاکتور / شماره سند (Invoice No)</label>
-                <input type="text" placeholder="مثلا: 255">
+                <label>شماره فاکتور / سند (Invoice No)</label>
+                <input type="text" id="log-invno" value="255">
             </div>
             <div class="form-group">
                 <label>نام و شرح کالا</label>
-                <input type="text">
+                <input type="text" id="log-item" value="لوازم الکترونیکی باربری">
             </div>
             <div class="form-group">
                 <label>تعداد کارتن (عدد)</label>
-                <input type="number">
+                <input type="number" id="log-cartons" value="5">
             </div>
-
+        </div>
+        <div class="grid-4">
             <div class="form-group">
                 <label>وزن بار (کیلوگرم)</label>
-                <input type="number">
+                <input type="number" id="log-weight" value="2500">
             </div>
             <div class="form-group">
                 <label>حجم بار (CBM - متر مکعب)</label>
-                <input type="number">
+                <input type="number" id="log-cbm" value="5">
             </div>
             <div class="form-group">
                 <label>نرخ اعلامی به مشتری (یوان)</label>
-                <input type="number">
+                <input type="number" id="log-client-rate" value="500">
             </div>
             <div class="form-group">
                 <label>نام خط کشتیرانی (Shipping Line)</label>
-                <input type="text">
+                <input type="text" id="log-line" value="Liang Shipping">
             </div>
-
+        </div>
+        <div class="grid-4">
             <div class="form-group">
                 <label>نرخ کشتیرانی به من (خرید ما - یوان)</label>
-                <input type="number">
+                <input type="number" id="log-my-rate" value="400">
             </div>
             <div class="form-group">
                 <label>هزینه داخلی چین (یوان)</label>
-                <input type="number">
+                <input type="number" id="log-china-cost" value="50">
             </div>
             <div class="form-group">
                 <label>هزینه داخلی مقصد / ترخیص (تومان)</label>
-                <input type="number">
+                <input type="number" id="log-dest-cost" value="0">
             </div>
-            <div class="form-group">
-                </div>
         </div>
-
-        <button class="btn-full" style="margin-bottom: 0;">ارسال نهایی بار و ثبت زنجیره‌ای اسناد مالی</button>
+        <button class="btn-full" onclick="submitShipment()">ارسال نهایی بار و ثبت زنجیره‌ای اسناد مالی</button>
     </div>
 
-    <div class="footer-link">
-        📊 گردش تفصیلی پرونده مشتری فعال
+    <div class="ledger-section">
+        <div class="ledger-title">
+            <span>📊 دفتر کل و گردش تفصیلی پرونده مشتری فعال (تراکنش‌های یوانی)</span>
+            <span id="balance-summary" style="color: #1e40af;">تراز نهایی مشتری: ۰ یوان</span>
+        </div>
+        <table>
+            <thead>
+                <tr>
+                    <th>نوع حساب</th>
+                    <th>شرح تراکنش / سند</th>
+                    <th>کد شیپمنت / فاکتور</th>
+                    <th>بدهکار (هزینه/بار)</th>
+                    <th>بستانکار (دریافتی)</th>
+                    <th>مبنای ارز</th>
+                </tr>
+            </thead>
+            <tbody id="ledger-body">
+                </tbody>
+        </table>
     </div>
 </div>
 
 <script>
-    // تابع برای جابجایی بین تب‌ها
+    // دیتابیس فرضی برای شبیه‌سازی دفتر کل
+    let ledgerDB = [];
+
     function switchTab(tabName) {
-        // حذف کلاس active از همه تب‌ها
         document.getElementById('tab-finance').classList.remove('active');
         document.getElementById('tab-logistic').classList.remove('active');
-        
-        // مخفی کردن همه فرم‌ها
         document.getElementById('form-finance').classList.remove('active-form');
         document.getElementById('form-logistic').classList.remove('active-form');
 
-        // فعال کردن تب و فرم انتخاب شده
         if (tabName === 'finance') {
             document.getElementById('tab-finance').classList.add('active');
             document.getElementById('form-finance').classList.add('active-form');
         } else if (tabName === 'logistic') {
             document.getElementById('tab-logistic').classList.add('active');
             document.getElementById('form-logistic').classList.add('active-form');
+        }
+    }
+
+    // ۱. ثبت سند مالی متفرقه در دفتر کل
+    function submitFinance() {
+        const desc = document.getElementById('fin-desc').value;
+        const amount = parseFloat(document.getElementById('fin-amount').value) || 0;
+        const rate = parseFloat(document.getElementById('fin-rate').value) || 1;
+        const currency = document.getElementById('fin-currency').value;
+        
+        const amountInYuan = amount * rate;
+
+        let entry = {
+            accountType: "حساب مشتری",
+            description: desc,
+            code: "سند مالی متفرقه",
+            debit: amountInYuan < 0 ? Math.abs(amountInYuan) : 0,  // اگر منفی بود یعنی بدهکار شده
+            credit: amountInYuan > 0 ? amountInYuan : 0,           // اگر مثبت بود یعنی پول داده (بستانکار)
+            currency: currency
+        };
+
+        ledgerDB.push(entry);
+        renderLedger();
+        alert("سند مالی با موفقیت در حساب دفتر کل مشتری ثبت شد.");
+    }
+
+    // ۲. ثبت زنجیره‌ای شیپمنت (همزمان در حساب مشتری و حساب کشتیرانی)
+    function submitShipment() {
+        const shipCode = document.getElementById('log-shipcode').value;
+        const invNo = document.getElementById('log-invno').value;
+        const itemName = document.getElementById('log-item').value;
+        const cbm = parseFloat(document.getElementById('log-cbm').value) || 0;
+        
+        const clientRate = parseFloat(document.getElementById('log-client-rate').value) || 0;
+        const myRate = parseFloat(document.getElementById('log-my-rate').value) || 0;
+        const chinaCost = parseFloat(document.getElementById('log-china-cost').value) || 0;
+        const shippingLine = document.getElementById('log-line').value;
+
+        // الف) محاسبه و ثبت هزینه بار در حساب مشتری (مشتری بدهکار می‌شود)
+        const clientTotalCost = cbm * clientRate;
+        let clientEntry = {
+            accountType: "حساب مشتری",
+            description: `باربری محموله: ${itemName} (حجم: ${cbm} CBM)`,
+            code: `فاکتور: ${invNo} / شیپمنت: ${shipCode}`,
+            debit: clientTotalCost,
+            credit: 0,
+            currency: "CNY"
+        };
+        ledgerDB.push(clientEntry);
+
+        // ب) محاسبه و ثبت بدهی ما به کشتیرانی (حساب فورواردر / کشتیرانی بستانکار می‌شود)
+        const shippingTotalCost = (cbm * myRate) + chinaCost;
+        let shippingEntry = {
+            accountType: `خط کشتیرانی (${shippingLine})`,
+            description: `کرایه بار واقعی شیپمنت ${shipCode} و هزینه‌های چین`,
+            code: `فورواردر: ${shippingLine}`,
+            debit: 0,
+            credit: shippingTotalCost,
+            currency: "CNY"
+        };
+        ledgerDB.push(shippingEntry);
+
+        renderLedger();
+        alert(`زنجیره مالی با موفقیت صادر شد:\n۱. حساب مشتری ${clientTotalCost} یوان بدهکار شد.\n۲. حساب کشتیرانی ${shippingTotalCost} یوان بستانکار شد.`);
+    }
+
+    // رندر کردن دفتر کل در جدول
+    function renderLedger() {
+        const tbody = document.getElementById('ledger-body');
+        tbody.innerHTML = "";
+        let totalCustomerBalance = 0;
+
+        ledgerDB.forEach(entry => {
+            const tr = document.createElement('tr');
+            
+            // محاسبه تراز مشتری (بدهکار منهای بستانکار)
+            if (entry.accountType === "حساب مشتری") {
+                totalCustomerBalance += (entry.debit - entry.credit);
+            }
+
+            tr.innerHTML = `
+                <td style="font-weight:bold; color:${entry.accountType === 'حساب مشتری' ? '#1e3a8a' : '#b45309'}">${entry.accountType}</td>
+                <td>${entry.description}</td>
+                <td><code>${entry.code}</code></td>
+                <td class="debit">${entry.debit > 0 ? entry.debit.toLocaleString() : '-'}</td>
+                <td class="credit">${entry.credit > 0 ? entry.credit.toLocaleString() : '-'}</td>
+                <td>${entry.currency}</td>
+            `;
+            tbody.appendChild(tr);
+        });
+
+        // به‌روزرسانی باکس وضعیت نهایی مشتری
+        const balanceSummary = document.getElementById('balance-summary');
+        if (totalCustomerBalance > 0) {
+            balanceSummary.innerText = `🔴 وضعیت مشتری: ${totalCustomerBalance.toLocaleString()} یوان بدهکار است.`;
+            balanceSummary.style.color = "#dc2626";
+        } else if (totalCustomerBalance < 0) {
+            balanceSummary.innerText = `🟢 وضعیت مشتری: ${Math.abs(totalCustomerBalance).toLocaleString()} یوان بستانکار (طلبکار) است.`;
+            balanceSummary.style.color = "#059669";
+        } else {
+            balanceSummary.innerText = `🔵 وضعیت مشتری: حساب کاملاً تسویه است.`;
+            balanceSummary.style.color = "#1e40af";
         }
     }
 </script>
