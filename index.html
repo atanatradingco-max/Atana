@@ -1,0 +1,159 @@
+سامانه هوشمند آتانا کارگو
+
+ثبت در دیتابیس ↺
+
+لیست آخرین بارها
+در حال بارگذاری...
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>پنل مدیریت آتانا کارگو</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- اتصال مستقیم به دیتابیس ابری (بدون نیاز به تنظیمات شما) -->
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js';
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js';
+        import { getFirestore, collection, addDoc, onSnapshot } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js';
+
+        // این بخش به صورت خودکار سرور را تنظیم می‌کند
+        const firebaseConfig = JSON.parse('__firebase_config');
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'atana-cargo-app';
+
+        let currentUser = null;
+
+        // ورود هوشمند به سیستم
+        const initAuth = async () => {
+            try {
+                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                    await signInWithCustomToken(auth, __initial_auth_token);
+                } else {
+                    await signInAnonymously(auth);
+                }
+            } catch (error) {
+                document.getElementById('status').innerText = "خطا در اتصال به سرور. لطفا اینترنت را چک کنید.";
+                document.getElementById('status').className = "mt-4 text-center font-bold text-red-600";
+            }
+        };
+
+        // گوش دادن به وضعیت ورود و بارگذاری بارها
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                currentUser = user;
+                loadData();
+            }
+        });
+
+        initAuth();
+
+        // تابع دریافت لیست بارها از ابر در لحظه
+        function loadData() {
+            if (!currentUser) return;
+            
+            const colRef = collection(db, 'artifacts', appId, 'users', currentUser.uid, 'transactions');
+            
+            onSnapshot(colRef, (snapshot) => {
+                const listDiv = document.getElementById('list');
+                listDiv.innerHTML = '';
+                let hasData = false;
+
+                snapshot.forEach(doc => {
+                    hasData = true;
+                    const data = doc.data();
+                    listDiv.innerHTML += `
+                        <div class="p-4 bg-gray-50 rounded-lg flex justify-between items-center border border-gray-200 mb-3 shadow-sm hover:shadow-md transition">
+                            <p class="font-bold text-gray-800">${data.desc}</p>
+                            <span class="font-bold text-blue-800 bg-blue-100 px-4 py-1 rounded-full text-sm">${data.amount} یوان</span>
+                        </div>`;
+                });
+
+                if (!hasData) {
+                    listDiv.innerHTML = '<p class="text-center text-gray-500 mt-4">هنوز باری ثبت نکرده‌اید.</p>';
+                }
+            }, (error) => {
+                document.getElementById('list').innerHTML = `<p class="text-red-500 text-center">مشکل در دریافت لیست بارها</p>`;
+            });
+        }
+
+        // تابع ذخیره بار جدید
+        window.saveData = async () => {
+            const status = document.getElementById('status');
+            
+            if (!currentUser) {
+                status.innerText = "سیستم در حال اتصال است، لطفا چند لحظه صبر کنید...";
+                status.className = "mt-4 text-center font-bold text-amber-600";
+                return;
+            }
+
+            const desc = document.getElementById('desc').value;
+            const amount = document.getElementById('amount').value;
+
+            if(!desc || !amount) {
+                status.innerText = "لطفاً هم نام کالا و هم مبلغ را وارد کنید!";
+                status.className = "mt-4 text-center font-bold text-red-600";
+                return;
+            }
+
+            status.innerText = "در حال ارسال به دیتابیس...";
+            status.className = "mt-4 text-center font-bold text-blue-600";
+
+            try {
+                const colRef = collection(db, 'artifacts', appId, 'users', currentUser.uid, 'transactions');
+                await addDoc(colRef, { 
+                    desc: desc, 
+                    amount: Number(amount),
+                    timestamp: new Date().getTime() 
+                });
+                
+                status.innerText = "✅ بار شما با موفقیت ثبت شد!";
+                status.className = "mt-4 text-center font-bold text-green-600";
+                
+                // خالی کردن کادرها بعد از ثبت
+                document.getElementById('desc').value = '';
+                document.getElementById('amount').value = '';
+                
+                // پاک کردن پیام موفقیت بعد از 3 ثانیه
+                setTimeout(() => { status.innerText = ""; }, 3000);
+            } catch (error) {
+                status.innerText = "خطا در ثبت اطلاعات!";
+                status.className = "mt-4 text-center font-bold text-red-600";
+            }
+        };
+    </script>
+</head>
+<body class="bg-gray-100 min-h-screen p-4 md:p-8 font-sans">
+    <div class="max-w-2xl mx-auto bg-white p-6 md:p-8 rounded-2xl shadow-xl border">
+        <h1 class="text-2xl md:text-3xl font-bold mb-8 text-gray-800 text-center border-b pb-4">پنل مدیریت آتانا کارگو</h1>
+        
+        <!-- فرم ثبت بار -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+            <div>
+                <label class="block text-sm font-bold text-gray-700 mb-2">نام کالا (شرح بار)</label>
+                <input id="desc" class="p-3 border rounded-lg w-full focus:ring-2 focus:ring-blue-500 outline-none bg-gray-50" placeholder="مثلاً: لوازم جانبی موبایل">
+            </div>
+            <div>
+                <label class="block text-sm font-bold text-gray-700 mb-2">مبلغ (به یوان)</label>
+                <input id="amount" type="number" class="p-3 border rounded-lg w-full focus:ring-2 focus:ring-blue-500 outline-none bg-gray-50" placeholder="مثلاً: 1500">
+            </div>
+        </div>
+        
+        <button onclick="saveData()" class="w-full bg-blue-700 text-white py-3 rounded-lg font-bold text-lg hover:bg-blue-800 transition shadow-md">ثبت بار</button>
+
+        <!-- محل نمایش پیام‌های موفقیت یا خطا -->
+        <div id="status" class="mt-4 text-center font-bold text-sm h-6"></div>
+
+        <!-- لیست بارها -->
+        <div class="mt-8">
+            <h2 class="font-bold text-lg mb-4 text-gray-800 border-b pb-2">لیست آخرین بارها</h2>
+            <div id="list" class="space-y-3">
+                <p class="text-gray-400 text-center mt-4">در حال اتصال به دیتابیس ابری...</p>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
