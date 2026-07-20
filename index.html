@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>آتانا ERP - هسته مرکزی بازرگانی</title>
+    <title>آتانا ERP - سیستم جامع مدیریت بازرگانی</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;700&display=swap');
         
@@ -26,24 +26,35 @@
             font-size: 13px;
         }
 
-        /* Navbar & Navigation */
+        /* Navbar & Global Balance */
         .navbar {
             background-color: var(--primary);
             color: white;
-            padding: 15px 20px;
+            padding: 10px 20px;
             display: flex;
             justify-content: space-between;
             align-items: center;
         }
-        .date-display { font-weight: bold; background: rgba(255,255,255,0.2); padding: 5px 10px; border-radius: 5px; }
+        .global-balance-bar {
+            background: #0f172a;
+            color: white;
+            padding: 10px 20px;
+            display: flex;
+            gap: 20px;
+            font-size: 13px;
+            align-items: center;
+            overflow-x: auto;
+        }
+        .global-balance-bar span { font-weight: bold; padding: 2px 8px; border-radius: 4px; background: rgba(255,255,255,0.1); }
         
         .main-menu {
             display: flex;
             background: #fff;
             padding: 10px 20px;
             box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-            gap: 15px;
+            gap: 10px;
             margin-bottom: 20px;
+            overflow-x: auto;
         }
         .menu-btn {
             padding: 10px 15px;
@@ -51,16 +62,16 @@
             cursor: pointer;
             font-weight: bold;
             color: #4b5563;
-            border: 1px solid transparent;
+            white-space: nowrap;
         }
-        .menu-btn.active { background-color: #eff6ff; color: var(--primary); border-color: #bfdbfe; }
-        .menu-btn:hover { background-color: #f3f4f6; }
+        .menu-btn.active { background-color: #eff6ff; color: var(--primary); border: 1px solid #bfdbfe; }
+        .menu-btn:hover:not(.active) { background-color: #f3f4f6; }
 
         .container { max-width: 1200px; margin: 0 auto; padding: 0 15px; }
         .page { display: none; }
         .page.active-page { display: block; }
 
-        /* Cards & UI Elements */
+        /* Cards & Form Elements */
         .card {
             background: var(--card);
             border: 1px solid var(--border);
@@ -71,85 +82,116 @@
         }
         .card-header { font-size: 16px; font-weight: bold; color: var(--primary); margin-bottom: 15px; border-bottom: 1px solid var(--border); padding-bottom: 10px;}
         
-        .grid-4 { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 15px; }
+        .grid-4 { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; }
         .form-group { display: flex; flex-direction: column; }
         .form-group label { font-size: 11px; font-weight: bold; color: #475569; margin-bottom: 5px; }
-        .form-group input, .form-group select { padding: 8px; border: 1px solid #cbd5e1; border-radius: 4px; font-family: inherit; }
+        .form-group input, .form-group select { padding: 9px; border: 1px solid #cbd5e1; border-radius: 4px; font-family: inherit; font-size: 13px; }
+        .form-group input:focus, .form-group select:focus { border-color: var(--primary-light); outline: none; }
         
         .btn { background: var(--primary-light); color: white; border: none; padding: 10px 15px; border-radius: 5px; cursor: pointer; font-weight: bold; }
         .btn-success { background: var(--success); }
+        .btn-warning { background: var(--warning); }
         .btn-danger { background: var(--danger); }
+        .btn-dark { background: var(--primary); }
         .btn-small { padding: 5px 10px; font-size: 11px; }
+        .btn-outline { background: transparent; border: 1px solid var(--primary-light); color: var(--primary-light); }
         
-        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 12px; }
         th, td { border: 1px solid var(--border); padding: 8px; text-align: center; }
         th { background-color: #f8fafc; color: #334155; }
         
         .text-debit { color: var(--danger); font-weight: bold; }
         .text-credit { color: var(--success); font-weight: bold; }
 
-        /* Currency Dashboard (Customer Panel) */
-        .currency-dash { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 20px; }
-        .curr-box { background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 6px; padding: 15px; text-align: center; font-weight: bold; font-size: 15px;}
+        /* Currency Dashboard */
+        .currency-dash { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; margin-bottom: 20px; }
+        .curr-box { background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 6px; padding: 15px; text-align: center; font-weight: bold; font-size: 16px;}
         .curr-title { font-size: 11px; color: #64748b; margin-bottom: 5px; }
 
-        /* Status Badges */
+        /* Badges */
         .badge { padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: bold; }
         .badge-alert { background: #fee2e2; color: #991b1b; border: 1px solid #f87171; }
         .badge-warn { background: #fef3c7; color: #92400e; border: 1px solid #fbbf24; }
         .badge-safe { background: #d1fae5; color: #065f46; border: 1px solid #34d399; }
         
-        .tabs { display: flex; gap: 10px; border-bottom: 2px solid var(--border); margin-bottom: 15px; }
-        .tab-btn { padding: 8px 15px; cursor: pointer; font-weight: bold; border-bottom: 2px solid transparent; margin-bottom: -2px; }
+        .tabs { display: flex; gap: 10px; border-bottom: 2px solid var(--border); margin-bottom: 15px; overflow-x: auto;}
+        .tab-btn { padding: 8px 15px; cursor: pointer; font-weight: bold; border-bottom: 2px solid transparent; margin-bottom: -2px; white-space: nowrap;}
         .tab-btn.active { border-color: var(--primary); color: var(--primary); }
+        
+        /* Modals */
+        .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 100; justify-content: center; align-items: center; }
+        .modal { background: white; padding: 20px; border-radius: 8px; width: 90%; max-width: 400px; box-shadow: 0 4px 20px rgba(0,0,0,0.2); }
+        .modal-header { font-size: 16px; font-weight: bold; margin-bottom: 15px; border-bottom: 1px solid var(--border); padding-bottom: 10px; }
+        .modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px; }
     </style>
 </head>
 <body>
 
+<!-- Navbar & Global Balance -->
 <div class="navbar">
     <div style="font-size: 18px; font-weight: bold;">🏢 آتانا ERP</div>
-    <div class="date-display">امروز: <span id="system-date">2026/07/20</span></div>
+    <div style="font-weight: bold; background: rgba(255,255,255,0.2); padding: 5px 10px; border-radius: 5px;">امروز: <span id="system-date">2026/07/20</span></div>
+</div>
+<div class="global-balance-bar">
+    <div>🌍 تراز کل دارایی/بدهی شما:</div>
+    <div>یوان: <span id="glb-cny">0</span></div>
+    <div>دلار: <span id="glb-usd">0</span></div>
+    <div>درهم: <span id="glb-aed">0</span></div>
+    <div>تومان: <span id="glb-irt">0</span></div>
 </div>
 
+<!-- Main Navigation -->
 <div class="main-menu">
     <div class="menu-btn active" onclick="navTo('page-dashboard', this)">📝 دفتر روزنامه (داشبورد)</div>
-    <div class="menu-btn" onclick="navTo('page-customer', this)">👤 پنل مشتریان</div>
+    <div class="menu-btn" onclick="navTo('page-customer', this)">👤 پرونده مشتریان</div>
     <div class="menu-btn" onclick="navTo('page-intransit', this)">🌍 کل بارهای در راه (لجستیک)</div>
 </div>
 
 <div class="container">
 
+    <!-- PAGE 1: داشبورد و دفتر روزنامه -->
     <div id="page-dashboard" class="page active-page">
+        
         <div class="card">
-            <div class="card-header">➕ ثبت رویداد / تراکنش سریع</div>
+            <div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
+                <span>➕ ثبت سریع رویداد (مالی و لجستیکی)</span>
+                <button class="btn btn-outline btn-small" onclick="openModal('customerModal')">👤 تعریف مشتری/فورواردر جدید</button>
+            </div>
+            
             <div class="grid-4">
+                <div class="form-group">
+                    <label>نوع ثبت (مالی / لجستیک)</label>
+                    <select id="log-category" onchange="toggleLogFields()">
+                        <option value="finance">💰 تراکنش مالی (دریافت/پرداخت)</option>
+                        <option value="logistic">📦 رویداد لجستیکی (بدون مبلغ)</option>
+                    </select>
+                </div>
                 <div class="form-group">
                     <label>تاریخ رویداد</label>
                     <input type="date" id="log-date" value="2026-07-20">
                 </div>
                 <div class="form-group">
-                    <label>مشتری (حساب)</label>
-                    <select id="log-customer">
-                        <option value="علی حسن‌زاده (ATC-101)">علی حسن‌زاده (ATC-101)</option>
-                        <option value="شرکت کشتیرانی Liang">شرکت کشتیرانی Liang</option>
-                    </select>
+                    <label>مشتری / خط کشتیرانی</label>
+                    <select id="log-customer" class="customer-dropdowns"></select>
                 </div>
                 <div class="form-group">
-                    <label>شرح تراکنش</label>
-                    <input type="text" id="log-desc" placeholder="مثال: واریز بیعانه">
+                    <label>شرح رویداد</label>
+                    <input type="text" id="log-desc" placeholder="مثال: واریز بیعانه یا بارگیری شد">
                 </div>
-                <div class="form-group">
-                    <label>نوع عملیات</label>
+                
+                <!-- فیلدهای مالی (مخفی شونده) -->
+                <div class="form-group fin-field">
+                    <label>نوع عملیات مالی</label>
                     <select id="log-type">
-                        <option value="credit">بستانکار (دریافت کردم)</option>
-                        <option value="debit">بدهکار (پرداخت/هزینه بار)</option>
+                        <option value="credit">بستانکار (من پول دریافت کردم)</option>
+                        <option value="debit">بدهکار (هزینه زدم / پرداخت کردم)</option>
                     </select>
                 </div>
-                <div class="form-group">
+                <div class="form-group fin-field">
                     <label>مبلغ</label>
                     <input type="number" id="log-amount" value="0">
                 </div>
-                <div class="form-group">
+                <div class="form-group fin-field">
                     <label>ارز</label>
                     <select id="log-currency">
                         <option value="CNY">یوان (CNY)</option>
@@ -159,39 +201,41 @@
                     </select>
                 </div>
             </div>
-            <button class="btn" style="margin-top: 15px;" onclick="addJournalEntry()">ثبت در دفتر کل</button>
+            <button class="btn btn-dark" style="margin-top: 15px;" onclick="addJournalEntry()">ثبت در دفتر کل روزنامه</button>
         </div>
 
         <div class="card">
-            <div class="card-header">📑 دفتر روزنامه (تراکنش‌های اخیر)</div>
-            <table>
-                <thead>
-                    <tr>
-                        <th>تاریخ</th>
-                        <th>مشتری / حساب</th>
-                        <th>شرح</th>
-                        <th>بدهکار</th>
-                        <th>بستانکار</th>
-                        <th>ارز</th>
-                        <th>عملیات</th>
-                    </tr>
-                </thead>
-                <tbody id="journal-tbody">
-                    </tbody>
-            </table>
+            <div class="card-header">📑 دفتر روزنامه (تایم‌لاین رویدادهای اخیر)</div>
+            <div style="overflow-x: auto;">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>تاریخ</th>
+                            <th>طرف حساب</th>
+                            <th>نوع رویداد</th>
+                            <th>شرح</th>
+                            <th>بدهکار</th>
+                            <th>بستانکار</th>
+                            <th>عملیات</th>
+                        </tr>
+                    </thead>
+                    <tbody id="journal-tbody"></tbody>
+                </table>
+            </div>
         </div>
     </div>
 
+    <!-- PAGE 2: پنل اختصاصی مشتری -->
     <div id="page-customer" class="page">
-        <div class="card" style="background: #e0f2fe; border-color: #bae6fd;">
+        <div class="card" style="background: #e0f2fe; border-color: #bae6fd; display: flex; gap: 15px; align-items: center;">
             <div class="form-group" style="width: 300px;">
-                <label>انتخاب پرونده مشتری:</label>
-                <select id="active-customer-select">
-                    <option>علی حسن‌زاده (ATC-101)</option>
-                </select>
+                <label>انتخاب پرونده فعال:</label>
+                <select id="active-customer-select" class="customer-dropdowns" onchange="updateUI()"></select>
             </div>
+            <button class="btn btn-outline btn-small" onclick="openModal('customerModal')" style="margin-top: 10px;">+ مشتری جدید</button>
         </div>
 
+        <!-- ترازنامه 4 ارزی -->
         <div class="currency-dash">
             <div class="curr-box"><div class="curr-title">موجودی یوان (CNY)</div><span id="bal-cny">0</span></div>
             <div class="curr-box"><div class="curr-title">موجودی دلار (USD)</div><span id="bal-usd">0</span></div>
@@ -201,7 +245,7 @@
 
         <div class="card">
             <div class="tabs">
-                <div class="tab-btn active" onclick="switchCustTab('tab-ledger', this)">🧾 حساب و مالی</div>
+                <div class="tab-btn active" onclick="switchCustTab('tab-ledger', this)">🧾 حساب و دفتر تفصیلی</div>
                 <div class="tab-btn" onclick="switchCustTab('tab-active-ship', this)">🚚 بارهای ارسالی (در راه)</div>
                 <div class="tab-btn" onclick="switchCustTab('tab-delivered', this)">📦 بارهای تحویل‌شده</div>
             </div>
@@ -212,9 +256,8 @@
                         <tr>
                             <th>تاریخ</th>
                             <th>شرح</th>
-                            <th>بدهکار (هزینه بار)</th>
+                            <th>بدهکار (هزینه/بدهی)</th>
                             <th>بستانکار (پرداختی)</th>
-                            <th>ارز</th>
                             <th>عملیات</th>
                         </tr>
                     </thead>
@@ -223,14 +266,15 @@
             </div>
 
             <div id="tab-active-ship" class="cust-tab" style="display: none;">
-                <button class="btn btn-success" style="margin-bottom:10px;" onclick="navTo('page-intransit', document.querySelectorAll('.menu-btn')[2])">+ ثبت بار جدید</button>
+                <button class="btn btn-success" style="margin-bottom:10px;" onclick="navTo('page-intransit', document.querySelectorAll('.menu-btn')[2])">+ ارسال بار جدید</button>
                 <table>
                     <thead>
                         <tr>
-                            <th>کد شیپمنت</th>
+                            <th>شیپمنت</th>
                             <th>مسیر</th>
                             <th>تاریخ ارسال</th>
-                            <th>حجم/وزن</th>
+                            <th>حجم</th>
+                            <th>آلارم وضعیت</th>
                             <th>عملیات</th>
                         </tr>
                     </thead>
@@ -242,9 +286,10 @@
                 <table>
                     <thead>
                         <tr>
-                            <th>کد شیپمنت</th>
+                            <th>شیپمنت</th>
                             <th>تاریخ تحویل</th>
                             <th>شرح کالا</th>
+                            <th>عملیات</th>
                         </tr>
                     </thead>
                     <tbody id="cust-delivered-tbody"></tbody>
@@ -253,20 +298,21 @@
         </div>
     </div>
 
+    <!-- PAGE 3: کل بارهای در راه (لجستیک) -->
     <div id="page-intransit" class="page">
         <div class="card">
-            <div class="card-header">📦 ارسال بار جدید (ثبت دوطرفه حساب مشتری و کشتیرانی)</div>
+            <div class="card-header">📦 ارسال بار جدید (ثبت دوطرفه اتوماتیک)</div>
             <div class="grid-4">
                 <div class="form-group">
                     <label>مشتری</label>
-                    <select id="ship-cust"><option>علی حسن‌زاده (ATC-101)</option></select>
+                    <select id="ship-cust" class="customer-dropdowns"></select>
                 </div>
                 <div class="form-group">
                     <label>مسیر و نوع</label>
                     <select id="ship-route">
-                        <option value="dubai">دبی (میانگین 30 روز)</option>
-                        <option value="iran_lcl">ایران خرده‌بار (میانگین 65 روز)</option>
-                        <option value="iran_fcl">ایران کانتینر (میانگین 45 روز)</option>
+                        <option value="dubai">دبی (میانگین ۳۰ روز)</option>
+                        <option value="iran_lcl">ایران خرده‌بار (میانگین ۶۵ روز)</option>
+                        <option value="iran_fcl">ایران کانتینر (میانگین ۴۵ روز)</option>
                     </select>
                 </div>
                 <div class="form-group">
@@ -282,19 +328,19 @@
                     <input type="number" id="ship-cbm" value="10">
                 </div>
                 <div class="form-group">
-                    <label>کرایه اعلامی به مشتری (هر CBM / یوان)</label>
+                    <label>کرایه مشتری (هر CBM / یوان)</label>
                     <input type="number" id="ship-client-rate" value="600">
                 </div>
                 <div class="form-group">
                     <label>شرکت کشتیرانی (فورواردر)</label>
-                    <input type="text" id="ship-line" value="شرکت کشتیرانی Liang">
+                    <select id="ship-line" class="customer-dropdowns"></select>
                 </div>
                 <div class="form-group">
-                    <label>کرایه واقعی فورواردر (هر CBM / یوان)</label>
+                    <label>کرایه فورواردر (هر CBM / یوان)</label>
                     <input type="number" id="ship-my-rate" value="500">
                 </div>
             </div>
-            <button class="btn btn-success" style="margin-top: 15px;" onclick="registerShipment()">ارسال بار و صدور اسناد مالی</button>
+            <button class="btn btn-success" style="margin-top: 15px;" onclick="registerShipment()">🚀 ارسال بار و صدور اسناد مالی</button>
         </div>
 
         <div class="card">
@@ -305,35 +351,111 @@
                         <th>شیپمنت</th>
                         <th>مشتری</th>
                         <th>مسیر</th>
-                        <th>روزهای سپری‌شده</th>
-                        <th>وضعیت هوشمند (آلارم)</th>
+                        <th>سپری‌شده</th>
+                        <th>آلارم سیستم</th>
                         <th>عملیات</th>
                     </tr>
                 </thead>
-                <tbody id="global-ship-tbody">
-                    </tbody>
+                <tbody id="global-ship-tbody"></tbody>
             </table>
         </div>
     </div>
 
 </div>
 
+<!-- Modals -->
+
+<!-- Modal: Add Customer -->
+<div class="modal-overlay" id="customerModal">
+    <div class="modal">
+        <div class="modal-header">👤 تعریف پرونده جدید</div>
+        <div class="form-group" style="margin-bottom: 10px;">
+            <label>نام و کد (مثال: علی حسن‌زاده ATC-101)</label>
+            <input type="text" id="new-cust-name" placeholder="نام مشتری یا خط کشتیرانی">
+        </div>
+        <div class="form-group">
+            <label>نوع پرونده</label>
+            <select id="new-cust-type">
+                <option value="customer">مشتری (صاحب کالا)</option>
+                <option value="forwarder">خط کشتیرانی / فورواردر</option>
+            </select>
+        </div>
+        <div class="modal-actions">
+            <button class="btn btn-outline" onclick="closeModal('customerModal')">انصراف</button>
+            <button class="btn btn-dark" onclick="saveNewCustomer()">ثبت پرونده</button>
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Edit Record -->
+<div class="modal-overlay" id="editModal">
+    <div class="modal">
+        <div class="modal-header">✏️ ویرایش اطلاعات</div>
+        <input type="hidden" id="edit-id">
+        <input type="hidden" id="edit-type">
+        
+        <div class="form-group" style="margin-bottom: 10px;">
+            <label>تاریخ</label>
+            <input type="date" id="edit-date">
+        </div>
+        <div class="form-group" style="margin-bottom: 10px;">
+            <label>شرح</label>
+            <input type="text" id="edit-desc">
+        </div>
+        <div class="form-group" id="edit-amount-group" style="margin-bottom: 10px;">
+            <label>مبلغ / مقدار</label>
+            <input type="number" id="edit-amount">
+        </div>
+
+        <div class="modal-actions">
+            <button class="btn btn-outline" onclick="closeModal('editModal')">انصراف</button>
+            <button class="btn btn-warning" onclick="saveEdit()">ذخیره تغییرات</button>
+        </div>
+    </div>
+</div>
+
+<!-- Custom UI Alert Modal (No default alert()) -->
+<div class="modal-overlay" id="msgModal">
+    <div class="modal">
+        <div class="modal-header" id="msg-title">پیام سیستم</div>
+        <div id="msg-body" style="line-height: 1.6;"></div>
+        <div class="modal-actions">
+            <button class="btn btn-dark" onclick="closeModal('msgModal')">متوجه شدم</button>
+        </div>
+    </div>
+</div>
+
 <script>
-    // --- State Management ---
+    // --- Data Base (Mock) ---
     const SYSTEM_DATE = new Date('2026-07-20T00:00:00');
     
     let db = {
+        customers: [
+            { id: 'علی حسن‌زاده (ATC-101)', type: 'customer', balances: { CNY: 0, USD: 0, AED: 0, IRT: 0 } },
+            { id: 'کشتیرانی Liang', type: 'forwarder', balances: { CNY: 0, USD: 0, AED: 0, IRT: 0 } }
+        ],
         journal: [],
         shipments: [
-            // یک داده آزمایشی قدیمی برای تست آلارم دبی (بیش از 35 روز)
-            { id: 'SH-OLD', cust: 'علی حسن‌زاده (ATC-101)', route: 'dubai', date: '2026-06-10', cbm: 5, status: 'active' }
+            { id: 'SH-OLD1', cust: 'علی حسن‌زاده (ATC-101)', route: 'dubai', date: '2026-06-10', cbm: 5, status: 'active' }
         ],
-        balances: {
-            'علی حسن‌زاده (ATC-101)': { CNY: 0, USD: 0, AED: 0, IRT: 0 }
-        }
+        idCounter: 1
     };
 
-    // --- Navigation Logic ---
+    // --- Core UI functions ---
+    function showMsg(title, body) {
+        document.getElementById('msg-title').innerText = title;
+        document.getElementById('msg-body').innerText = body;
+        openModal('msgModal');
+    }
+
+    function toggleLogFields() {
+        const isFin = document.getElementById('log-category').value === 'finance';
+        document.querySelectorAll('.fin-field').forEach(el => el.style.display = isFin ? 'flex' : 'none');
+    }
+
+    function openModal(id) { document.getElementById(id).style.display = 'flex'; }
+    function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+
     function navTo(pageId, btnElement) {
         document.querySelectorAll('.page').forEach(p => p.classList.remove('active-page'));
         document.getElementById(pageId).classList.add('active-page');
@@ -349,31 +471,81 @@
         btnElement.classList.add('active');
     }
 
-    // --- Core Functions ---
-    function addJournalEntry(entry = null) {
-        if (!entry) {
-            entry = {
-                date: document.getElementById('log-date').value,
-                cust: document.getElementById('log-customer').value,
-                desc: document.getElementById('log-desc').value,
-                type: document.getElementById('log-type').value,
-                amount: parseFloat(document.getElementById('log-amount').value) || 0,
-                currency: document.getElementById('log-currency').value
-            };
-        }
+    // --- Entity Management ---
+    function populateCustomers() {
+        const selects = document.querySelectorAll('.customer-dropdowns');
+        selects.forEach(select => {
+            let currentVal = select.value;
+            select.innerHTML = '';
+            db.customers.forEach(c => {
+                let opt = document.createElement('option');
+                opt.value = c.id;
+                opt.innerText = c.id;
+                select.appendChild(opt);
+            });
+            if (currentVal && db.customers.find(c => c.id === currentVal)) select.value = currentVal;
+        });
+    }
+
+    function saveNewCustomer() {
+        let name = document.getElementById('new-cust-name').value;
+        let type = document.getElementById('new-cust-type').value;
+        if (!name) return showMsg('خطا', 'لطفا نام پرونده را وارد کنید.');
         
-        db.journal.push(entry);
-
-        // Update Customer Balance if it's a customer
-        if (db.balances[entry.cust]) {
-            if (entry.type === 'debit') db.balances[entry.cust][entry.currency] -= entry.amount; // بدهکار منفی میکند
-            if (entry.type === 'credit') db.balances[entry.cust][entry.currency] += entry.amount; // بستانکار مثبت میکند
-        }
-
+        db.customers.push({ id: name, type: type, balances: { CNY: 0, USD: 0, AED: 0, IRT: 0 } });
+        populateCustomers();
+        closeModal('customerModal');
+        showMsg('موفق', `پرونده جدید برای "${name}" با موفقیت ایجاد شد.`);
         updateUI();
     }
 
-    // Dual-Entry Accounting for Shipment
+    // --- Journal & Finance ---
+    function addJournalEntry(entryObj = null) {
+        let jId = 'J' + (db.idCounter++);
+        
+        if (!entryObj) {
+            const cat = document.getElementById('log-category').value;
+            const type = document.getElementById('log-type').value;
+            const amount = parseFloat(document.getElementById('log-amount').value) || 0;
+            
+            entryObj = {
+                id: jId,
+                date: document.getElementById('log-date').value,
+                cust: document.getElementById('log-customer').value,
+                desc: document.getElementById('log-desc').value || (cat === 'logistic' ? 'ثبت رویداد لجستیکی' : 'بدون شرح'),
+                category: cat,
+                type: cat === 'logistic' ? 'event' : type,
+                amount: cat === 'logistic' ? 0 : amount,
+                currency: document.getElementById('log-currency').value
+            };
+        } else {
+            entryObj.id = jId;
+        }
+        
+        db.journal.push(entryObj);
+        recalcBalances();
+        updateUI();
+        
+        if(!entryObj.isSystem) showMsg('ثبت موفق', 'رویداد با موفقیت در دفتر روزنامه ثبت شد.');
+    }
+
+    function recalcBalances() {
+        // Reset all balances
+        db.customers.forEach(c => c.balances = { CNY: 0, USD: 0, AED: 0, IRT: 0 });
+        
+        // Calculate based on journal
+        db.journal.forEach(j => {
+            if (j.category === 'finance') {
+                let custObj = db.customers.find(c => c.id === j.cust);
+                if (custObj) {
+                    if (j.type === 'debit') custObj.balances[j.currency] -= j.amount;
+                    if (j.type === 'credit') custObj.balances[j.currency] += j.amount;
+                }
+            }
+        });
+    }
+
+    // --- Shipment Logic ---
     function registerShipment() {
         const cust = document.getElementById('ship-cust').value;
         const line = document.getElementById('ship-line').value;
@@ -384,105 +556,167 @@
         const clientRate = parseFloat(document.getElementById('ship-client-rate').value) || 0;
         const myRate = parseFloat(document.getElementById('ship-my-rate').value) || 0;
 
-        // 1. اضافه کردن به لیست لجستیک
-        db.shipments.push({ id: code, cust: cust, route: route, date: date, cbm: cbm, status: 'active' });
+        if(!code) return showMsg('خطا', 'کد شیپمنت الزامی است.');
 
-        // 2. ثبت حساب مشتری (بدهکار می‌شود)
-        addJournalEntry({
-            date: date, cust: cust, desc: `هزینه باربری شیپمنت ${code}`, type: 'debit', amount: cbm * clientRate, currency: 'CNY'
-        });
+        // 1. Save shipment
+        db.shipments.push({ id: code, cust: cust, route: route, date: date, cbm: cbm, status: 'active', desc: 'بار تجاری' });
 
-        // 3. ثبت حساب کشتیرانی (بستانکار می‌شویم به او)
-        addJournalEntry({
-            date: date, cust: line, desc: `کرایه واقعی شیپمنت ${code}`, type: 'credit', amount: cbm * myRate, currency: 'CNY'
-        });
+        // 2. Client Debit (Financial)
+        addJournalEntry({ date: date, cust: cust, desc: `هزینه باربری شیپمنت ${code}`, category: 'finance', type: 'debit', amount: cbm * clientRate, currency: 'CNY', isSystem: true });
 
-        alert("بار با موفقیت ثبت شد و اسناد مالی به صورت دوطرفه (مشتری و کشتیرانی) در دفتر کل صادر گردید.");
-        document.getElementById('ship-code').value = 'SH-' + Math.floor(Math.random()*10000); // رندومایز کد بعدی
+        // 3. Forwarder Credit (Financial)
+        addJournalEntry({ date: date, cust: line, desc: `کرایه واقعی شیپمنت ${code}`, category: 'finance', type: 'credit', amount: cbm * myRate, currency: 'CNY', isSystem: true });
+
+        showMsg("ثبت زنجیره‌ای موفق", `بار ${code} ثبت شد.\n۱. حساب مشتری ${cbm * clientRate} بدهکار شد.\n۲. حساب کشتیرانی ${cbm * myRate} بستانکار شد.`);
+        document.getElementById('ship-code').value = 'SH-' + Math.floor(Math.random()*10000); 
         updateUI();
     }
 
-    function markAsDelivered(shipCode) {
+    function changeShipmentStatus(shipCode, newStatus) {
         let ship = db.shipments.find(s => s.id === shipCode);
         if (ship) {
-            ship.status = 'delivered';
-            ship.deliveredDate = '2026-07-20'; // تاریخ فرضی امروز
+            ship.status = newStatus;
+            ship.deliveredDate = newStatus === 'delivered' ? '2026-07-20' : null;
+            
+            // Add logistic event to journal
+            let eventDesc = newStatus === 'delivered' ? `تحویل بار ${shipCode} به مشتری` : `بازگشت بار ${shipCode} به وضعیت در راه`;
+            addJournalEntry({ date: '2026-07-20', cust: ship.cust, desc: eventDesc, category: 'logistic', type: 'event', amount: 0, currency: 'CNY', isSystem: true });
+            
             updateUI();
         }
     }
 
-    // --- Smart Alert Logic (ETA Engine) ---
+    // --- Edit Logic ---
+    function openEditModal(type, id) {
+        document.getElementById('edit-id').value = id;
+        document.getElementById('edit-type').value = type;
+        
+        if (type === 'journal') {
+            let j = db.journal.find(x => x.id === id);
+            document.getElementById('edit-date').value = j.date;
+            document.getElementById('edit-desc').value = j.desc;
+            document.getElementById('edit-amount').value = j.amount;
+            document.getElementById('edit-amount-group').style.display = j.category === 'logistic' ? 'none' : 'flex';
+        } else if (type === 'shipment') {
+            let s = db.shipments.find(x => x.id === id);
+            document.getElementById('edit-date').value = s.date;
+            document.getElementById('edit-desc').value = s.desc || '';
+            document.getElementById('edit-amount').value = s.cbm; // Use amount field for CBM
+            document.getElementById('edit-amount-group').style.display = 'flex';
+        }
+        openModal('editModal');
+    }
+
+    function saveEdit() {
+        let id = document.getElementById('edit-id').value;
+        let type = document.getElementById('edit-type').value;
+        
+        if (type === 'journal') {
+            let j = db.journal.find(x => x.id === id);
+            j.date = document.getElementById('edit-date').value;
+            j.desc = document.getElementById('edit-desc').value;
+            if(j.category === 'finance') j.amount = parseFloat(document.getElementById('edit-amount').value) || 0;
+            recalcBalances();
+        } else if (type === 'shipment') {
+            let s = db.shipments.find(x => x.id === id);
+            s.date = document.getElementById('edit-date').value;
+            s.desc = document.getElementById('edit-desc').value;
+            s.cbm = parseFloat(document.getElementById('edit-amount').value) || 0;
+        }
+        
+        closeModal('editModal');
+        updateUI();
+        showMsg("ویرایش موفق", "تغییرات با موفقیت اعمال شد.");
+    }
+
+    // --- Smart Alert Engine ---
     function getAlertBadge(shipDateStr, route) {
         let shipDate = new Date(shipDateStr);
-        let diffTime = Math.abs(SYSTEM_DATE - shipDate);
+        let diffTime = SYSTEM_DATE - shipDate; // Date is fixed for this demo
         let daysElapsed = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+        if (daysElapsed < 0) daysElapsed = 0; // Future date safecheck
 
         let badge = `<span class="badge badge-safe">عادی (${daysElapsed} روز)</span>`;
         
         if (route === 'dubai') {
-            if (daysElapsed > 35) badge = `<span class="badge badge-alert">🚨 بحرانی: ${daysElapsed} روز! پیگیری فوری</span>`;
-            else if (daysElapsed >= 27) badge = `<span class="badge badge-warn">⚠️ نزدیک رسیدن (یادآوری به مشتری)</span>`;
+            if (daysElapsed > 35) badge = `<span class="badge badge-alert">🚨 بحرانی: ${daysElapsed} روز! پیگیری</span>`;
+            else if (daysElapsed >= 27) badge = `<span class="badge badge-warn">⚠️ نزدیک رسیدن (${daysElapsed} روز)</span>`;
         } 
         else if (route === 'iran_lcl') {
-            if (daysElapsed > 70) badge = `<span class="badge badge-alert">🚨 تأخیر LCL: بیش از 70 روز!</span>`;
+            if (daysElapsed > 70) badge = `<span class="badge badge-alert">🚨 تأخیر LCL: بیش از ۷۰ روز!</span>`;
+            else if (daysElapsed >= 65) badge = `<span class="badge badge-warn">⚠️ نزدیک رسیدن</span>`;
         }
         else if (route === 'iran_fcl') {
-            if (daysElapsed > 50) badge = `<span class="badge badge-alert">🚨 تأخیر FCL: بیش از 50 روز!</span>`;
+            if (daysElapsed > 50) badge = `<span class="badge badge-alert">🚨 تأخیر FCL: بیش از ۵۰ روز!</span>`;
+            else if (daysElapsed >= 45) badge = `<span class="badge badge-warn">⚠️ نزدیک رسیدن</span>`;
         }
-        
         return { text: daysElapsed, badge: badge };
     }
 
-    // --- UI Render Engine ---
+    // --- Render Engine ---
     function updateUI() {
-        // 1. Render Journal
+        // 1. Global Balance Calculation
+        let global = { CNY: 0, USD: 0, AED: 0, IRT: 0 };
+        db.customers.forEach(c => {
+            global.CNY += c.balances.CNY;
+            global.USD += c.balances.USD;
+            global.AED += c.balances.AED;
+            global.IRT += c.balances.IRT;
+        });
+        
+        ['cny', 'usd', 'aed', 'irt'].forEach(curr => {
+            let val = global[curr.toUpperCase()];
+            let el = document.getElementById(`glb-${curr}`);
+            el.innerText = val.toLocaleString();
+            el.style.color = val < 0 ? '#fca5a5' : (val > 0 ? '#86efac' : 'white');
+        });
+
+        // 2. Journal Dashboard
         const jTbody = document.getElementById('journal-tbody');
         jTbody.innerHTML = '';
-        [...db.journal].reverse().forEach((j, index) => {
+        [...db.journal].reverse().forEach(j => {
+            let catStr = j.category === 'logistic' ? '📦 لجستیک' : '💰 مالی';
             jTbody.innerHTML += `
                 <tr>
                     <td>${j.date}</td>
                     <td>${j.cust}</td>
+                    <td><span class="badge ${j.category === 'logistic' ? 'badge-safe' : 'badge-warn'}">${catStr}</span></td>
                     <td>${j.desc}</td>
                     <td class="text-debit">${j.type === 'debit' ? j.amount.toLocaleString() : '-'}</td>
                     <td class="text-credit">${j.type === 'credit' ? j.amount.toLocaleString() : '-'}</td>
-                    <td>${j.currency}</td>
-                    <td><button class="btn btn-small" style="background:#64748b;">ویرایش</button></td>
+                    <td><button class="btn btn-small btn-warning" onclick="openEditModal('journal', '${j.id}')">✏️ ویرایش</button></td>
                 </tr>
             `;
         });
 
-        // 2. Render Customer Balances
-        const custName = 'علی حسن‌زاده (ATC-101)';
-        const bals = db.balances[custName];
-        document.getElementById('bal-cny').innerText = bals.CNY.toLocaleString();
-        document.getElementById('bal-usd').innerText = bals.USD.toLocaleString();
-        document.getElementById('bal-aed').innerText = bals.AED.toLocaleString();
-        document.getElementById('bal-irt').innerText = bals.IRT.toLocaleString();
-        
-        // Colorize based on debt (negative) or credit (positive)
-        ['cny','usd','aed','irt'].forEach(curr => {
-            let el = document.getElementById(`bal-${curr}`);
-            let val = bals[curr.toUpperCase()];
-            el.style.color = val < 0 ? '#dc2626' : (val > 0 ? '#059669' : '#1f2937');
-        });
+        // 3. Customer Panel Balances
+        const activeCustId = document.getElementById('active-customer-select').value;
+        if (activeCustId) {
+            const custObj = db.customers.find(c => c.id === activeCustId);
+            ['cny', 'usd', 'aed', 'irt'].forEach(curr => {
+                let el = document.getElementById(`bal-${curr}`);
+                let val = custObj.balances[curr.toUpperCase()];
+                el.innerText = val.toLocaleString() + ` ${curr.toUpperCase()}`;
+                el.style.color = val < 0 ? '#dc2626' : (val > 0 ? '#059669' : '#1f2937');
+            });
 
-        // 3. Render Customer Ledger
-        const clTbody = document.getElementById('cust-ledger-tbody');
-        clTbody.innerHTML = '';
-        db.journal.filter(j => j.cust === custName).forEach(j => {
-            clTbody.innerHTML += `
-                <tr>
-                    <td>${j.date}</td><td>${j.desc}</td>
-                    <td class="text-debit">${j.type === 'debit' ? j.amount.toLocaleString() : '-'}</td>
-                    <td class="text-credit">${j.type === 'credit' ? j.amount.toLocaleString() : '-'}</td>
-                    <td>${j.currency}</td>
-                    <td><button class="btn btn-small" style="background:#64748b;">ویرایش</button></td>
-                </tr>
-            `;
-        });
+            // Customer Ledger (Financial + Logistic combined timeline)
+            const clTbody = document.getElementById('cust-ledger-tbody');
+            clTbody.innerHTML = '';
+            db.journal.filter(j => j.cust === activeCustId).forEach(j => {
+                let amtStr = j.category === 'logistic' ? `<span class="badge badge-safe">رویداد</span>` : j.amount.toLocaleString() + ' ' + j.currency;
+                clTbody.innerHTML += `
+                    <tr>
+                        <td>${j.date}</td><td>${j.desc}</td>
+                        <td class="text-debit">${j.type === 'debit' ? amtStr : '-'}</td>
+                        <td class="text-credit">${j.type === 'credit' ? amtStr : '-'}</td>
+                        <td><button class="btn btn-small btn-warning" onclick="openEditModal('journal', '${j.id}')">✏️</button></td>
+                    </tr>
+                `;
+            });
+        }
 
-        // 4. Render Global Active Shipments (In-Transit Page) & Customer Shipments
+        // 4. Logistics Tables
         const gTbody = document.getElementById('global-ship-tbody');
         const caTbody = document.getElementById('cust-active-ship-tbody');
         const cdTbody = document.getElementById('cust-delivered-tbody');
@@ -495,36 +729,40 @@
             if (s.status === 'active') {
                 let alertData = getAlertBadge(s.date, s.route);
                 
-                // رندر در تب گلوبال لجستیک
+                // Global logistics tab
                 gTbody.innerHTML += `
                     <tr>
                         <td>${s.id}</td><td>${s.cust}</td><td>${routeName}</td>
                         <td>${alertData.text} روز</td>
                         <td>${alertData.badge}</td>
                         <td>
-                            <button class="btn btn-success btn-small" onclick="markAsDelivered('${s.id}')">تحویل شد ✔</button>
-                            <button class="btn btn-small" style="background:#64748b;">ویرایش</button>
+                            <button class="btn btn-success btn-small" onclick="changeShipmentStatus('${s.id}', 'delivered')">تحویل شد ✔</button>
+                            <button class="btn btn-small btn-warning" onclick="openEditModal('shipment', '${s.id}')">✏️</button>
                         </td>
                     </tr>
                 `;
 
-                // رندر در تب ارسالی‌های مشتری
-                if (s.cust === custName) {
+                // Customer active tab
+                if (s.cust === activeCustId) {
                     caTbody.innerHTML += `
                         <tr>
                             <td>${s.id}</td><td>${routeName}</td><td>${s.date}</td><td>${s.cbm} CBM</td>
+                            <td>${alertData.badge}</td>
                             <td>
-                                <button class="btn btn-success btn-small" onclick="markAsDelivered('${s.id}')">تحویل شد ✔</button>
-                                <button class="btn btn-small" style="background:#64748b;">ویرایش</button>
+                                <button class="btn btn-success btn-small" onclick="changeShipmentStatus('${s.id}', 'delivered')">تحویل شد ✔</button>
+                                <button class="btn btn-small btn-warning" onclick="openEditModal('shipment', '${s.id}')">✏️</button>
                             </td>
                         </tr>
                     `;
                 }
-            } else if (s.status === 'delivered' && s.cust === custName) {
-                // رندر در تب تحویل شده‌های مشتری
+            } else if (s.status === 'delivered' && s.cust === activeCustId) {
+                // Customer delivered tab (with UNDO Revert functionality)
                 cdTbody.innerHTML += `
                     <tr>
-                        <td>${s.id}</td><td>${s.deliveredDate}</td><td>لوازم تجاری (آرشیو شده)</td>
+                        <td>${s.id}</td><td>${s.deliveredDate}</td><td>${s.desc || 'آرشیو شده'}</td>
+                        <td>
+                            <button class="btn btn-danger btn-small" onclick="changeShipmentStatus('${s.id}', 'active')">↩ بازگشت به در راه</button>
+                        </td>
                     </tr>
                 `;
             }
@@ -532,7 +770,11 @@
     }
 
     // Init
-    window.onload = updateUI;
+    window.onload = function() {
+        populateCustomers();
+        updateUI();
+        toggleLogFields();
+    };
 </script>
 </body>
 </html>
