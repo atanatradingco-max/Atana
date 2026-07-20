@@ -1,354 +1,288 @@
 <!DOCTYPE html>
 <html lang="fa" dir="rtl">
 <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>سیستم جامع بازرگانی آتانا</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
-    <!-- React & ReactDOM -->
-    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-    <!-- Babel -->
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>آتانا ERP - ثبت و پیگیری بار</title>
     <style>
-        body { font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Tahoma, sans-serif; background-color: #f3f4f6; -webkit-tap-highlight-color: transparent; }
-        .hide-scrollbar::-webkit-scrollbar { display: none; }
-        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        :root {
+            --primary: #1e3a8a;
+            --success: #059669;
+            --warning: #d97706;
+            --danger: #dc2626;
+            --bg: #f8fafc;
+            --card: #ffffff;
+            --text: #0f172a;
+            --border: #e2e8f0;
+        }
+        body {
+            font-family: Tahoma, Arial, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            margin: 0;
+            padding: 15px;
+            font-size: 14px;
+        }
+        .container { max-width: 1000px; margin: 0 auto; }
+        h1 { color: var(--primary); font-size: 22px; text-align: center; margin-bottom: 20px; }
+        .card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+        .section-title {
+            font-size: 16px;
+            font-weight: bold;
+            color: var(--primary);
+            border-bottom: 2px solid var(--border);
+            padding-bottom: 5px;
+            margin-top: 0;
+            margin-bottom: 15px;
+        }
+        .grid-3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 15px; }
+        .form-group { margin-bottom: 12px; display: flex; flex-direction: column; }
+        .form-group label { margin-bottom: 5px; font-weight: bold; }
+        input, select {
+            padding: 8px;
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            font-family: inherit;
+            background: #fff;
+        }
+        .btn {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            width: 100%;
+            margin-top: 15px;
+        }
+        .btn:hover { opacity: 0.9; }
+        .alert-box {
+            padding: 12px;
+            border-radius: 4px;
+            margin-top: 10px;
+            font-weight: bold;
+            display: none;
+            text-align: center;
+        }
+        .alert-warning { background-color: #fef3c7; color: #92400e; border: 1px solid #fde68a; }
+        .profit-display {
+            background: #ecfdf5;
+            border: 1px solid #a7f3d0;
+            color: var(--success);
+            padding: 15px;
+            border-radius: 6px;
+            text-align: center;
+            font-size: 18px;
+            font-weight: bold;
+            margin-top: 15px;
+        }
+        .currency-badge { font-size: 11px; color: #64748b; margin-right: 5px; }
     </style>
 </head>
 <body>
-    <div id="root"></div>
 
-    <script type="text/babel" data-type="module">
-        import { initializeApp } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js';
-        import { getAuth, signInAnonymously } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js';
-        import { getFirestore, collection, addDoc, onSnapshot, updateDoc, doc, deleteDoc } from 'https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js';
+<div class="container">
+    <h1>آتانا ERP - ثبت محموله جدید (لجستیک)</h1>
 
-        // تنظیمات دیتابیس اختصاصی شما
-        const firebaseConfig = {
-            apiKey: "AIzaSyAD9pbJbfz5i2rkdldTUeFc7GvCmgd2PrA",
-            authDomain: "atana-d41d7.firebaseapp.com",
-            projectId: "atana-d41d7",
-            storageBucket: "atana-d41d7.firebasestorage.app",
-            messagingSenderId: "735986567605",
-            appId: "1:735986567605:web:fdb82e9b1c4bf3d726b1fc"
-        };
+    <div class="card">
+        <div class="section-title">۱. اطلاعات پایه و فیزیکی بار</div>
+        <div class="grid-3">
+            <div class="form-group">
+                <label>کد یا نام مشتری:</label>
+                <input type="text" id="customerCode" placeholder="مثلا: ATC-101">
+            </div>
+            <div class="form-group">
+                <label>مسیر و نوع ارسال:</label>
+                <select id="routeType" onchange="updateETACalculation()">
+                    <option value="dubai_lcl">خرده‌بار (LCL) به دبی - حدود ۳۰ روز</option>
+                    <option value="dubai_fcl">کانتینر کامل (FCL) به دبی</option>
+                    <option value="iran_lcl">خرده‌بار (LCL) به ایران - حدود ۶۵ روز</option>
+                    <option value="iran_fcl">کانتینر کامل (FCL) به ایران</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>حجم واقعی بار (مترمکعب/CBM):</label>
+                <input type="number" id="cbm" value="10" step="0.01" oninput="calculateProfit()">
+            </div>
+            <div class="form-group">
+                <label>تعداد کارتن:</label>
+                <input type="number" id="cartons" value="5">
+            </div>
+            <div class="form-group">
+                <label>وزن واقعی (کیلوگرم):</label>
+                <input type="number" id="weight" value="0">
+            </div>
+            <div class="form-group">
+                <label>نام شرکت حمل‌ونقل (فورواردر):</label>
+                <input type="text" id="forwarder" placeholder="نام فورواردر چین">
+            </div>
+        </div>
+    </div>
 
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
-        const db = getFirestore(app);
+    <div class="card">
+        <div class="section-title">۲. زمان‌بندی و آلارم هوشمند (ETA)</div>
+        <div class="grid-3">
+            <div class="form-group">
+                <label>تاریخ ارسال از چین:</label>
+                <input type="date" id="shipDate" onchange="updateETACalculation()">
+            </div>
+            <div class="form-group">
+                <label>تاریخ تقریبی رسیدن (ETA):</label>
+                <input type="text" id="etaDate" readonly style="background: #f1f5f9;">
+            </div>
+            <div class="form-group">
+                <label>وضعیت بار:</label>
+                <select id="shipmentStatus" onchange="toggleStatus()">
+                    <option value="in_transit">در راه (In Transit)</option>
+                    <option value="delivered">تحویل شد (Delivered) -> انتقال به آرشیو</option>
+                </select>
+            </div>
+        </div>
+        <div id="etaAlert" class="alert-box alert-warning"></div>
+    </div>
 
-        const App = () => {
-            const [activeTab, setActiveTab] = React.useState('dashboard');
-            const [role, setRole] = React.useState('admin'); // admin, china_wh, sales, iran_cl
-            const [userId, setUserId] = React.useState(null);
-            
-            // Data States
-            const [customers, setCustomers] = React.useState([]);
-            const [shipments, setShipments] = React.useState([]);
-            const [loading, setLoading] = React.useState(true);
+    <div class="card">
+        <div class="section-title">۳. فاکتور مالی دوگانه و محاسبه سود واقعی</div>
+        <div class="grid-3">
+            <div class="form-group">
+                <label>قیمت حمل فورواردر <span class="currency-badge">(هر CBM / یوان)</span>:</label>
+                <input type="number" id="costPerCbm" value="500" oninput="calculateProfit()">
+            </div>
+            <div class="form-group">
+                <label>قیمت حمل اعلامی به مشتری <span class="currency-badge">(هر CBM / یوان)</span>:</label>
+                <input type="number" id="pricePerCbm" value="600" oninput="calculateProfit()">
+            </div>
+            <div class="form-group">
+                <label>هزینه‌های داخلی چین <span class="currency-badge">(لیفتراک، کارگر / یوان)</span>:</label>
+                <input type="number" id="chinaInternalCost" value="0" oninput="calculateProfit()">
+            </div>
+            <div class="form-group">
+                <label>هزینه پنهان مقصد (دبی/ایران) <span class="currency-badge">(درهم یا ارز مقصد)</span>:</label>
+                <input type="number" id="destinationCost" value="100" oninput="calculateProfit()">
+            </div>
+            <div class="form-group">
+                <label>نرخ تبدیل ارز مقصد به یوان <span class="currency-badge">(مثلا هر درهم چند یوان)</span>:</label>
+                <input type="number" id="exchangeRate" value="2" oninput="calculateProfit()">
+            </div>
+        </div>
 
-            // Modals
-            const [showCustomerModal, setShowCustomerModal] = React.useState(false);
-            const [showShipmentModal, setShowShipmentModal] = React.useState(false);
-            const [selectedCustomer, setSelectedCustomer] = React.useState(null);
+        <div class="profit-display">
+            تراز حساب مشتری: <span id="clientTotal">0</span> یوان <br>
+            تراز حساب فورواردر (هزینه واقعی): <span id="forwarderTotal">0</span> یوان <br><br>
+            💸 سود خالص واقعی این بار: <span id="pureProfit">0</span> یوان
+        </div>
+    </div>
 
-            React.useEffect(() => {
-                signInAnonymously(auth).then((userCred) => {
-                    setUserId(userCred.user.uid);
-                }).catch(err => alert("خطای اتصال به دیتابیس: " + err.message));
-            }, []);
+    <button class="btn" onclick="saveShipment()">ثبت نهایی بار در سیستم</button>
+</div>
 
-            React.useEffect(() => {
-                if (!userId) return;
-                
-                const custRef = collection(db, 'artifacts', 'atana-cargo', 'users', userId, 'customers');
-                const shipRef = collection(db, 'artifacts', 'atana-cargo', 'users', userId, 'shipments');
+<script>
+    // تنظیم تاریخ امروز به عنوان پیش‌فرض تاریخ ارسال
+    document.getElementById('shipDate').valueAsDate = new Date();
 
-                const unsubCust = onSnapshot(custRef, (snap) => {
-                    const data = [];
-                    snap.forEach(doc => data.push({ id: doc.id, ...doc.data() }));
-                    setCustomers(data);
-                });
+    function updateETACalculation() {
+        const shipDateInput = document.getElementById('shipDate').value;
+        const routeType = document.getElementById('routeType').value;
+        const etaAlert = document.getElementById('etaAlert');
+        
+        if (!shipDateInput) return;
 
-                const unsubShip = onSnapshot(shipRef, (snap) => {
-                    const data = [];
-                    snap.forEach(doc => data.push({ id: doc.id, ...doc.data() }));
-                    setShipments(data.sort((a,b) => b.createdAt - a.createdAt));
-                    setLoading(false);
-                });
+        let shipDate = new Date(shipDateInput);
+        let daysToArrive = 30; // پیش‌فرض دبی
+        let alertDaysBefore = 3;
 
-                return () => { unsubCust(); unsubShip(); };
-            }, [userId]);
+        if (routeType.includes('iran')) {
+            daysToArrive = 65; // میانگین زمان ایران (بین ۵۵ تا ۷۵)
+            alertDaysBefore = 5;
+        }
 
-            // === توابع ثبت اطلاعات ===
-            const handleAddCustomer = async (e) => {
-                e.preventDefault();
-                const name = e.target.name.value;
-                const code = e.target.code.value;
-                if(!name || !code) return;
-                
-                await addDoc(collection(db, 'artifacts', 'atana-cargo', 'users', userId, 'customers'), {
-                    name, code, 
-                    balances: { CNY: 0, USD: 0, IRT: 0, AED: 0 },
-                    createdAt: Date.now()
-                });
-                e.target.reset();
-                setShowCustomerModal(false);
-            };
+        // محاسبه تاریخ ETA
+        let etaDate = new Date(shipDate);
+        etaDate.setDate(etaDate.getDate() + daysToArrive);
+        document.getElementById('etaDate').value = etaDate.toISOString().split('T')[0];
 
-            const handleAddShipment = async (e) => {
-                e.preventDefault();
-                const data = {
-                    customerId: e.target.customer.value,
-                    cbm: parseFloat(e.target.cbm.value) || 0,
-                    route: e.target.route.value,
-                    mark: e.target.mark.value,
-                    cost: parseFloat(e.target.cost.value) || 0, // هزینه شیپینگ
-                    price: parseFloat(e.target.price.value) || 0, // قیمت به مشتری
-                    status: 'در راه',
-                    createdAt: Date.now()
-                };
-                
-                await addDoc(collection(db, 'artifacts', 'atana-cargo', 'users', userId, 'shipments'), data);
-                e.target.reset();
-                setShowShipmentModal(false);
-            };
+        // بررسی وضعیت آلارم بر اساس تاریخ فعلی سیستم
+        let today = new Date();
+        let timeDiff = etaDate.getTime() - today.getTime();
+        let daysRemaining = Math.ceil(timeDiff / (1000 * 3600 * 24));
 
-            // === کامپوننت‌های داخلی ===
-            const Dashboard = () => {
-                // محاسبه تراز کل سیستم
-                let totalToman = 0; let totalYuan = 0;
-                customers.forEach(c => {
-                    totalToman += (c.balances?.IRT || 0);
-                    totalYuan += (c.balances?.CNY || 0);
-                });
+        if (document.getElementById('shipmentStatus').value === 'in_transit') {
+            etaAlert.style.display = 'block';
+            if (daysRemaining <= alertDaysBefore && daysRemaining >= 0) {
+                etaAlert.className = "alert-box alert-warning";
+                etaAlert.innerText = `⚠️ هشدار: ${daysRemaining} روز تا تاریخ تقریبی رسیدن بار باقی مانده! پیگیری از فورواردر یا اطلاع به مشتری انجام شود.`;
+            } else if (daysRemaining < 0) {
+                etaAlert.className = "alert-box alert-warning";
+                etaAlert.style.backgroundColor = "#fee2e2";
+                etaAlert.style.color = "#991b1b";
+                etaAlert.innerText = `🚨 تأخیر بار: بار باید ${Math.abs(daysRemaining)} روز پیش می‌رسید! وضعیت را فوری از شرکت حمل پیگیری کنید.`;
+            } else {
+                etaAlert.innerText = `${daysRemaining} روز تا زمان تقریبی رسیدن بار به مقصد باقی مانده است.`;
+                etaAlert.className = "alert-box alert-warning";
+                etaAlert.style.backgroundColor = "#e0f2fe";
+                etaAlert.style.color = "#0369a1";
+            }
+        } else {
+            etaAlert.style.display = 'none';
+        }
+    }
 
-                return (
-                    <div className="space-y-6 pb-20">
-                        <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
-                            <h2 className="text-gray-500 text-sm font-bold mb-4">خلاصه تراز مالی (داشبورد)</h2>
-                            <div className="grid grid-cols-2 gap-4">
-                                <div className="bg-emerald-50 p-4 rounded-xl border border-emerald-100">
-                                    <p className="text-emerald-700 text-xs mb-1">مجموع طلب/دارایی (تومان)</p>
-                                    <p className="text-xl font-bold text-emerald-900">{totalToman.toLocaleString()}</p>
-                                </div>
-                                <div className="bg-blue-50 p-4 rounded-xl border border-blue-100">
-                                    <p className="text-blue-700 text-xs mb-1">مجموع یوان (در گردش)</p>
-                                    <p className="text-xl font-bold text-blue-900">¥ {totalYuan.toLocaleString()}</p>
-                                </div>
-                            </div>
-                        </div>
+    function calculateProfit() {
+        const cbm = parseFloat(document.getElementById('cbm').value) || 0;
+        const costPerCbm = parseFloat(document.getElementById('costPerCbm').value) || 0;
+        const pricePerCbm = parseFloat(document.getElementById('pricePerCbm').value) || 0;
+        const chinaInternal = parseFloat(document.getElementById('chinaInternalCost').value) || 0;
+        const destCost = parseFloat(document.getElementById('destinationCost').value) || 0;
+        const rate = parseFloat(document.getElementById('exchangeRate').value) || 1;
 
-                        {/* دسترسی سریع */}
-                        {role === 'admin' && (
-                            <div className="grid grid-cols-2 gap-4">
-                                <button onClick={() => setShowShipmentModal(true)} className="bg-slate-800 text-white p-4 rounded-xl shadow hover:bg-slate-700 flex flex-col items-center gap-2">
-                                    <i className="fa-solid fa-plane-departure text-2xl"></i>
-                                    <span>ثبت بار جدید</span>
-                                </button>
-                                <button onClick={() => setShowCustomerModal(true)} className="bg-white border border-gray-200 text-gray-800 p-4 rounded-xl shadow-sm hover:bg-gray-50 flex flex-col items-center gap-2">
-                                    <i className="fa-solid fa-user-plus text-2xl"></i>
-                                    <span>مشتری جدید</span>
-                                </button>
-                            </div>
-                        )}
-                    </div>
-                );
-            };
+        // حساب مشتری (قیمت اعلامی به مشتری ضربدر حجم)
+        const clientTotal = cbm * pricePerCbm;
+        
+        // هزینه مقصد تبدیل شده به یوان
+        const destCostInYuan = destCost * rate;
+        
+        // حساب فورواردر (هزینه حمل واقعی فورواردر + هزینه‌های داخلی چین + هزینه پنهان مقصد به یوان)
+        const forwarderTotal = (cbm * costPerCbm) + chinaInternal + destCostInYuan;
 
-            const Shipments = () => {
-                const getStatusColor = (createdAt, route) => {
-                    const daysPassed = Math.floor((Date.now() - createdAt) / (1000 * 60 * 60 * 24));
-                    const limit = route.includes('دبی') ? 30 : 60;
-                    if (daysPassed > limit - 3) return 'border-r-4 border-red-500 bg-red-50';
-                    if (daysPassed > limit - 10) return 'border-r-4 border-yellow-400 bg-yellow-50';
-                    return 'border-r-4 border-emerald-500 bg-white';
-                };
+        // سود واقعی
+        const pureProfit = clientTotal - forwarderTotal;
 
-                return (
-                    <div className="space-y-4 pb-20">
-                        <div className="flex justify-between items-center mb-4">
-                            <h2 className="text-lg font-bold text-gray-800">مدیریت لجستیک و بارها</h2>
-                            {role !== 'iran_cl' && (
-                                <button onClick={() => setShowShipmentModal(true)} className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm"><i className="fa-solid fa-plus ml-1"></i> بار جدید</button>
-                            )}
-                        </div>
-                        
-                        {shipments.map(s => (
-                            <div key={s.id} className={`p-4 rounded-xl shadow-sm mb-3 ${getStatusColor(s.createdAt, s.route)}`}>
-                                <div className="flex justify-between items-start mb-2">
-                                    <div>
-                                        <p className="font-bold text-gray-800">{s.mark || 'بدون مارک'} <span className="text-xs bg-gray-200 text-gray-600 px-2 py-1 rounded ml-2">{s.route}</span></p>
-                                        <p className="text-xs text-gray-500 mt-1">CBM: {s.cbm} | ثبت: {new Date(s.createdAt).toLocaleDateString('fa-IR')}</p>
-                                    </div>
-                                    <span className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded font-bold">{s.status}</span>
-                                </div>
-                                
-                                {/* مخفی کردن بخش مالی برای انبار چین و ترخیص کار */}
-                                {(role === 'admin' || role === 'sales') && (
-                                    <div className="mt-3 pt-3 border-t flex justify-between text-sm">
-                                        <div className="text-gray-600">
-                                            فروش: <span className="font-bold text-green-700">¥ {s.price}</span>
-                                        </div>
-                                        {role === 'admin' && (
-                                            <div className="text-gray-600">
-                                                سود خالص: <span className="font-bold text-blue-700">¥ {s.price - s.cost}</span>
-                                            </div>
-                                        )}
-                                    </div>
-                                )}
-                            </div>
-                        ))}
-                        {shipments.length === 0 && <p className="text-center text-gray-400 mt-10">باری در جریان نیست.</p>}
-                    </div>
-                );
-            };
+        document.getElementById('clientTotal').innerText = clientTotal.toLocaleString();
+        document.getElementById('forwarderTotal').innerText = forwarderTotal.toLocaleString();
+        document.getElementById('pureProfit').innerText = pureProfit.toLocaleString();
+    }
 
-            const Customers = () => (
-                <div className="space-y-4 pb-20">
-                    <div className="flex justify-between items-center mb-4">
-                        <h2 className="text-lg font-bold text-gray-800">دفتر کل مشتریان (Ledger)</h2>
-                    </div>
-                    {customers.map(c => (
-                        <div key={c.id} className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 mb-3">
-                            <div className="flex justify-between items-center mb-3">
-                                <h3 className="font-bold text-gray-800">{c.name} <span className="text-xs bg-gray-100 px-2 rounded text-gray-500">{c.code}</span></h3>
-                                {role === 'admin' && <button className="text-blue-600 text-sm">تراکنش <i className="fa-solid fa-chevron-left"></i></button>}
-                            </div>
-                            
-                            {(role === 'admin' || role === 'sales') && (
-                                <div className="grid grid-cols-4 gap-2 text-center text-sm border-t pt-3">
-                                    <div><p className="text-gray-400 text-xs">یوان</p><p className="font-bold text-gray-700">{c.balances?.CNY || 0}</p></div>
-                                    <div><p className="text-gray-400 text-xs">دلار</p><p className="font-bold text-gray-700">{c.balances?.USD || 0}</p></div>
-                                    <div><p className="text-gray-400 text-xs">درهم</p><p className="font-bold text-gray-700">{c.balances?.AED || 0}</p></div>
-                                    <div><p className="text-gray-400 text-xs">تومان</p><p className="font-bold text-gray-700 text-xs">{c.balances?.IRT || 0}</p></div>
-                                </div>
-                            )}
-                        </div>
-                    ))}
-                </div>
-            );
+    function toggleStatus() {
+        const status = document.getElementById('shipmentStatus').value;
+        if (status === 'delivered') {
+            document.getElementById('etaAlert').style.display = 'block';
+            document.getElementById('etaAlert').className = "alert-box";
+            document.getElementById('etaAlert').style.backgroundColor = "#d1fae5";
+            document.getElementById('etaAlert').style.color = "#065f46";
+            document.getElementById('etaAlert').innerText = "✅ بار تحویل شد. با ثبت نهایی، این پرونده به آرشیو ماه جاری منتقل می‌شود.";
+        } else {
+            updateETACalculation();
+        }
+    }
 
-            if (loading) return <div className="flex justify-center items-center h-screen text-gray-500">در حال همگام‌سازی با فایربیس...</div>;
+    function saveShipment() {
+        alert("اطلاعات بار با موفقیت در ساختار محلی پردازش شد. در مرحله بعد این داده‌ها مستقیماً به فایربیس ارسال خواهند شد.");
+    }
 
-            return (
-                <div className="max-w-md mx-auto min-h-screen relative bg-gray-50">
-                    {/* Header */}
-                    <header className="bg-white shadow-sm p-4 sticky top-0 z-10 flex justify-between items-center">
-                        <h1 className="font-bold text-gray-800 text-lg">آتانا کارگو</h1>
-                        <select value={role} onChange={(e) => setRole(e.target.value)} className="text-xs bg-gray-100 p-2 rounded-lg border-none outline-none font-bold text-gray-600">
-                            <option value="admin">👨‍💼 مدیریت (کامل)</option>
-                            <option value="china_wh">📦 انبار چین (بدون قیمت)</option>
-                            <option value="sales">💰 فروش (بدون قیمت خرید)</option>
-                            <option value="iran_cl">🚚 ترخیص ایران</option>
-                        </select>
-                    </header>
+    // اجرای اولیه محاسبات
+    window.onload = function() {
+        updateETACalculation();
+        calculateProfit();
+    };
+</script>
 
-                    {/* Main Content */}
-                    <main className="p-4">
-                        {activeTab === 'dashboard' && <Dashboard />}
-                        {activeTab === 'shipments' && <Shipments />}
-                        {activeTab === 'customers' && <Customers />}
-                    </main>
-
-                    {/* Bottom Navigation */}
-                    <nav className="fixed bottom-0 w-full max-w-md bg-white border-t flex justify-around p-3 pb-safe shadow-lg z-20">
-                        <button onClick={() => setActiveTab('dashboard')} className={`flex flex-col items-center p-2 ${activeTab === 'dashboard' ? 'text-blue-600' : 'text-gray-400'}`}>
-                            <i className="fa-solid fa-chart-pie text-xl mb-1"></i>
-                            <span className="text-[10px] font-bold">داشبورد</span>
-                        </button>
-                        <button onClick={() => setActiveTab('shipments')} className={`flex flex-col items-center p-2 ${activeTab === 'shipments' ? 'text-blue-600' : 'text-gray-400'}`}>
-                            <i className="fa-solid fa-box text-xl mb-1"></i>
-                            <span className="text-[10px] font-bold">ارسال بار</span>
-                        </button>
-                        <button onClick={() => setActiveTab('customers')} className={`flex flex-col items-center p-2 ${activeTab === 'customers' ? 'text-blue-600' : 'text-gray-400'}`}>
-                            <i className="fa-solid fa-users text-xl mb-1"></i>
-                            <span className="text-[10px] font-bold">دفتر کل</span>
-                        </button>
-                    </nav>
-
-                    {/* Modal: New Shipment */}
-                    {showShipmentModal && (
-                        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
-                            <div className="bg-white rounded-2xl w-full max-w-sm p-6 shadow-2xl relative max-h-[90vh] overflow-y-auto">
-                                <button onClick={() => setShowShipmentModal(false)} className="absolute top-4 left-4 text-gray-400 hover:text-gray-800"><i className="fa-solid fa-times text-xl"></i></button>
-                                <h3 className="font-bold text-lg mb-4 text-gray-800 border-b pb-2">ثبت بار جدید (Shipment)</h3>
-                                
-                                <form onSubmit={handleAddShipment} className="space-y-4">
-                                    <div>
-                                        <label className="text-xs font-bold text-gray-600 block mb-1">مشتری</label>
-                                        <select name="customer" required className="w-full p-3 bg-gray-50 border rounded-xl text-sm">
-                                            <option value="">انتخاب کنید...</option>
-                                            {customers.map(c => <option key={c.id} value={c.id}>{c.name} ({c.code})</option>)}
-                                        </select>
-                                    </div>
-                                    <div className="grid grid-cols-2 gap-3">
-                                        <div>
-                                            <label className="text-xs font-bold text-gray-600 block mb-1">حجم اعلامی (CBM)</label>
-                                            <input type="number" step="0.01" name="cbm" required className="w-full p-3 bg-gray-50 border rounded-xl text-sm" placeholder="مثلا 2.5"/>
-                                        </div>
-                                        <div>
-                                            <label className="text-xs font-bold text-gray-600 block mb-1">مارک بار (Mark)</label>
-                                            <input type="text" name="mark" required className="w-full p-3 bg-gray-50 border rounded-xl text-sm" placeholder="ATN-01"/>
-                                        </div>
-                                    </div>
-                                    <div>
-                                        <label className="text-xs font-bold text-gray-600 block mb-1">مسیر و نوع بار</label>
-                                        <select name="route" className="w-full p-3 bg-gray-50 border rounded-xl text-sm">
-                                            <option value="LCL دبی">خرده‌بار (LCL) به دبی</option>
-                                            <option value="FCL دبی">کانتینر (FCL) به دبی</option>
-                                            <option value="LCL ایران">خرده‌بار (LCL) به ایران</option>
-                                            <option value="هوایی ایران">هوایی به ایران</option>
-                                        </select>
-                                    </div>
-                                    
-                                    {/* بخش مالی فقط برای مدیریت نمایش داده می‌شود */}
-                                    {(role === 'admin' || role === 'sales') && (
-                                        <div className="bg-blue-50 p-3 rounded-xl border border-blue-100 space-y-3">
-                                            <h4 className="text-xs font-bold text-blue-800">بخش مالی (یوان)</h4>
-                                            {role === 'admin' && (
-                                                <div>
-                                                    <label className="text-[10px] font-bold text-gray-500 block mb-1">هزینه واقعی شیپینگ (خرید شما)</label>
-                                                    <input type="number" name="cost" className="w-full p-2 bg-white border rounded-lg text-sm" placeholder="مثلا 1200"/>
-                                                </div>
-                                            )}
-                                            <div>
-                                                <label className="text-[10px] font-bold text-gray-500 block mb-1">قیمت اعلامی به مشتری (فروش شما)</label>
-                                                <input type="number" name="price" className="w-full p-2 bg-white border rounded-lg text-sm" placeholder="مثلا 1500"/>
-                                            </div>
-                                        </div>
-                                    )}
-
-                                    <button type="submit" className="w-full bg-slate-800 text-white font-bold py-3 rounded-xl shadow-lg mt-2">ثبت و ایجاد شیپمنت</button>
-                                </form>
-                            </div>
-                        </div>
-                    )}
-
-                    {/* Modal: New Customer */}
-                    {showCustomerModal && (
-                        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
-                            <div className="bg-white rounded-2xl w-full max-w-sm p-6 shadow-2xl relative">
-                                <button onClick={() => setShowCustomerModal(false)} className="absolute top-4 left-4 text-gray-400 hover:text-gray-800"><i className="fa-solid fa-times text-xl"></i></button>
-                                <h3 className="font-bold text-lg mb-4 text-gray-800">تعریف مشتری جدید</h3>
-                                <form onSubmit={handleAddCustomer} className="space-y-4">
-                                    <input type="text" name="name" required placeholder="نام کامل مشتری" className="w-full p-3 bg-gray-50 border rounded-xl"/>
-                                    <input type="text" name="code" required placeholder="کد اختصاصی (مثلا CU-101)" className="w-full p-3 bg-gray-50 border rounded-xl"/>
-                                    <button type="submit" className="w-full bg-emerald-600 text-white font-bold py-3 rounded-xl shadow-lg">ذخیره مشتری</button>
-                                </form>
-                            </div>
-                        </div>
-                    )}
-                </div>
-            );
-        };
-
-        const root = ReactDOM.createRoot(document.getElementById('root'));
-        root.render(<App />);
-    </script>
 </body>
 </html>
