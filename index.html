@@ -174,7 +174,7 @@
 <!-- Main Navigation -->
 <div class="main-menu">
     <div class="menu-btn active" onclick="navTo('page-dashboard', this)">📝 دفتر روزنامه (داشبورد)</div>
-    <div class="menu-btn" onclick="navTo('page-customer', this)">👤 پرونده مشتریان و تامین‌کنندگان</div>
+    <div class="menu-btn" onclick="navTo('page-customer', this)">👤 پرونده اشخاص</div>
     <div class="menu-btn" onclick="navTo('page-intransit', this)">🌍 کل بارهای در راه (لجستیک)</div>
 </div>
 
@@ -411,14 +411,6 @@
                 <div class="form-group"><label>7. انبارداری چین</label><input type="number" id="ship-cost-wh" placeholder="0" oninput="calcTotalShipping()"></div>
                 <div class="form-group"><label>8. لیفتراک</label><input type="number" id="ship-cost-fork" placeholder="0" oninput="calcTotalShipping()"></div>
             </div>
-            <div class="grid-6" style="background:#f8fafc; border:1px solid #cbd5e1; padding:15px; border-radius:5px; margin-top:15px; align-items:center;">
-                <div class="form-group" style="grid-column: span 6;">
-                    <label style="color:#059669; font-weight:bold; font-size:13px; margin-bottom:10px;">
-                        مجموع کل هزینه ارسال مشتری (حجم × نرخ + داخلی + بسته‌بندی + انبارداری + لیفتراک):
-                    </label>
-                    <input type="number" id="ship-total-shipping" disabled style="background:#d1fae5; color:#065f46; font-weight:bold; font-size:18px; text-align:center; padding:12px; border:1px solid #34d399;">
-                </div>
-            </div>
 
             <!-- FCL Dubai Clearance Section (Dynamic) -->
             <div id="clearance-section" class="section-title" style="display:none; color: #d97706;">🛂 جزئیات ترخیص دبی (FCL)</div>
@@ -442,28 +434,65 @@
                 </div>
             </div>
 
-            <div class="section-title">🚢 خرید حمل و نقل (فورواردر)</div>
+            <div class="section-title">🚢 خرید حمل و نقل (هزینه‌های فورواردر)</div>
             <div class="grid-6">
                 <div class="form-group"><label>شرکت کشتیرانی (فورواردر)</label><select id="ship-line"></select></div>
-                <div class="form-group"><label>کرایه خالص فورواردر (یوان/CBM)</label><input type="number" id="ship-my-rate" placeholder="0"></div>
+                <div class="form-group"><label>کرایه خالص فورواردر (یوان/CBM)</label><input type="number" id="fwd-my-rate" placeholder="0"></div>
+                <div class="form-group"><label>هزینه بسته‌بندی (یوان)</label><input type="number" id="fwd-cost-pack" placeholder="0"></div>
+                <div class="form-group"><label>هزینه انبارداری (یوان)</label><input type="number" id="fwd-cost-wh" placeholder="0"></div>
+                <div class="form-group"><label>هزینه لیفتراک (یوان)</label><input type="number" id="fwd-cost-fork" placeholder="0"></div>
             </div>
 
-            <div class="section-title">🛒 اطلاعات تجاری و مالی (فاکتور خرید کالا)</div>
-            <div class="grid-6">
+            <!-- بخش جدید فاکتور خریدهای چندگانه -->
+            <div class="section-title">🛒 فاکتور خرید کالا و تامین‌کنندگان (امکان ثبت چندین کالا)</div>
+            
+            <div class="grid-8" style="background:#f8fafc; border:1px solid #cbd5e1; padding:15px; border-radius:5px; margin-bottom:15px; align-items:end;">
                 <div class="form-group">
-                    <label>تامین‌کننده / کارخانه 
-                        <a href="javascript:void(0)" onclick="quickAddSupplier()" style="color:blue; font-size:10px;">+ سریع</a>
-                    </label>
-                    <select id="ship-supplier"></select>
+                    <label>تامین‌کننده <a href="javascript:void(0)" onclick="quickAddSupplier()" style="color:blue; font-size:10px;">+ سریع</a></label>
+                    <select id="pur-supplier"></select>
                 </div>
-                <div class="form-group"><label>شماره فاکتور</label><input type="text" id="ship-inv-no" placeholder="مثال: INV-1002"></div>
-                <div class="form-group"><label>ارزش کل فاکتور (یوان)</label><input type="number" id="ship-inv-val" placeholder="0"></div>
-                <div class="form-group"><label>کمیسیون شما (یوان)</label><input type="number" id="ship-comm" placeholder="0"></div>
-                <div class="form-group"><label>مبلغ پرداخت‌شده (علی‌الحساب)</label><input type="number" id="ship-paid" placeholder="0"></div>
-                <div class="form-group"><label>تاریخ موعد تسویه مانده</label><input type="date" id="ship-due-date" value="2026-07-25"></div>
+                <div class="form-group">
+                    <label>کالا / جنس <a href="javascript:void(0)" onclick="openItemModal()" style="color:blue; font-size:10px;">+ سریع</a></label>
+                    <select id="pur-item"></select>
+                </div>
+                <div class="form-group"><label>شماره فاکتور</label><input type="text" id="pur-inv" placeholder="INV-001"></div>
+                <div class="form-group"><label>تعداد/مقدار</label><input type="number" id="pur-qty" value="1"></div>
+                <div class="form-group"><label>قیمت واحد (یوان)</label><input type="number" id="pur-price" placeholder="0"></div>
+                <div class="form-group"><label>علی‌الحساب (یوان)</label><input type="number" id="pur-paid" placeholder="0"></div>
+                <div class="form-group"><label>موعد تسویه</label><input type="date" id="pur-due" value="2026-07-25"></div>
+                <div class="form-group"><button class="btn btn-warning" onclick="addPurchaseItem()">➕ افزودن کالا</button></div>
             </div>
 
-            <button class="btn btn-success" style="margin-top: 25px; width:100%; font-size:15px; padding:12px;" onclick="registerShipment()">🚀 ثبت بار و صدور اتوماتیک اسناد حسابداری</button>
+            <!-- جدول لیست خریدهای این شیپمنت -->
+            <table style="margin-bottom:20px;">
+                <thead>
+                    <tr>
+                        <th>تامین‌کننده</th>
+                        <th>شماره فاکتور</th>
+                        <th>کالا</th>
+                        <th>تعداد × قیمت</th>
+                        <th>مجموع (یوان)</th>
+                        <th>پرداختی</th>
+                        <th>حذف</th>
+                    </tr>
+                </thead>
+                <tbody id="pur-list-tbody">
+                    <tr><td colspan="7" style="color:gray;">هیچ کالایی برای این شیپمنت ثبت نشده است.</td></tr>
+                </tbody>
+            </table>
+
+            <div class="grid-6" style="background:#e0f2fe; border:1px solid #bae6fd; padding:15px; border-radius:5px; margin-top:15px; align-items:center;">
+                <div class="form-group"><label>هزینه خالص ارسال مشتری (یوان)</label><input type="number" id="ship-total-shipping" disabled style="background:#f8fafc; font-weight:bold;"></div>
+                <div class="form-group"><label>ارزش کل کالاها (یوان)</label><input type="number" id="ship-total-cargo" disabled style="background:#f8fafc; font-weight:bold;"></div>
+                <div class="form-group"><label>درصد کمیسیون فروش (%)</label><input type="number" id="ship-comm-percent" placeholder="0" oninput="calcCommission()"></div>
+                <div class="form-group"><label>مبلغ کمیسیون شما (یوان)</label><input type="number" id="ship-comm-val" disabled style="background:#f8fafc; font-weight:bold; color:#059669;"></div>
+                <div class="form-group" style="grid-column: span 2;">
+                    <label style="color:#dc2626; font-weight:bold; font-size:14px;">بدهی کل مشتری در این بار (حمل + کالا + کمیسیون):</label>
+                    <input type="number" id="ship-grand-total" disabled style="background:#fee2e2; color:#dc2626; font-weight:bold; font-size:18px; text-align:center; padding:12px; border:1px solid #fca5a5;">
+                </div>
+            </div>
+
+            <button class="btn btn-success" style="margin-top: 25px; width:100%; font-size:15px; padding:12px;" onclick="registerShipment()">🚀 ثبت بار و صدور اتوماتیک تمام فاکتورها (مشتری، فورواردر، تامین‌کنندگان)</button>
         </div>
 
         <div class="card">
@@ -475,7 +504,7 @@
                         <th>مشتری</th>
                         <th>مسیر</th>
                         <th>حجم/وزن</th>
-                        <th>تامین‌کننده</th>
+                        <th>تامین‌کنندگان</th>
                         <th>سپری‌شده</th>
                         <th>آلارم سیستم</th>
                         <th>عملیات</th>
@@ -489,6 +518,26 @@
 </div>
 
 <!-- Modals -->
+
+<!-- Item Definition Modal -->
+<div class="modal-overlay" id="itemModal">
+    <div class="modal">
+        <div class="modal-header">📦 تعریف کالای جدید</div>
+        <div class="form-group" style="margin-bottom: 10px;">
+            <label>نام کالا (فارسی یا انگلیسی)</label>
+            <input type="text" id="new-item-name" placeholder="مثال: قاب موبایل آیفون">
+        </div>
+        <div class="form-group" style="margin-bottom: 10px;">
+            <label>کد کالا</label>
+            <input type="text" id="new-item-code" placeholder="مثال: ITM-001">
+        </div>
+        <div class="modal-actions">
+            <button class="btn btn-outline" onclick="closeModal('itemModal')">انصراف</button>
+            <button class="btn btn-dark" onclick="saveNewItem()">ثبت کالا</button>
+        </div>
+    </div>
+</div>
+
 <div class="modal-overlay" id="customerModal">
     <div class="modal">
         <div class="modal-header">👤 تعریف پرونده جدید</div>
@@ -611,17 +660,153 @@
             { id: 'کارخانه آلفا (SUP-01)', name: 'کارخانه آلفا', code: 'SUP-01', type: 'supplier', desc: '', balances: { CNY: 0, USD: 0, AED: 0, IRT: 0 } },
             { id: 'ترخیص دبی (CLR-99)', name: 'ترخیص دبی', code: 'CLR-99', type: 'clearance_agent', desc: '', balances: { CNY: 0, USD: 0, AED: 0, IRT: 0 } }
         ],
-        journal: [],
-        shipments: [
-            { id: 'SH-OLD1', cust: 'علی حسن‌زاده (ATC-101)', type: 'LCL', dest: 'Dubai', date: '2026-06-10', cbm: 5, weight: 1000, supplier: 'کارخانه آلفا (SUP-01)', invNo: 'INV-100', invVal: 5000, paid: 1000, dueDate: '2026-07-23', status: 'active', desc: 'تست سیستم', mark: 'ATC' }
+        items: [
+            { id: 'ITM-001', name: 'قاب موبایل آیفون', code: 'ITM-001' }
         ],
+        journal: [],
+        shipments: [],
         idCounter: 1
     };
 
     let activeCustomerId = null; 
     let isSidebarVisible = true;
+    let currentPurchases = []; // لیست خریدهای موقت برای یک شیپمنت
 
-    // توابع اضافه کردن سریع مشتری با نقش مرتبط
+    // توابع بخش کالاها (Items)
+    function openItemModal() {
+        openModal('itemModal');
+    }
+
+    function saveNewItem() {
+        let name = document.getElementById('new-item-name').value.trim();
+        let code = document.getElementById('new-item-code').value.trim();
+        if(!name || !code) return showMsg('خطا', 'نام و کد کالا الزامی است.');
+        
+        if (db.items.find(i => i.code === code)) return showMsg('خطا', 'این کد کالا قبلا ثبت شده است.');
+        
+        db.items.push({ id: code, name: name, code: code });
+        document.getElementById('new-item-name').value = '';
+        document.getElementById('new-item-code').value = '';
+        populateItems();
+        closeModal('itemModal');
+        showMsg('موفق', 'کالای جدید با موفقیت به سیستم اضافه شد.');
+    }
+
+    function populateItems() {
+        const itemSelect = document.getElementById('pur-item');
+        if (itemSelect) {
+            itemSelect.innerHTML = '';
+            db.items.forEach(i => {
+                let opt = document.createElement('option');
+                opt.value = i.id;
+                opt.innerText = `${i.name} (${i.code})`;
+                itemSelect.appendChild(opt);
+            });
+        }
+    }
+
+    // توابع مدیریت فاکتورهای خرید (چندگانه)
+    function addPurchaseItem() {
+        let supplierId = document.getElementById('pur-supplier').value;
+        let itemId = document.getElementById('pur-item').value;
+        let invNo = document.getElementById('pur-inv').value || 'ندارد';
+        let qty = parseFloat(document.getElementById('pur-qty').value) || 0;
+        let price = parseFloat(document.getElementById('pur-price').value) || 0;
+        let paid = parseFloat(document.getElementById('pur-paid').value) || 0;
+        let due = document.getElementById('pur-due').value;
+
+        if(!supplierId || !itemId || qty <= 0 || price <= 0) {
+            return showMsg('خطا', 'لطفاً تامین‌کننده، کالا، تعداد و قیمت را به درستی وارد کنید.');
+        }
+
+        let supplierName = db.customers.find(c => c.id === supplierId)?.name || supplierId;
+        let itemName = db.items.find(i => i.id === itemId)?.name || itemId;
+        let total = qty * price;
+
+        currentPurchases.push({
+            id: Math.random().toString(),
+            supplierId, supplierName,
+            itemId, itemName,
+            invNo, qty, price, total, paid, due
+        });
+
+        // Reset quick inputs
+        document.getElementById('pur-qty').value = '1';
+        document.getElementById('pur-price').value = '';
+        document.getElementById('pur-paid').value = '';
+        document.getElementById('pur-inv').value = '';
+
+        renderPurchasesList();
+    }
+
+    function removePurchaseItem(id) {
+        currentPurchases = currentPurchases.filter(p => p.id !== id);
+        renderPurchasesList();
+    }
+
+    function renderPurchasesList() {
+        const tbody = document.getElementById('pur-list-tbody');
+        tbody.innerHTML = '';
+        
+        let totalCargo = 0;
+
+        if (currentPurchases.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="7" style="color:gray;">هیچ کالایی برای این شیپمنت ثبت نشده است.</td></tr>`;
+        } else {
+            currentPurchases.forEach(p => {
+                totalCargo += p.total;
+                tbody.innerHTML += `
+                    <tr>
+                        <td>${p.supplierName}</td>
+                        <td>${p.invNo}</td>
+                        <td>${p.itemName}</td>
+                        <td>${p.qty} × ${p.price}</td>
+                        <td style="font-weight:bold;">${p.total.toLocaleString()}</td>
+                        <td>${p.paid.toLocaleString()}</td>
+                        <td><button class="btn btn-danger btn-small" onclick="removePurchaseItem('${p.id}')">✖</button></td>
+                    </tr>
+                `;
+            });
+        }
+
+        document.getElementById('ship-total-cargo').value = totalCargo;
+        calcCommission();
+    }
+
+    // محاسبه کمیسیون و ارزش کل
+    function calcCommission() {
+        let totalCargo = parseFloat(document.getElementById('ship-total-cargo').value) || 0;
+        let percent = parseFloat(document.getElementById('ship-comm-percent').value) || 0;
+        let commVal = totalCargo * (percent / 100);
+        document.getElementById('ship-comm-val').value = commVal;
+        
+        calcGrandTotal();
+    }
+
+    function calcTotalShipping() {
+        let cbm = parseFloat(document.getElementById('ship-cbm').value) || 0;
+        let rate = parseFloat(document.getElementById('ship-client-rate').value) || 0;
+        let costInt = parseFloat(document.getElementById('ship-cost-int').value) || 0;
+        let costPack = parseFloat(document.getElementById('ship-cost-pack').value) || 0;
+        let costWh = parseFloat(document.getElementById('ship-cost-wh').value) || 0;
+        let costFork = parseFloat(document.getElementById('ship-cost-fork').value) || 0;
+
+        let total = (cbm * rate) + costInt + costPack + costWh + costFork;
+        document.getElementById('ship-total-shipping').value = total;
+        
+        calcGrandTotal();
+    }
+
+    function calcGrandTotal() {
+        let shipping = parseFloat(document.getElementById('ship-total-shipping').value) || 0;
+        let cargo = parseFloat(document.getElementById('ship-total-cargo').value) || 0;
+        let comm = parseFloat(document.getElementById('ship-comm-val').value) || 0;
+        
+        document.getElementById('ship-grand-total').value = shipping + cargo + comm;
+    }
+
+
+    // توابع اضافه کردن سریع مشتری
     function quickAddCustomer() {
         document.getElementById('new-cust-type').value = 'customer';
         openModal('customerModal');
@@ -637,26 +822,12 @@
         openModal('customerModal');
     }
 
-    // همگام‌سازی منوی کشویی نام مشتری و کد مشتری
     function syncCustomerSelection(source) {
         if (source === 'name') {
             document.getElementById('ship-cust-code').value = document.getElementById('ship-cust-name').value;
         } else {
             document.getElementById('ship-cust-name').value = document.getElementById('ship-cust-code').value;
         }
-    }
-
-    // محاسبه خودکار جمع کل هزینه‌ها
-    function calcTotalShipping() {
-        let cbm = parseFloat(document.getElementById('ship-cbm').value) || 0;
-        let rate = parseFloat(document.getElementById('ship-client-rate').value) || 0;
-        let costInt = parseFloat(document.getElementById('ship-cost-int').value) || 0;
-        let costPack = parseFloat(document.getElementById('ship-cost-pack').value) || 0;
-        let costWh = parseFloat(document.getElementById('ship-cost-wh').value) || 0;
-        let costFork = parseFloat(document.getElementById('ship-cost-fork').value) || 0;
-
-        let total = (cbm * rate) + costInt + costPack + costWh + costFork;
-        document.getElementById('ship-total-shipping').value = total;
     }
 
     function toggleClearanceFields() {
@@ -768,7 +939,6 @@
             if(currentVal && list.find(x => x.id === currentVal)) logSelect.value = currentVal;
         }
 
-        // پر کردن همزمان لیست نام و لیست کدهای مشتری
         const shipCustName = document.getElementById('ship-cust-name');
         const shipCustCode = document.getElementById('ship-cust-code');
         if (shipCustName && shipCustCode) {
@@ -778,19 +948,12 @@
             
             sortedCust.filter(c => c.type === 'customer').forEach(c => {
                 let optName = document.createElement('option'); 
-                optName.value = c.id; 
-                optName.innerText = c.name; 
-                shipCustName.appendChild(optName);
+                optName.value = c.id; optName.innerText = c.name; shipCustName.appendChild(optName);
 
                 let optCode = document.createElement('option'); 
-                optCode.value = c.id; 
-                optCode.innerText = c.code; 
-                shipCustCode.appendChild(optCode);
+                optCode.value = c.id; optCode.innerText = c.code; shipCustCode.appendChild(optCode);
             });
-            if(scVal) {
-                shipCustName.value = scVal;
-                shipCustCode.value = scVal;
-            }
+            if(scVal) { shipCustName.value = scVal; shipCustCode.value = scVal; }
         }
 
         const shipLine = document.getElementById('ship-line');
@@ -802,13 +965,13 @@
             if(slVal) shipLine.value = slVal;
         }
 
-        const shipSupplier = document.getElementById('ship-supplier');
-        if (shipSupplier) {
-            let spVal = shipSupplier.value; shipSupplier.innerHTML = '';
+        const purSupplier = document.getElementById('pur-supplier');
+        if (purSupplier) {
+            let spVal = purSupplier.value; purSupplier.innerHTML = '';
             sortedCust.filter(c => c.type === 'supplier').forEach(c => {
-                let opt = document.createElement('option'); opt.value = c.id; opt.innerText = c.id; shipSupplier.appendChild(opt);
+                let opt = document.createElement('option'); opt.value = c.id; opt.innerText = c.id; purSupplier.appendChild(opt);
             });
-            if(spVal) shipSupplier.value = spVal;
+            if(spVal) purSupplier.value = spVal;
         }
 
         const shipClearAgent = document.getElementById('ship-clearance-agent');
@@ -819,6 +982,8 @@
             });
             if(caVal) shipClearAgent.value = caVal;
         }
+        
+        populateItems();
     }
 
     function saveNewCustomer() {
@@ -871,8 +1036,8 @@
             db.journal.forEach(j => { if(j.cust === oldId) j.cust = newId; });
             db.shipments.forEach(s => { 
                 if(s.cust === oldId) s.cust = newId; 
-                if(s.supplier === oldId) s.supplier = newId;
                 if(s.forwarder === oldId) s.forwarder = newId;
+                if(s.purchases) s.purchases.forEach(p => { if(p.supplierId === oldId) p.supplierId = newId; });
             });
 
             activeCustomerId = newId;
@@ -884,7 +1049,6 @@
         }
     }
     
-    // Double Confirmation Delete Logic
     function deleteActiveCustomer() {
         if (!activeCustomerId) return;
         
@@ -959,58 +1123,65 @@
         });
     }
 
+    // هسته اصلی ثبت بار و اسناد حسابداری 3 جانبه
     function registerShipment() {
         const cust = document.getElementById('ship-cust-name').value;
         const type = document.getElementById('ship-type').value;
         const dest = document.getElementById('ship-dest').value;
         const date = document.getElementById('ship-date').value;
         const code = document.getElementById('ship-code').value || `SH-${Math.floor(Math.random()*10000)}`;
-        const mark = document.getElementById('ship-mark').value || 'ندارد'; // Shipping Mark
+        const mark = document.getElementById('ship-mark').value || 'ندارد'; 
         const cbm = parseFloat(document.getElementById('ship-cbm').value) || 0;
         const weight = parseFloat(document.getElementById('ship-weight').value) || 0;
         
+        // هزینه کل پرداختی مشتری بابت حمل
         let totalShipping = parseFloat(document.getElementById('ship-total-shipping').value) || 0;
         
+        // هزینه‌های فورواردر
         const line = document.getElementById('ship-line').value;
-        const myRate = parseFloat(document.getElementById('ship-my-rate').value) || 0;
-        const costWH = parseFloat(document.getElementById('ship-cost-wh').value) || 0;
-        const costFork = parseFloat(document.getElementById('ship-cost-fork').value) || 0;
-        const costPack = parseFloat(document.getElementById('ship-cost-pack').value) || 0;
-        const costInt = parseFloat(document.getElementById('ship-cost-int').value) || 0;
+        const fwdRate = parseFloat(document.getElementById('fwd-my-rate').value) || 0;
+        const fwdPack = parseFloat(document.getElementById('fwd-cost-pack').value) || 0;
+        const fwdWh = parseFloat(document.getElementById('fwd-cost-wh').value) || 0;
+        const fwdFork = parseFloat(document.getElementById('fwd-cost-fork').value) || 0;
 
-        const supplier = document.getElementById('ship-supplier').value;
-        const invNo = document.getElementById('ship-inv-no').value || 'ندارد';
-        const invVal = parseFloat(document.getElementById('ship-inv-val').value) || 0;
-        const comm = parseFloat(document.getElementById('ship-comm').value) || 0;
-        const paid = parseFloat(document.getElementById('ship-paid').value) || 0;
-        const dueDate = document.getElementById('ship-due-date').value;
+        // اطلاعات کالاها
+        let totalCargo = parseFloat(document.getElementById('ship-total-cargo').value) || 0;
+        let commVal = parseFloat(document.getElementById('ship-comm-val').value) || 0;
+        let grandTotal = parseFloat(document.getElementById('ship-grand-total').value) || 0;
 
         let shipObj = { 
             id: code, cust: cust, type: type, dest: dest, date: date, 
             mark: mark, cbm: cbm, weight: weight, status: 'active', 
-            supplier: supplier, invNo: invNo, invVal: invVal, paid: paid, dueDate: dueDate,
-            totalShipping: totalShipping, myRate: myRate, costWH: costWH, costFork: costFork, costPack: costPack, costInt: costInt, comm: comm, forwarder: line, destCostYuan: 0
+            purchases: [...currentPurchases], 
+            totalCargo: totalCargo, commVal: commVal, totalShipping: totalShipping, grandTotal: grandTotal,
+            fwdRate: fwdRate, fwdPack: fwdPack, fwdWh: fwdWh, fwdFork: fwdFork,
+            forwarder: line, destCostYuan: 0
         };
 
         db.shipments.push(shipObj);
 
-        let totalCustDebt = totalShipping + invVal + comm;
-        if(totalCustDebt > 0) {
-            addJournalEntry({ date: date, cust: cust, desc: `فاکتور فروش شیپمنت ${code} (مارک: ${mark})`, category: 'finance', type: 'debit', amount: totalCustDebt, currency: 'CNY', isSystem: true });
+        // حسابداری 1: بدهکار کردن مشتری (مجموع کل بار، کمیسیون و کرایه)
+        if(grandTotal > 0) {
+            addJournalEntry({ date: date, cust: cust, desc: `صدور صورتحساب کل (کالا+کمیسیون+کرایه) شیپمنت ${code} (مارک: ${mark})`, category: 'finance', type: 'debit', amount: grandTotal, currency: 'CNY', isSystem: true });
         }
 
-        let totalForwarderCredit = (cbm * myRate) + costWH + costFork + costPack + costInt;
+        // حسابداری 2: بستانکار کردن فورواردر (CBM * نرخ فورواردر + سایر هزینه‌ها)
+        let totalForwarderCredit = (cbm * fwdRate) + fwdPack + fwdWh + fwdFork;
         if(totalForwarderCredit > 0) {
             addJournalEntry({ date: date, cust: line, desc: `هزینه‌های فورواردر و داخل چین برای ${code}`, category: 'finance', type: 'credit', amount: totalForwarderCredit, currency: 'CNY', isSystem: true });
         }
 
-        if (invVal > 0 && supplier) {
-            addJournalEntry({ date: date, cust: supplier, desc: `فاکتور خرید ${invNo} برای ${code}`, category: 'finance', type: 'credit', amount: invVal, currency: 'CNY', isSystem: true });
-            if (paid > 0) {
-                addJournalEntry({ date: date, cust: supplier, desc: `پرداختی علی‌الحساب برای فاکتور ${invNo}`, category: 'finance', type: 'debit', amount: paid, currency: 'CNY', isSystem: true });
+        // حسابداری 3: ثبت تک‌تک فاکتورهای تامین‌کنندگان
+        currentPurchases.forEach(p => {
+            if (p.total > 0) {
+                addJournalEntry({ date: date, cust: p.supplierId, desc: `خرید ${p.qty} عدد ${p.itemName} (فاکتور: ${p.invNo}) برای ${code}`, category: 'finance', type: 'credit', amount: p.total, currency: 'CNY', isSystem: true });
             }
-        }
+            if (p.paid > 0) {
+                addJournalEntry({ date: date, cust: p.supplierId, desc: `پرداختی علی‌الحساب بابت فاکتور ${p.invNo}`, category: 'finance', type: 'debit', amount: p.paid, currency: 'CNY', isSystem: true });
+            }
+        });
 
+        // حسابداری 4: ترخیص‌کار (در صورت وجود FCL دبی)
         let clearMsg = '';
         if (type === 'FCL' && dest === 'Dubai') {
             const agent = document.getElementById('ship-clearance-agent').value;
@@ -1023,10 +1194,13 @@
             }
         }
 
-        showMsg("ثبت موفقیت‌آمیز", `شیپمنت ${code} (مارک: ${mark}) با موفقیت ثبت شد.\nبدهی مشتری: ${totalCustDebt} یوان\nبستانکاری فورواردر: ${totalForwarderCredit} یوان${clearMsg}`);
+        showMsg("ثبت فوق‌حرفه‌ای موفق", `شیپمنت ${code} (مارک: ${mark}) ثبت شد.\nبدهی نهایی مشتری: ${grandTotal.toLocaleString()} یوان\nبستانکاری فورواردر: ${totalForwarderCredit.toLocaleString()} یوان\nتعداد ${currentPurchases.length} فاکتور خرید در سیستم ثبت گردید.${clearMsg}`);
         
-        // Reset specific form fields
-        ['ship-code', 'ship-mark', 'ship-cbm', 'ship-client-rate', 'ship-cartons', 'ship-weight', 'ship-cost-int', 'ship-cost-pack', 'ship-cost-wh', 'ship-cost-fork', 'ship-total-shipping', 'ship-clearance-amt', 'ship-my-rate', 'ship-inv-no', 'ship-inv-val', 'ship-comm', 'ship-paid'].forEach(id => {
+        // Reset Logic
+        currentPurchases = [];
+        renderPurchasesList();
+        
+        ['ship-code', 'ship-mark', 'ship-cbm', 'ship-client-rate', 'ship-cartons', 'ship-weight', 'ship-cost-int', 'ship-cost-pack', 'ship-cost-wh', 'ship-cost-fork', 'ship-total-shipping', 'ship-clearance-amt', 'fwd-my-rate', 'fwd-cost-pack', 'fwd-cost-wh', 'fwd-cost-fork', 'ship-comm-percent', 'ship-comm-val', 'ship-total-cargo', 'ship-grand-total'].forEach(id => {
             if(document.getElementById(id)) document.getElementById(id).value = '';
         });
 
@@ -1074,13 +1248,13 @@
         
         ship.destCostYuan = totalCny;
         
-        let revenue = (ship.totalShipping || 0) + (ship.comm || 0);
-        let costs = (ship.cbm * (ship.myRate || 0)) + (ship.costWH || 0) + (ship.costFork || 0) + (ship.costPack || 0) + (ship.costInt || 0) + totalCny;
+        let revenue = (ship.totalShipping || 0) + (ship.commVal || 0);
+        let costs = (ship.cbm * (ship.fwdRate || 0)) + (ship.fwdWh || 0) + (ship.fwdFork || 0) + (ship.fwdPack || 0) + totalCny;
         ship.netProfit = revenue - costs;
         
         closeModal('settlementModal');
         changeShipmentStatus(shipId, 'delivered');
-        showMsg('تسویه موفقیت‌آمیز', `شیپمنت ${shipId} ترخیص و آرشیو شد.\nسود خالص: ${ship.netProfit.toLocaleString()} یوان`);
+        showMsg('تسویه موفقیت‌آمیز', `شیپمنت ${shipId} ترخیص و آرشیو شد.\nسود خالص (از حمل و کمیسیون): ${ship.netProfit.toLocaleString()} یوان`);
     }
 
     function getAlertBadge(shipDateStr, type, dest) {
@@ -1109,14 +1283,18 @@
         const remindersDiv = document.getElementById('reminders-container');
         remindersDiv.innerHTML = '';
         db.shipments.forEach(s => {
-            if(s.dueDate && s.invVal > s.paid) {
-                let due = new Date(s.dueDate);
-                let diff = Math.ceil((due - SYSTEM_DATE) / (1000*60*60*24));
-                if (diff >= 0 && diff <= 5) {
-                    remindersDiv.innerHTML += `<div class="badge badge-warn" style="display:block; margin-bottom:5px; padding:8px; font-size:13px;">🔔 یادآوری تسویه: تنها ${diff} روز تا تسویه فاکتور ${s.invNo} (${s.supplier}) باقیست</div>`;
-                } else if (diff < 0) {
-                    remindersDiv.innerHTML += `<div class="badge badge-alert" style="display:block; margin-bottom:5px; padding:8px; font-size:13px;">🚨 تاخیر پرداخت: ${Math.abs(diff)} روز از موعد فاکتور ${s.invNo} گذشته است!</div>`;
-                }
+            if (s.purchases) {
+                s.purchases.forEach(p => {
+                    if(p.due && p.total > p.paid) {
+                        let due = new Date(p.due);
+                        let diff = Math.ceil((due - SYSTEM_DATE) / (1000*60*60*24));
+                        if (diff >= 0 && diff <= 5) {
+                            remindersDiv.innerHTML += `<div class="badge badge-warn" style="display:block; margin-bottom:5px; padding:8px; font-size:13px;">🔔 یادآوری تسویه: ${diff} روز تا تسویه فاکتور ${p.invNo} (تامین‌کننده: ${p.supplierName}) باقیست</div>`;
+                        } else if (diff < 0) {
+                            remindersDiv.innerHTML += `<div class="badge badge-alert" style="display:block; margin-bottom:5px; padding:8px; font-size:13px;">🚨 تاخیر پرداخت: ${Math.abs(diff)} روز از موعد فاکتور ${p.invNo} گذشته است!</div>`;
+                        }
+                    }
+                });
             }
         });
 
@@ -1204,7 +1382,7 @@
         db.shipments.forEach(s => {
             let routeName = `${s.type} - ${s.dest}`;
             let cwStr = `${s.cbm}CBM / ${s.weight}KG`;
-            let supplierStr = s.supplier ? s.supplier.split('(')[0] : '-';
+            let supplierStr = (s.purchases && s.purchases.length > 0) ? `${s.purchases.length} تامین‌کننده` : '-';
             let markStr = s.mark ? `(${s.mark})` : '';
 
             if (s.status === 'active') {
@@ -1215,7 +1393,7 @@
                         <td>${s.id} <br><span style="color:gray;font-size:9px;">${markStr}</span></td>
                         <td style="font-size:10px;">${s.cust}</td><td>${routeName}</td>
                         <td style="font-size:10px;">${cwStr}</td><td style="font-size:10px;">${supplierStr}</td>
-                        <td>${alertData.text}</td><td>${alertData.badge}</td>
+                        <td>${alertData.text} روز</td><td>${alertData.badge}</td>
                         <td><button class="btn btn-success btn-small" onclick="openSettlementModal('${s.id}')">تسویه و تحویل ✔</button></td>
                     </tr>
                 `;
