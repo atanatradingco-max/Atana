@@ -295,7 +295,6 @@
                 <div class="card" style="background: #e0f2fe; border-color: #bae6fd; display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
                     <h3 id="active-cust-title" style="margin: 0; color: #0369a1;">لطفا یک پرونده انتخاب کنید</h3>
                     <div style="display:flex; gap:10px;">
-                        <!-- دکمه ویرایش پرونده اضافه شد -->
                         <button class="btn btn-warning btn-small" id="btn-edit-cust" onclick="openEditCustomerModal()" style="display:none; color:black;">✏️ ویرایش پرونده</button>
                         <button class="btn btn-danger btn-small" id="btn-delete-cust" onclick="deleteActiveCustomer()" style="display:none;">🗑️ حذف پرونده</button>
                     </div>
@@ -375,7 +374,15 @@
             
             <div class="section-title">👤 اطلاعات پایه و مسیر</div>
             <div class="grid-6">
-                <div class="form-group"><label>مشتری / صاحب بار</label><select id="ship-cust"></select></div>
+                <!-- Dropdown اسم و کد باهم سینک می‌شوند -->
+                <div class="form-group">
+                    <label>مشتری / صاحب بار <a href="javascript:void(0)" onclick="quickAddCustomer()" style="color:blue; font-size:10px;">+ سریع</a></label>
+                    <select id="ship-cust-name" onchange="syncCustomerSelection('name')"></select>
+                </div>
+                <div class="form-group">
+                    <label>کد مشتری</label>
+                    <select id="ship-cust-code" onchange="syncCustomerSelection('code')"></select>
+                </div>
                 <div class="form-group"><label>نوع بار</label>
                     <select id="ship-type" onchange="toggleClearanceFields()">
                         <option value="LCL">LCL (خرده بار)</option>
@@ -390,13 +397,11 @@
                 </div>
                 <div class="form-group"><label>تاریخ ارسال</label><input type="date" id="ship-date" value="2026-07-20"></div>
                 <div class="form-group"><label>کد شیپمنت</label><input type="text" id="ship-code" placeholder="دستی وارد کنید"></div>
-                <!-- فیلد مارک شیپمنت اضافه شد -->
                 <div class="form-group"><label>مارک شیپمنت (Shipping Mark)</label><input type="text" id="ship-mark" placeholder="مثال: ABC-123"></div>
             </div>
 
             <div class="section-title">⚖️ اطلاعات فیزیکی و هزینه ارسال مشتری</div>
             <div class="grid-8">
-                <!-- ترتیب کاملا مطابق درخواست، و بدون عدد صفر دیفالت -->
                 <div class="form-group"><label>1. حجم (CBM)</label><input type="number" id="ship-cbm" placeholder="0" oninput="calcTotalShipping()"></div>
                 <div class="form-group"><label>2. کرایه مشتری (یوان/CBM)</label><input type="number" id="ship-client-rate" placeholder="0" oninput="calcTotalShipping()"></div>
                 <div class="form-group"><label>3. تعداد کارتن</label><input type="number" id="ship-cartons" placeholder="0"></div>
@@ -616,17 +621,10 @@
     let activeCustomerId = null; 
     let isSidebarVisible = true;
 
-    // Calculation function based on formula: (CBM * rate) + internal delivery + packing + warehouse + forklift
-    function calcTotalShipping() {
-        let cbm = parseFloat(document.getElementById('ship-cbm').value) || 0;
-        let rate = parseFloat(document.getElementById('ship-client-rate').value) || 0;
-        let costInt = parseFloat(document.getElementById('ship-cost-int').value) || 0;
-        let costPack = parseFloat(document.getElementById('ship-cost-pack').value) || 0;
-        let costWh = parseFloat(document.getElementById('ship-cost-wh').value) || 0;
-        let costFork = parseFloat(document.getElementById('ship-cost-fork').value) || 0;
-
-        let total = (cbm * rate) + costInt + costPack + costWh + costFork;
-        document.getElementById('ship-total-shipping').value = total;
+    // توابع اضافه کردن سریع مشتری با نقش مرتبط
+    function quickAddCustomer() {
+        document.getElementById('new-cust-type').value = 'customer';
+        openModal('customerModal');
     }
 
     function quickAddSupplier() {
@@ -637,6 +635,28 @@
     function quickAddClearance() {
         document.getElementById('new-cust-type').value = 'clearance_agent';
         openModal('customerModal');
+    }
+
+    // همگام‌سازی منوی کشویی نام مشتری و کد مشتری
+    function syncCustomerSelection(source) {
+        if (source === 'name') {
+            document.getElementById('ship-cust-code').value = document.getElementById('ship-cust-name').value;
+        } else {
+            document.getElementById('ship-cust-name').value = document.getElementById('ship-cust-code').value;
+        }
+    }
+
+    // محاسبه خودکار جمع کل هزینه‌ها
+    function calcTotalShipping() {
+        let cbm = parseFloat(document.getElementById('ship-cbm').value) || 0;
+        let rate = parseFloat(document.getElementById('ship-client-rate').value) || 0;
+        let costInt = parseFloat(document.getElementById('ship-cost-int').value) || 0;
+        let costPack = parseFloat(document.getElementById('ship-cost-pack').value) || 0;
+        let costWh = parseFloat(document.getElementById('ship-cost-wh').value) || 0;
+        let costFork = parseFloat(document.getElementById('ship-cost-fork').value) || 0;
+
+        let total = (cbm * rate) + costInt + costPack + costWh + costFork;
+        document.getElementById('ship-total-shipping').value = total;
     }
 
     function toggleClearanceFields() {
@@ -748,13 +768,29 @@
             if(currentVal && list.find(x => x.id === currentVal)) logSelect.value = currentVal;
         }
 
-        const shipCust = document.getElementById('ship-cust');
-        if (shipCust) {
-            let scVal = shipCust.value; shipCust.innerHTML = '';
+        // پر کردن همزمان لیست نام و لیست کدهای مشتری
+        const shipCustName = document.getElementById('ship-cust-name');
+        const shipCustCode = document.getElementById('ship-cust-code');
+        if (shipCustName && shipCustCode) {
+            let scVal = shipCustName.value; 
+            shipCustName.innerHTML = '';
+            shipCustCode.innerHTML = '';
+            
             sortedCust.filter(c => c.type === 'customer').forEach(c => {
-                let opt = document.createElement('option'); opt.value = c.id; opt.innerText = c.id; shipCust.appendChild(opt);
+                let optName = document.createElement('option'); 
+                optName.value = c.id; 
+                optName.innerText = c.name; 
+                shipCustName.appendChild(optName);
+
+                let optCode = document.createElement('option'); 
+                optCode.value = c.id; 
+                optCode.innerText = c.code; 
+                shipCustCode.appendChild(optCode);
             });
-            if(scVal) shipCust.value = scVal;
+            if(scVal) {
+                shipCustName.value = scVal;
+                shipCustCode.value = scVal;
+            }
         }
 
         const shipLine = document.getElementById('ship-line');
