@@ -35,15 +35,17 @@
             justify-content: space-between;
             align-items: center;
         }
+        
         .global-balance-bar {
             background: #0f172a;
             color: white;
             padding: 10px 20px;
-            display: flex;
+            display: none; /* مخفی به صورت پیش‌فرض برای امنیت */
             gap: 20px;
             font-size: 13px;
             align-items: center;
             overflow-x: auto;
+            border-bottom: 2px solid #3b82f6;
         }
         .global-balance-bar span { font-weight: bold; padding: 2px 8px; border-radius: 4px; background: rgba(255,255,255,0.1); }
         
@@ -130,9 +132,15 @@
 <!-- Navbar & Global Balance -->
 <div class="navbar">
     <div style="font-size: 18px; font-weight: bold;">🏢 آتانا ERP</div>
-    <div style="font-weight: bold; background: rgba(255,255,255,0.2); padding: 5px 10px; border-radius: 5px;">امروز: <span id="system-date">2026/07/20</span></div>
+    <div style="display: flex; gap: 10px; align-items: center;">
+        <button class="btn btn-small" style="background: rgba(255,255,255,0.2); color: white; border: 1px solid white; display: flex; align-items: center; gap: 5px;" onclick="toggleGlobalBalance()">
+            👁️ مشاهده تراز کل
+        </button>
+        <div style="font-weight: bold; background: rgba(255,255,255,0.2); padding: 5px 10px; border-radius: 5px;">امروز: <span id="system-date">2026/07/20</span></div>
+    </div>
 </div>
-<div class="global-balance-bar">
+<!-- تراز کل - به صورت پیش فرض مخفی است -->
+<div class="global-balance-bar" id="globalBalanceContainer">
     <div>🌍 تراز کل دارایی/بدهی شما:</div>
     <div>یوان: <span id="glb-cny">0</span></div>
     <div>دلار: <span id="glb-usd">0</span></div>
@@ -155,15 +163,15 @@
         <div class="card">
             <div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
                 <span>➕ ثبت سریع رویداد (مالی و لجستیکی)</span>
-                <button class="btn btn-outline btn-small" onclick="openModal('customerModal')">👤 تعریف مشتری/فورواردر جدید</button>
+                <button class="btn btn-outline btn-small" onclick="openModal('customerModal')">👤 تعریف پرونده جدید</button>
             </div>
             
             <div class="grid-4">
                 <div class="form-group">
-                    <label>نوع ثبت (مالی / لجستیک)</label>
+                    <label>نوع ثبت</label>
                     <select id="log-category" onchange="toggleLogFields()">
                         <option value="finance">💰 تراکنش مالی (دریافت/پرداخت)</option>
-                        <option value="logistic">📦 رویداد لجستیکی (بدون مبلغ)</option>
+                        <option value="logistic">📦 رویداد لجستیکی (ارسال بار)</option>
                     </select>
                 </div>
                 <div class="form-group">
@@ -171,19 +179,19 @@
                     <input type="date" id="log-date" value="2026-07-20">
                 </div>
                 <div class="form-group">
-                    <label>مشتری / خط کشتیرانی</label>
-                    <select id="log-customer" class="customer-dropdowns"></select>
-                </div>
-                <div class="form-group">
-                    <label>شرح رویداد</label>
-                    <input type="text" id="log-desc" placeholder="مثال: واریز بیعانه یا بارگیری شد">
+                    <label id="lbl-log-customer">مشتری / طرف حساب</label>
+                    <select id="log-customer"></select>
                 </div>
                 
-                <!-- فیلدهای مالی (مخفی شونده) -->
+                <!-- فیلدهای مالی -->
+                <div class="form-group fin-field">
+                    <label>شرح تراکنش مالی</label>
+                    <input type="text" id="log-desc" placeholder="مثال: واریز بیعانه">
+                </div>
                 <div class="form-group fin-field">
                     <label>نوع عملیات مالی</label>
                     <select id="log-type">
-                        <option value="credit">بستانکار (من پول دریافت کردم)</option>
+                        <option value="credit">بستانکار (دریافت کردم)</option>
                         <option value="debit">بدهکار (هزینه زدم / پرداخت کردم)</option>
                     </select>
                 </div>
@@ -200,20 +208,38 @@
                         <option value="IRT">تومان (IRT)</option>
                     </select>
                 </div>
+
+                <!-- فیلدهای لجستیک (هنگام ارسال بار) -->
+                <div class="form-group log-field" style="display: none;">
+                    <label>کد / نام شیپمنت</label>
+                    <input type="text" id="log-ship-name" placeholder="مثال: SH-1088">
+                </div>
+                <div class="form-group log-field" style="display: none;">
+                    <label>حجم (CBM)</label>
+                    <input type="number" id="log-ship-cbm" placeholder="0">
+                </div>
+                <div class="form-group log-field" style="display: none;">
+                    <label>تعداد کارتن</label>
+                    <input type="number" id="log-ship-carton" placeholder="0">
+                </div>
+                <div class="form-group log-field" style="display: none;">
+                    <label>نام مشتری (جهت ثبت در سابقه)</label>
+                    <input type="text" id="log-ship-desc" placeholder="ارسال برای: علی حسن زاده">
+                </div>
             </div>
             <button class="btn btn-dark" style="margin-top: 15px;" onclick="addJournalEntry()">ثبت در دفتر کل روزنامه</button>
         </div>
 
         <div class="card">
-            <div class="card-header">📑 دفتر روزنامه (تایم‌لاین رویدادهای اخیر)</div>
+            <div class="card-header">📑 دفتر روزنامه (تایم‌لاین وقایع اخیر)</div>
             <div style="overflow-x: auto;">
                 <table>
                     <thead>
                         <tr>
                             <th>تاریخ</th>
                             <th>طرف حساب</th>
-                            <th>نوع رویداد</th>
-                            <th>شرح</th>
+                            <th>نوع ثبت</th>
+                            <th>شرح رویداد</th>
                             <th>بدهکار</th>
                             <th>بستانکار</th>
                             <th>عملیات</th>
@@ -232,7 +258,7 @@
                 <label>انتخاب پرونده فعال:</label>
                 <select id="active-customer-select" class="customer-dropdowns" onchange="updateUI()"></select>
             </div>
-            <button class="btn btn-outline btn-small" onclick="openModal('customerModal')" style="margin-top: 10px;">+ مشتری جدید</button>
+            <button class="btn btn-outline btn-small" onclick="openModal('customerModal')" style="margin-top: 10px;">+ پرونده جدید</button>
         </div>
 
         <!-- ترازنامه 4 ارزی -->
@@ -247,7 +273,7 @@
             <div class="tabs">
                 <div class="tab-btn active" onclick="switchCustTab('tab-ledger', this)">🧾 حساب و دفتر تفصیلی</div>
                 <div class="tab-btn" onclick="switchCustTab('tab-active-ship', this)">🚚 بارهای ارسالی (در راه)</div>
-                <div class="tab-btn" onclick="switchCustTab('tab-delivered', this)">📦 بارهای تحویل‌شده</div>
+                <div class="tab-btn" onclick="switchCustTab('tab-delivered', this)">📦 بارهای تحویل‌شده (آرشیو)</div>
             </div>
 
             <div id="tab-ledger" class="cust-tab">
@@ -288,7 +314,7 @@
                         <tr>
                             <th>شیپمنت</th>
                             <th>تاریخ تحویل</th>
-                            <th>شرح کالا</th>
+                            <th>شرح کالا / مسیر</th>
                             <th>عملیات</th>
                         </tr>
                     </thead>
@@ -305,7 +331,7 @@
             <div class="grid-4">
                 <div class="form-group">
                     <label>مشتری</label>
-                    <select id="ship-cust" class="customer-dropdowns"></select>
+                    <select id="ship-cust"></select>
                 </div>
                 <div class="form-group">
                     <label>مسیر و نوع</label>
@@ -333,7 +359,7 @@
                 </div>
                 <div class="form-group">
                     <label>شرکت کشتیرانی (فورواردر)</label>
-                    <select id="ship-line" class="customer-dropdowns"></select>
+                    <select id="ship-line"></select>
                 </div>
                 <div class="form-group">
                     <label>کرایه فورواردر (هر CBM / یوان)</label>
@@ -370,15 +396,23 @@
     <div class="modal">
         <div class="modal-header">👤 تعریف پرونده جدید</div>
         <div class="form-group" style="margin-bottom: 10px;">
-            <label>نام و کد (مثال: علی حسن‌زاده ATC-101)</label>
-            <input type="text" id="new-cust-name" placeholder="نام مشتری یا خط کشتیرانی">
+            <label>اسم و فامیل / نام شرکت</label>
+            <input type="text" id="new-cust-fullname" placeholder="مثال: علی حسن‌زاده">
         </div>
-        <div class="form-group">
+        <div class="form-group" style="margin-bottom: 10px;">
+            <label>کد اختصاصی / مخفف</label>
+            <input type="text" id="new-cust-code" placeholder="مثال: ATC-101">
+        </div>
+        <div class="form-group" style="margin-bottom: 10px;">
             <label>نوع پرونده</label>
             <select id="new-cust-type">
                 <option value="customer">مشتری (صاحب کالا)</option>
                 <option value="forwarder">خط کشتیرانی / فورواردر</option>
             </select>
+        </div>
+        <div class="form-group" style="margin-bottom: 10px;">
+            <label>توضیحات (اختیاری)</label>
+            <input type="text" id="new-cust-desc" placeholder="توضیحات تکمیلی">
         </div>
         <div class="modal-actions">
             <button class="btn btn-outline" onclick="closeModal('customerModal')">انصراف</button>
@@ -414,7 +448,7 @@
     </div>
 </div>
 
-<!-- Custom UI Alert Modal (No default alert()) -->
+<!-- Custom UI Alert Modal -->
 <div class="modal-overlay" id="msgModal">
     <div class="modal">
         <div class="modal-header" id="msg-title">پیام سیستم</div>
@@ -431,8 +465,8 @@
     
     let db = {
         customers: [
-            { id: 'علی حسن‌زاده (ATC-101)', type: 'customer', balances: { CNY: 0, USD: 0, AED: 0, IRT: 0 } },
-            { id: 'کشتیرانی Liang', type: 'forwarder', balances: { CNY: 0, USD: 0, AED: 0, IRT: 0 } }
+            { id: 'علی حسن‌زاده (ATC-101)', type: 'customer', desc: '', balances: { CNY: 0, USD: 0, AED: 0, IRT: 0 } },
+            { id: 'کشتیرانی Liang', type: 'forwarder', desc: '', balances: { CNY: 0, USD: 0, AED: 0, IRT: 0 } }
         ],
         journal: [],
         shipments: [
@@ -448,9 +482,49 @@
         openModal('msgModal');
     }
 
+    let isBalanceVisible = false;
+    function toggleGlobalBalance() {
+        isBalanceVisible = !isBalanceVisible;
+        document.getElementById('globalBalanceContainer').style.display = isBalanceVisible ? 'flex' : 'none';
+    }
+
+    // Toggle fields in Dashboard based on Logistic vs Finance
     function toggleLogFields() {
-        const isFin = document.getElementById('log-category').value === 'finance';
+        const cat = document.getElementById('log-category').value;
+        const isFin = cat === 'finance';
+        
         document.querySelectorAll('.fin-field').forEach(el => el.style.display = isFin ? 'flex' : 'none');
+        document.querySelectorAll('.log-field').forEach(el => el.style.display = !isFin ? 'flex' : 'none');
+        
+        // Update the Dropdown in Dashboard
+        const select = document.getElementById('log-customer');
+        const lbl = document.getElementById('lbl-log-customer');
+        let currentVal = select.value;
+        select.innerHTML = '';
+        
+        if (isFin) {
+            lbl.innerText = 'مشتری / طرف حساب';
+            db.customers.forEach(c => {
+                let opt = document.createElement('option');
+                opt.value = c.id;
+                opt.innerText = c.id;
+                select.appendChild(opt);
+            });
+        } else {
+            lbl.innerText = 'خط کشتیرانی (فورواردر)';
+            // Only show forwarders when logistic is selected
+            db.customers.filter(c => c.type === 'forwarder').forEach(c => {
+                let opt = document.createElement('option');
+                opt.value = c.id;
+                opt.innerText = c.id;
+                select.appendChild(opt);
+            });
+        }
+        
+        // Retain selection if possible
+        if (currentVal && Array.from(select.options).some(o => o.value === currentVal)) {
+            select.value = currentVal;
+        }
     }
 
     function openModal(id) { document.getElementById(id).style.display = 'flex'; }
@@ -473,26 +547,63 @@
 
     // --- Entity Management ---
     function populateCustomers() {
-        const selects = document.querySelectorAll('.customer-dropdowns');
-        selects.forEach(select => {
-            let currentVal = select.value;
-            select.innerHTML = '';
+        // General dropdowns (like Active Customer Profile)
+        const activeSelect = document.getElementById('active-customer-select');
+        if(activeSelect) {
+            let activeVal = activeSelect.value;
+            activeSelect.innerHTML = '';
             db.customers.forEach(c => {
-                let opt = document.createElement('option');
-                opt.value = c.id;
-                opt.innerText = c.id;
-                select.appendChild(opt);
+                let opt = document.createElement('option'); opt.value = c.id; opt.innerText = c.id; activeSelect.appendChild(opt);
             });
-            if (currentVal && db.customers.find(c => c.id === currentVal)) select.value = currentVal;
-        });
+            if(activeVal) activeSelect.value = activeVal;
+        }
+
+        // Logistic form specific dropdowns
+        const shipCust = document.getElementById('ship-cust');
+        if (shipCust) {
+            let scVal = shipCust.value;
+            shipCust.innerHTML = '';
+            // Only customers
+            db.customers.filter(c => c.type === 'customer').forEach(c => {
+                let opt = document.createElement('option'); opt.value = c.id; opt.innerText = c.id; shipCust.appendChild(opt);
+            });
+            if(scVal) shipCust.value = scVal;
+        }
+
+        const shipLine = document.getElementById('ship-line');
+        if (shipLine) {
+            let slVal = shipLine.value;
+            shipLine.innerHTML = '';
+            // Only forwarders
+            db.customers.filter(c => c.type === 'forwarder').forEach(c => {
+                let opt = document.createElement('option'); opt.value = c.id; opt.innerText = c.id; shipLine.appendChild(opt);
+            });
+            if(slVal) shipLine.value = slVal;
+        }
+
+        // Refresh dashboard dropdown depending on current view mode
+        toggleLogFields();
     }
 
     function saveNewCustomer() {
-        let name = document.getElementById('new-cust-name').value;
+        let fname = document.getElementById('new-cust-fullname').value;
+        let code = document.getElementById('new-cust-code').value;
         let type = document.getElementById('new-cust-type').value;
-        if (!name) return showMsg('خطا', 'لطفا نام پرونده را وارد کنید.');
+        let desc = document.getElementById('new-cust-desc').value;
         
-        db.customers.push({ id: name, type: type, balances: { CNY: 0, USD: 0, AED: 0, IRT: 0 } });
+        if (!fname || !code) return showMsg('خطا', 'لطفا نام و کد مشتری را وارد کنید.');
+        
+        let name = `${fname} (${code})`;
+        
+        if (db.customers.find(c => c.id === name)) return showMsg('خطا', 'این پرونده قبلاً وجود دارد.');
+
+        db.customers.push({ id: name, type: type, desc: desc, balances: { CNY: 0, USD: 0, AED: 0, IRT: 0 } });
+        
+        // Reset inputs
+        document.getElementById('new-cust-fullname').value = '';
+        document.getElementById('new-cust-code').value = '';
+        document.getElementById('new-cust-desc').value = '';
+
         populateCustomers();
         closeModal('customerModal');
         showMsg('موفق', `پرونده جدید برای "${name}" با موفقیت ایجاد شد.`);
@@ -505,19 +616,27 @@
         
         if (!entryObj) {
             const cat = document.getElementById('log-category').value;
-            const type = document.getElementById('log-type').value;
-            const amount = parseFloat(document.getElementById('log-amount').value) || 0;
+            const cust = document.getElementById('log-customer').value;
+            const date = document.getElementById('log-date').value;
+
+            if(!cust) return showMsg('خطا', 'لطفا طرف حساب را مشخص کنید.');
             
-            entryObj = {
-                id: jId,
-                date: document.getElementById('log-date').value,
-                cust: document.getElementById('log-customer').value,
-                desc: document.getElementById('log-desc').value || (cat === 'logistic' ? 'ثبت رویداد لجستیکی' : 'بدون شرح'),
-                category: cat,
-                type: cat === 'logistic' ? 'event' : type,
-                amount: cat === 'logistic' ? 0 : amount,
-                currency: document.getElementById('log-currency').value
-            };
+            if(cat === 'finance') {
+                const type = document.getElementById('log-type').value;
+                const amount = parseFloat(document.getElementById('log-amount').value) || 0;
+                const desc = document.getElementById('log-desc').value || 'تراکنش مالی';
+                const curr = document.getElementById('log-currency').value;
+                entryObj = { id: jId, date: date, cust: cust, desc: desc, category: 'finance', type: type, amount: amount, currency: curr };
+            } else {
+                // Logistic entry
+                const shipName = document.getElementById('log-ship-name').value;
+                const cbm = document.getElementById('log-ship-cbm').value;
+                const carton = document.getElementById('log-ship-carton').value;
+                const shipDesc = document.getElementById('log-ship-desc').value;
+                
+                const fullDesc = `ارسال بار: ${shipName} | حجم: ${cbm} CBM | ${carton} کارتن | برای: ${shipDesc}`;
+                entryObj = { id: jId, date: date, cust: cust, desc: fullDesc, category: 'logistic', type: 'event', amount: 0, currency: 'CNY' };
+            }
         } else {
             entryObj.id = jId;
         }
@@ -530,10 +649,8 @@
     }
 
     function recalcBalances() {
-        // Reset all balances
         db.customers.forEach(c => c.balances = { CNY: 0, USD: 0, AED: 0, IRT: 0 });
         
-        // Calculate based on journal
         db.journal.forEach(j => {
             if (j.category === 'finance') {
                 let custObj = db.customers.find(c => c.id === j.cust);
@@ -558,13 +675,11 @@
 
         if(!code) return showMsg('خطا', 'کد شیپمنت الزامی است.');
 
-        // 1. Save shipment
-        db.shipments.push({ id: code, cust: cust, route: route, date: date, cbm: cbm, status: 'active', desc: 'بار تجاری' });
+        // Save shipment
+        db.shipments.push({ id: code, cust: cust, route: route, date: date, cbm: cbm, status: 'active', desc: `مشتری: ${cust}` });
 
-        // 2. Client Debit (Financial)
+        // Financial generation
         addJournalEntry({ date: date, cust: cust, desc: `هزینه باربری شیپمنت ${code}`, category: 'finance', type: 'debit', amount: cbm * clientRate, currency: 'CNY', isSystem: true });
-
-        // 3. Forwarder Credit (Financial)
         addJournalEntry({ date: date, cust: line, desc: `کرایه واقعی شیپمنت ${code}`, category: 'finance', type: 'credit', amount: cbm * myRate, currency: 'CNY', isSystem: true });
 
         showMsg("ثبت زنجیره‌ای موفق", `بار ${code} ثبت شد.\n۱. حساب مشتری ${cbm * clientRate} بدهکار شد.\n۲. حساب کشتیرانی ${cbm * myRate} بستانکار شد.`);
@@ -578,7 +693,7 @@
             ship.status = newStatus;
             ship.deliveredDate = newStatus === 'delivered' ? '2026-07-20' : null;
             
-            // Add logistic event to journal
+            // Add logistic event history
             let eventDesc = newStatus === 'delivered' ? `تحویل بار ${shipCode} به مشتری` : `بازگشت بار ${shipCode} به وضعیت در راه`;
             addJournalEntry({ date: '2026-07-20', cust: ship.cust, desc: eventDesc, category: 'logistic', type: 'event', amount: 0, currency: 'CNY', isSystem: true });
             
@@ -601,7 +716,7 @@
             let s = db.shipments.find(x => x.id === id);
             document.getElementById('edit-date').value = s.date;
             document.getElementById('edit-desc').value = s.desc || '';
-            document.getElementById('edit-amount').value = s.cbm; // Use amount field for CBM
+            document.getElementById('edit-amount').value = s.cbm; 
             document.getElementById('edit-amount-group').style.display = 'flex';
         }
         openModal('editModal');
@@ -632,9 +747,9 @@
     // --- Smart Alert Engine ---
     function getAlertBadge(shipDateStr, route) {
         let shipDate = new Date(shipDateStr);
-        let diffTime = SYSTEM_DATE - shipDate; // Date is fixed for this demo
+        let diffTime = SYSTEM_DATE - shipDate;
         let daysElapsed = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-        if (daysElapsed < 0) daysElapsed = 0; // Future date safecheck
+        if (daysElapsed < 0) daysElapsed = 0; 
 
         let badge = `<span class="badge badge-safe">عادی (${daysElapsed} روز)</span>`;
         
@@ -682,9 +797,9 @@
                     <td>${j.cust}</td>
                     <td><span class="badge ${j.category === 'logistic' ? 'badge-safe' : 'badge-warn'}">${catStr}</span></td>
                     <td>${j.desc}</td>
-                    <td class="text-debit">${j.type === 'debit' ? j.amount.toLocaleString() : '-'}</td>
-                    <td class="text-credit">${j.type === 'credit' ? j.amount.toLocaleString() : '-'}</td>
-                    <td><button class="btn btn-small btn-warning" onclick="openEditModal('journal', '${j.id}')">✏️ ویرایش</button></td>
+                    <td class="text-debit">${j.type === 'debit' && j.category === 'finance' ? j.amount.toLocaleString() : '-'}</td>
+                    <td class="text-credit">${j.type === 'credit' && j.category === 'finance' ? j.amount.toLocaleString() : '-'}</td>
+                    <td><button class="btn btn-small btn-warning" onclick="openEditModal('journal', '${j.id}')">✏️</button></td>
                 </tr>
             `;
         });
@@ -700,7 +815,7 @@
                 el.style.color = val < 0 ? '#dc2626' : (val > 0 ? '#059669' : '#1f2937');
             });
 
-            // Customer Ledger (Financial + Logistic combined timeline)
+            // Customer Ledger (Financial + Logistic combined)
             const clTbody = document.getElementById('cust-ledger-tbody');
             clTbody.innerHTML = '';
             db.journal.filter(j => j.cust === activeCustId).forEach(j => {
@@ -756,10 +871,10 @@
                     `;
                 }
             } else if (s.status === 'delivered' && s.cust === activeCustId) {
-                // Customer delivered tab (with UNDO Revert functionality)
+                // Customer delivered tab (Archive) - Only shows for the active customer
                 cdTbody.innerHTML += `
                     <tr>
-                        <td>${s.id}</td><td>${s.deliveredDate}</td><td>${s.desc || 'آرشیو شده'}</td>
+                        <td>${s.id}</td><td>${s.deliveredDate}</td><td>${s.desc}</td>
                         <td>
                             <button class="btn btn-danger btn-small" onclick="changeShipmentStatus('${s.id}', 'active')">↩ بازگشت به در راه</button>
                         </td>
@@ -773,7 +888,6 @@
     window.onload = function() {
         populateCustomers();
         updateUI();
-        toggleLogFields();
     };
 </script>
 </body>
