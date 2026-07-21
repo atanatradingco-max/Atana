@@ -86,6 +86,7 @@
         
         .grid-4 { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; }
         .grid-6 { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 15px; }
+        .grid-8 { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 15px; }
         
         .form-group { display: flex; flex-direction: column; }
         .form-group label { font-size: 11px; font-weight: bold; color: #475569; margin-bottom: 5px; }
@@ -221,7 +222,7 @@
                 </div>
                 <div class="form-group fin-field">
                     <label>مبلغ</label>
-                    <input type="number" id="log-amount">
+                    <input type="number" id="log-amount" placeholder="0">
                 </div>
                 <div class="form-group fin-field">
                     <label>ارز</label>
@@ -240,11 +241,11 @@
                 </div>
                 <div class="form-group log-field" style="display: none;">
                     <label>حجم (CBM)</label>
-                    <input type="number" id="log-ship-cbm" placeholder="">
+                    <input type="number" id="log-ship-cbm" placeholder="0">
                 </div>
                 <div class="form-group log-field" style="display: none;">
                     <label>تعداد کارتن</label>
-                    <input type="number" id="log-ship-carton" placeholder="">
+                    <input type="number" id="log-ship-carton" placeholder="0">
                 </div>
                 <div class="form-group log-field" style="display: none;">
                     <label>نام مشتری (جهت ثبت در سابقه)</label>
@@ -294,7 +295,8 @@
                 <div class="card" style="background: #e0f2fe; border-color: #bae6fd; display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
                     <h3 id="active-cust-title" style="margin: 0; color: #0369a1;">لطفا یک پرونده انتخاب کنید</h3>
                     <div style="display:flex; gap:10px;">
-                        <button class="btn btn-warning btn-small" id="btn-edit-cust" onclick="openEditCustomerModal()" style="display:none;">✏️ ویرایش پرونده</button>
+                        <!-- دکمه ویرایش پرونده اضافه شد -->
+                        <button class="btn btn-warning btn-small" id="btn-edit-cust" onclick="openEditCustomerModal()" style="display:none; color:black;">✏️ ویرایش پرونده</button>
                         <button class="btn btn-danger btn-small" id="btn-delete-cust" onclick="deleteActiveCustomer()" style="display:none;">🗑️ حذف پرونده</button>
                     </div>
                 </div>
@@ -388,22 +390,29 @@
                 </div>
                 <div class="form-group"><label>تاریخ ارسال</label><input type="date" id="ship-date" value="2026-07-20"></div>
                 <div class="form-group"><label>کد شیپمنت</label><input type="text" id="ship-code" placeholder="دستی وارد کنید"></div>
+                <!-- فیلد مارک شیپمنت اضافه شد -->
                 <div class="form-group"><label>مارک شیپمنت (Shipping Mark)</label><input type="text" id="ship-mark" placeholder="مثال: ABC-123"></div>
             </div>
 
             <div class="section-title">⚖️ اطلاعات فیزیکی و هزینه ارسال مشتری</div>
-            <div class="grid-6">
-                <div class="form-group"><label>1. حجم (CBM)</label><input type="number" id="ship-cbm" placeholder="" oninput="calcTotalShipping()"></div>
-                <div class="form-group"><label>2. کرایه اعلامی مشتری (یوان/CBM)</label><input type="number" id="ship-client-rate" placeholder="" oninput="calcTotalShipping()"></div>
-                <div class="form-group"><label>3. تعداد کارتن</label><input type="number" id="ship-cartons" placeholder=""></div>
-                <div class="form-group"><label>4. وزن (KG)</label><input type="number" id="ship-weight" placeholder=""></div>
-                <div class="form-group"><label>5. هزینه ارسال داخلی چین (یوان)</label><input type="number" id="ship-cost-int" placeholder="" oninput="calcTotalShipping()"></div>
-                <div class="form-group"><label>6. هزینه بسته‌بندی (یوان)</label><input type="number" id="ship-cost-pack" placeholder="" oninput="calcTotalShipping()"></div>
-                <div class="form-group"><label>7. انبارداری چین (یوان)</label><input type="number" id="ship-cost-wh" placeholder="" oninput="calcTotalShipping()"></div>
-                <div class="form-group"><label>8. لیفتراک (یوان)</label><input type="number" id="ship-cost-fork" placeholder="" oninput="calcTotalShipping()"></div>
+            <div class="grid-8">
+                <!-- ترتیب کاملا مطابق درخواست، و بدون عدد صفر دیفالت -->
+                <div class="form-group"><label>1. حجم (CBM)</label><input type="number" id="ship-cbm" placeholder="0" oninput="calcTotalShipping()"></div>
+                <div class="form-group"><label>2. کرایه مشتری (یوان/CBM)</label><input type="number" id="ship-client-rate" placeholder="0" oninput="calcTotalShipping()"></div>
+                <div class="form-group"><label>3. تعداد کارتن</label><input type="number" id="ship-cartons" placeholder="0"></div>
+                <div class="form-group"><label>4. وزن (KG)</label><input type="number" id="ship-weight" placeholder="0"></div>
+                <div class="form-group"><label>5. ارسال داخلی چین</label><input type="number" id="ship-cost-int" placeholder="0" oninput="calcTotalShipping()"></div>
+                <div class="form-group"><label>6. هزینه بسته‌بندی</label><input type="number" id="ship-cost-pack" placeholder="0" oninput="calcTotalShipping()"></div>
+                <div class="form-group"><label>7. انبارداری چین</label><input type="number" id="ship-cost-wh" placeholder="0" oninput="calcTotalShipping()"></div>
+                <div class="form-group"><label>8. لیفتراک</label><input type="number" id="ship-cost-fork" placeholder="0" oninput="calcTotalShipping()"></div>
             </div>
-            <div class="grid-6" style="background:#f8fafc; padding:10px; border-radius:5px; margin-top:10px;">
-                <div class="form-group" style="grid-column: span 6;"><label style="color:#059669; font-weight:bold; font-size:14px;">مجموع کل هزینه ارسال مشتری (CBM * نرخ + داخلی + بسته‌بندی + انبارداری + لیفتراک):</label><input type="number" id="ship-total-shipping" disabled style="background:#e6f4ea; font-weight:bold; font-size:15px; text-align:center;"></div>
+            <div class="grid-6" style="background:#f8fafc; border:1px solid #cbd5e1; padding:15px; border-radius:5px; margin-top:15px; align-items:center;">
+                <div class="form-group" style="grid-column: span 6;">
+                    <label style="color:#059669; font-weight:bold; font-size:13px; margin-bottom:10px;">
+                        مجموع کل هزینه ارسال مشتری (حجم × نرخ + داخلی + بسته‌بندی + انبارداری + لیفتراک):
+                    </label>
+                    <input type="number" id="ship-total-shipping" disabled style="background:#d1fae5; color:#065f46; font-weight:bold; font-size:18px; text-align:center; padding:12px; border:1px solid #34d399;">
+                </div>
             </div>
 
             <!-- FCL Dubai Clearance Section (Dynamic) -->
@@ -415,7 +424,7 @@
                 </div>
                 <div class="form-group">
                     <label>مبلغ ترخیص</label>
-                    <input type="number" id="ship-clearance-amt" placeholder="">
+                    <input type="number" id="ship-clearance-amt" placeholder="0">
                 </div>
                 <div class="form-group">
                     <label>ارز (دستمزد)</label>
@@ -431,7 +440,7 @@
             <div class="section-title">🚢 خرید حمل و نقل (فورواردر)</div>
             <div class="grid-6">
                 <div class="form-group"><label>شرکت کشتیرانی (فورواردر)</label><select id="ship-line"></select></div>
-                <div class="form-group"><label>کرایه فورواردر (یوان/CBM)</label><input type="number" id="ship-my-rate" placeholder=""></div>
+                <div class="form-group"><label>کرایه خالص فورواردر (یوان/CBM)</label><input type="number" id="ship-my-rate" placeholder="0"></div>
             </div>
 
             <div class="section-title">🛒 اطلاعات تجاری و مالی (فاکتور خرید کالا)</div>
@@ -443,9 +452,9 @@
                     <select id="ship-supplier"></select>
                 </div>
                 <div class="form-group"><label>شماره فاکتور</label><input type="text" id="ship-inv-no" placeholder="مثال: INV-1002"></div>
-                <div class="form-group"><label>ارزش کل فاکتور (یوان)</label><input type="number" id="ship-inv-val" placeholder=""></div>
-                <div class="form-group"><label>کمیسیون شما (یوان)</label><input type="number" id="ship-comm" placeholder=""></div>
-                <div class="form-group"><label>مبلغ پرداخت‌شده (علی‌الحساب)</label><input type="number" id="ship-paid" placeholder=""></div>
+                <div class="form-group"><label>ارزش کل فاکتور (یوان)</label><input type="number" id="ship-inv-val" placeholder="0"></div>
+                <div class="form-group"><label>کمیسیون شما (یوان)</label><input type="number" id="ship-comm" placeholder="0"></div>
+                <div class="form-group"><label>مبلغ پرداخت‌شده (علی‌الحساب)</label><input type="number" id="ship-paid" placeholder="0"></div>
                 <div class="form-group"><label>تاریخ موعد تسویه مانده</label><input type="date" id="ship-due-date" value="2026-07-25"></div>
             </div>
 
@@ -532,7 +541,7 @@
         <input type="hidden" id="edit-type">
         <div class="form-group" style="margin-bottom: 10px;"><label>تاریخ</label><input type="date" id="edit-date"></div>
         <div class="form-group" style="margin-bottom: 10px;"><label>شرح</label><input type="text" id="edit-desc"></div>
-        <div class="form-group" id="edit-amount-group" style="margin-bottom: 10px;"><label>مبلغ / مقدار</label><input type="number" id="edit-amount"></div>
+        <div class="form-group" id="edit-amount-group" style="margin-bottom: 10px;"><label>مبلغ / مقدار</label><input type="number" id="edit-amount" placeholder="0"></div>
         <div class="modal-actions">
             <button class="btn btn-outline" onclick="closeModal('editModal')">انصراف</button>
             <button class="btn btn-warning" onclick="saveEdit()">ذخیره تغییرات</button>
@@ -560,7 +569,7 @@
         <div style="margin-bottom:15px; font-size:12px; color:#475569;">با ثبت این فرم، بار بایگانی شده و سود خالص به صورت خودکار محاسبه می‌شود.</div>
         <div class="form-group" style="margin-bottom: 10px;">
             <label>هزینه‌های متفرقه مقصد (مثال: درهم برای دبی)</label>
-            <input type="number" id="settle-dest-cost" placeholder="">
+            <input type="number" id="settle-dest-cost" placeholder="0">
         </div>
         <div class="form-group" style="margin-bottom: 10px;">
             <label>نرخ تبدیل به یوان (جهت شارژ حساب فورواردر)</label>
@@ -599,7 +608,7 @@
         ],
         journal: [],
         shipments: [
-            { id: 'SH-OLD1', cust: 'علی حسن‌زاده (ATC-101)', type: 'LCL', dest: 'Dubai', date: '2026-06-10', cbm: 5, weight: 1000, supplier: 'کارخانه آلفا (SUP-01)', invNo: 'INV-100', invVal: 5000, paid: 1000, dueDate: '2026-07-23', status: 'active', desc: 'تست سیستم' }
+            { id: 'SH-OLD1', cust: 'علی حسن‌زاده (ATC-101)', type: 'LCL', dest: 'Dubai', date: '2026-06-10', cbm: 5, weight: 1000, supplier: 'کارخانه آلفا (SUP-01)', invNo: 'INV-100', invVal: 5000, paid: 1000, dueDate: '2026-07-23', status: 'active', desc: 'تست سیستم', mark: 'ATC' }
         ],
         idCounter: 1
     };
@@ -607,7 +616,7 @@
     let activeCustomerId = null; 
     let isSidebarVisible = true;
 
-    // Calculation function based on formula: CBM * rate + internal delivery + packing + warehouse + forklift
+    // Calculation function based on formula: (CBM * rate) + internal delivery + packing + warehouse + forklift
     function calcTotalShipping() {
         let cbm = parseFloat(document.getElementById('ship-cbm').value) || 0;
         let rate = parseFloat(document.getElementById('ship-client-rate').value) || 0;
@@ -822,8 +831,13 @@
             cust.code = newCode;
             cust.id = newId;
 
+            // Update references everywhere in the DB
             db.journal.forEach(j => { if(j.cust === oldId) j.cust = newId; });
-            db.shipments.forEach(s => { if(s.cust === oldId) s.cust = newId; if(s.supplier === oldId) s.supplier = newId; });
+            db.shipments.forEach(s => { 
+                if(s.cust === oldId) s.cust = newId; 
+                if(s.supplier === oldId) s.supplier = newId;
+                if(s.forwarder === oldId) s.forwarder = newId;
+            });
 
             activeCustomerId = newId;
             closeModal('editCustomerModal');
@@ -834,18 +848,20 @@
         }
     }
     
+    // Double Confirmation Delete Logic
     function deleteActiveCustomer() {
         if (!activeCustomerId) return;
         
         document.getElementById('confirm-title').innerText = 'تایید حذف (مرحله اول)';
         document.getElementById('confirm-body').innerText = `آیا واقعاً می‌خواهید پرونده "${activeCustomerId}" را حذف کنید؟`;
         
-        document.getElementById('confirm-yes-btn').innerText = 'بله، مطمئنم (مرحله بعد)';
-        document.getElementById('confirm-yes-btn').onclick = () => {
+        let btn = document.getElementById('confirm-yes-btn');
+        btn.innerText = 'بله، مطمئنم (مرحله بعد)';
+        btn.onclick = () => {
             document.getElementById('confirm-title').innerText = 'هشدار نهایی (مرحله دوم)';
             document.getElementById('confirm-body').innerText = `این عملیات غیرقابل بازگشت است! آیا صددرصد از حذف پرونده "${activeCustomerId}" اطمینان دارید؟`;
-            document.getElementById('confirm-yes-btn').innerText = 'تایید نهایی حذف';
-            document.getElementById('confirm-yes-btn').onclick = () => {
+            btn.innerText = 'تایید نهایی حذف';
+            btn.onclick = () => {
                 db.customers = db.customers.filter(c => c.id !== activeCustomerId);
                 activeCustomerId = null; 
                 closeModal('confirmModal');
@@ -913,7 +929,7 @@
         const dest = document.getElementById('ship-dest').value;
         const date = document.getElementById('ship-date').value;
         const code = document.getElementById('ship-code').value || `SH-${Math.floor(Math.random()*10000)}`;
-        const mark = document.getElementById('ship-mark').value || 'ندارد';
+        const mark = document.getElementById('ship-mark').value || 'ندارد'; // Shipping Mark
         const cbm = parseFloat(document.getElementById('ship-cbm').value) || 0;
         const weight = parseFloat(document.getElementById('ship-weight').value) || 0;
         
@@ -944,7 +960,7 @@
 
         let totalCustDebt = totalShipping + invVal + comm;
         if(totalCustDebt > 0) {
-            addJournalEntry({ date: date, cust: cust, desc: `فاکتور فروش (کالا+کمیسیون+مجموع هزینه ارسال) شیپمنت ${code}`, category: 'finance', type: 'debit', amount: totalCustDebt, currency: 'CNY', isSystem: true });
+            addJournalEntry({ date: date, cust: cust, desc: `فاکتور فروش شیپمنت ${code} (مارک: ${mark})`, category: 'finance', type: 'debit', amount: totalCustDebt, currency: 'CNY', isSystem: true });
         }
 
         let totalForwarderCredit = (cbm * myRate) + costWH + costFork + costPack + costInt;
@@ -971,10 +987,13 @@
             }
         }
 
-        showMsg("ثبت موفقیت‌آمیز", `شیپمنت ${code} با موفقیت ثبت شد.\nبدهی مشتری: ${totalCustDebt} یوان\nبستانکاری فورواردر: ${totalForwarderCredit} یوان${clearMsg}`);
+        showMsg("ثبت موفقیت‌آمیز", `شیپمنت ${code} (مارک: ${mark}) با موفقیت ثبت شد.\nبدهی مشتری: ${totalCustDebt} یوان\nبستانکاری فورواردر: ${totalForwarderCredit} یوان${clearMsg}`);
         
-        document.getElementById('ship-code').value = '';
-        document.getElementById('ship-inv-no').value = '';
+        // Reset specific form fields
+        ['ship-code', 'ship-mark', 'ship-cbm', 'ship-client-rate', 'ship-cartons', 'ship-weight', 'ship-cost-int', 'ship-cost-pack', 'ship-cost-wh', 'ship-cost-fork', 'ship-total-shipping', 'ship-clearance-amt', 'ship-my-rate', 'ship-inv-no', 'ship-inv-val', 'ship-comm', 'ship-paid'].forEach(id => {
+            if(document.getElementById(id)) document.getElementById(id).value = '';
+        });
+
         updateUI();
     }
 
@@ -1150,13 +1169,15 @@
             let routeName = `${s.type} - ${s.dest}`;
             let cwStr = `${s.cbm}CBM / ${s.weight}KG`;
             let supplierStr = s.supplier ? s.supplier.split('(')[0] : '-';
+            let markStr = s.mark ? `(${s.mark})` : '';
 
             if (s.status === 'active') {
                 let alertData = getAlertBadge(s.date, s.type, s.dest);
                 
                 gTbody.innerHTML += `
                     <tr>
-                        <td>${s.id}</td><td style="font-size:10px;">${s.cust}</td><td>${routeName}</td>
+                        <td>${s.id} <br><span style="color:gray;font-size:9px;">${markStr}</span></td>
+                        <td style="font-size:10px;">${s.cust}</td><td>${routeName}</td>
                         <td style="font-size:10px;">${cwStr}</td><td style="font-size:10px;">${supplierStr}</td>
                         <td>${alertData.text}</td><td>${alertData.badge}</td>
                         <td><button class="btn btn-success btn-small" onclick="openSettlementModal('${s.id}')">تسویه و تحویل ✔</button></td>
@@ -1166,16 +1187,18 @@
                 if (activeCustomerId && s.cust === activeCustomerId) {
                     caTbody.innerHTML += `
                         <tr>
-                            <td>${s.id}</td><td>${routeName}</td><td>${s.date}</td><td>${cwStr}</td>
+                            <td>${s.id} <span style="color:gray;font-size:9px;">${markStr}</span></td>
+                            <td>${routeName}</td><td>${s.date}</td><td>${cwStr}</td>
                             <td>${supplierStr}</td><td>${alertData.badge}</td>
-                            <td><button class="btn btn-success sbutton" onclick="openSettlementModal('${s.id}')">تسویه و تحویل ✔</button></td>
+                            <td><button class="btn btn-success btn-small" onclick="openSettlementModal('${s.id}')">تسویه و تحویل ✔</button></td>
                         </tr>
                     `;
                 }
             } else if (s.status === 'delivered' && activeCustomerId && s.cust === activeCustomerId) {
                 cdTbody.innerHTML += `
                     <tr>
-                        <td>${s.id}</td><td>${s.deliveredDate}</td><td>${supplierStr}</td>
+                        <td>${s.id} <span style="color:gray;font-size:9px;">${markStr}</span></td>
+                        <td>${s.deliveredDate}</td><td>${supplierStr}</td>
                         <td style="font-weight:bold; color:${s.netProfit >= 0 ? '#059669' : '#dc2626'}">${(s.netProfit || 0).toLocaleString()}</td>
                         <td><button class="btn btn-danger btn-small" onclick="changeShipmentStatus('${s.id}', 'active')">↩ بازگشت</button></td>
                     </tr>
