@@ -1323,7 +1323,6 @@
 
         const actTbody = document.getElementById('active-shipments-tbody'); actTbody.innerHTML = '';
         const caTbody = document.getElementById('cust-active-ship-tbody'); caTbody.innerHTML = '';
-        const gTbody = document.getElementById('global-ship-tbody'); gTbody.innerHTML = '';
 
         db.shipments.forEach(s => {
             let routeName = `${s.type.replace('_',' ')} - ${s.dest}`;
@@ -1336,8 +1335,6 @@
                 let badge = days > 30 ? `<span class="badge badge-alert">هشدار (${days} روز)</span>` : `<span class="badge badge-safe">عادی (${days} روز)</span>`;
                 
                 actTbody.innerHTML += `<tr><td style="direction:ltr;">${s.id} <span style="color:gray;font-size:9px;">${markStr}</span></td><td>${s.cust.split('(')[0]}</td><td>${routeName}</td><td style="direction:ltr;">${cwStr}</td><td>${badge}</td><td><button class="btn btn-warning btn-small" onclick="editShipment('${s.id}')">✏️ ویرایش</button> <button class="btn btn-danger btn-small" onclick="deleteShipment('${s.id}')">✖ حذف</button> <button class="btn btn-success btn-small" onclick="openSettlementModal('${s.id}')">تسویه ✔</button></td></tr>`;
-
-                gTbody.innerHTML += `<tr><td style="direction:ltr;">${s.id}</td><td>${s.cust.split('(')[0]}</td><td>${s.dest}</td><td style="direction:ltr;">${s.cbm} CBM</td><td>${(s.purchases||[]).length} فاکتور</td><td>${days} روز</td><td>${badge}</td><td>-</td></tr>`;
 
                 if (activeCustomerId && s.cust === activeCustomerId) {
                     caTbody.innerHTML += `<tr><td style="direction:ltr;">${s.id} <span style="color:gray;font-size:9px;">${markStr}</span></td><td>${routeName}</td><td>${s.date}</td><td style="direction:ltr;">${cwStr}</td><td>${badge}</td><td><button class="btn btn-warning btn-small" onclick="editShipment('${s.id}')">✏️</button> <button class="btn btn-danger btn-small" onclick="deleteShipment('${s.id}')">✖</button></td></tr>`;
