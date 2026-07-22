@@ -612,7 +612,6 @@
 </div>
 
 <script>
-    // سیستم تاریخ
     const SYSTEM_DATE = new Date().toISOString().split('T')[0];
     document.getElementById('log-date').value = SYSTEM_DATE;
     document.getElementById('ship-date').value = SYSTEM_DATE;
@@ -621,7 +620,6 @@
 
     let db = { customers: [], journal: [], shipments: [], idCounter: 1 };
 
-    // LocalStorage Engine
     function saveToLocal() { localStorage.setItem('atana_erp_v6', JSON.stringify(db)); }
     function loadFromLocal() {
         let d = localStorage.getItem('atana_erp_v6');
@@ -634,9 +632,8 @@
     let currentSidebarTabLog = 'customer';
     let currentPurchases = []; 
     let editPurchaseId = null;
-    let editingShipmentId = null; // برای ادیت کل شیپمنت
+    let editingShipmentId = null;
 
-    // مدیریت فاکتور خرید
     function addPurchaseItem() {
         let supplierId = document.getElementById('pur-supplier').value;
         let invNo = document.getElementById('pur-inv').value || 'ندارد';
@@ -723,7 +720,6 @@
         calcCommission();
     }
 
-    // محاسبات مالی
     function calcCommission() {
         let totalCargo = parseFloat(document.getElementById('ship-total-cargo').value) || 0;
         let percent = parseFloat(document.getElementById('ship-comm-percent').value) || 0;
@@ -761,7 +757,6 @@
         document.getElementById('ship-grand-total').value = shipping + cargo + comm;
     }
 
-    // UI و تب‌ها
     function toggleTopBar(id) {
         let el = document.getElementById(id);
         el.style.display = el.style.display === 'flex' ? 'none' : 'flex';
@@ -777,7 +772,7 @@
         renderSidebar(context);
     }
 
-    function getSortedCustomers() { return [...db.customers].sort((a, b) => { return parseInt(a.code.match(/\d+/)?.[0]||0) - parseInt(b.code.match(/\d+/)?.[0]||0); }); }
+    function getSortedCustomers() { return [...db.customers].sort((a, b) => { return parseInt((a.code||'0').match(/\d+/)?.[0]||0) - parseInt((b.code||'0').match(/\d+/)?.[0]||0); }); }
 
     function renderSidebar(context) {
         let containerId = context === 'cust' ? 'cust-list-container' : 'log-cust-list-container';
@@ -785,7 +780,8 @@
         let tab = context === 'cust' ? currentSidebarTab : currentSidebarTabLog; 
         
         const container = document.getElementById(containerId);
-        const searchTerm = document.getElementById(searchId).value.trim().toLowerCase();
+        const searchInput = document.getElementById(searchId);
+        const searchTerm = searchInput ? searchInput.value.trim().toLowerCase() : '';
         container.innerHTML = '';
         
         let sortedCust = getSortedCustomers().filter(c => c.type === tab);
@@ -821,7 +817,7 @@
 
     function populateDropdowns() {
         let sortedCust = getSortedCustomers();
-        const isFin = document.getElementById('log-category').value === 'finance';
+        const isFin = document.getElementById('log-category') ? document.getElementById('log-category').value === 'finance' : true;
         
         ['log-customer', 'ship-line', 'pur-supplier', 'ship-clearance-agent'].forEach(id => {
             const el = document.getElementById(id);
@@ -850,9 +846,13 @@
         
         if (!fname) return showMsg('خطا', 'نام شخص/شرکت الزامی است.');
         
-        // Exact checking
-        if (db.customers.find(c => c.name === fname)) return showMsg('خطا', 'این نام شخص/شرکت قبلاً ثبت شده است.');
-        if (code && db.customers.find(c => c.code === code)) return showMsg('خطا', 'این کد اختصاصی قبلاً ثبت شده است.');
+        // Fixed Duplication Validation Logic
+        if (db.customers.find(c => c.name.toLowerCase() === fname.toLowerCase())) {
+            return showMsg('خطا', 'این نام شخص یا شرکت قبلاً در سیستم ثبت شده است.');
+        }
+        if (code && db.customers.find(c => c.code === code)) {
+            return showMsg('خطا', 'این کد اختصاصی قبلاً در سیستم ثبت شده است.');
+        }
 
         let codeStr = code ? ` (${code})` : '';
         let idName = `${fname}${codeStr}`;
@@ -870,7 +870,6 @@
         showMsg('موفقیت', 'پرونده با موفقیت ثبت شد.');
     }
 
-    // Double Confirmation Delete
     function deleteActiveCustomer() {
         if (!activeCustomerId) return;
         document.getElementById('confirm-title').innerText = 'تاییدیه حذف (مرحله اول)';
@@ -944,16 +943,6 @@
         });
     }
 
-    function toggleClearanceFields() {
-        const type = document.getElementById('ship-type').value;
-        const dest = document.getElementById('ship-dest').value;
-        const section = document.getElementById('clearance-section');
-        const fields = document.getElementById('clearance-fields');
-        if (type.startsWith('FCL') && dest === 'Dubai') { section.style.display = 'block'; fields.style.display = 'grid'; } 
-        else { section.style.display = 'none'; fields.style.display = 'none'; }
-    }
-
-    // Editing Shipment Flow
     function editShipment(shipId) {
         let ship = db.shipments.find(s => s.id === shipId);
         if(!ship) return;
@@ -969,7 +958,6 @@
         document.getElementById('ship-mark').value = ship.mark || '';
         document.getElementById('ship-line').value = ship.forwarder || '';
         
-        // Restore Raw Values
         document.getElementById('ship-cbm').value = ship.cbm || '';
         document.getElementById('fwd-cbm').value = ship.fwdCbm || '';
         document.getElementById('ship-client-rate').value = ship.clientRate || '';
@@ -1044,7 +1032,6 @@
             commPercent: document.getElementById('ship-comm-percent').value
         };
 
-        // If editing, remove old shipment and ALL its accounting entries first
         if (editingShipmentId) {
             db.shipments = db.shipments.filter(s => s.id !== editingShipmentId);
             db.journal = db.journal.filter(j => j.shipmentRef !== editingShipmentId);
@@ -1052,19 +1039,14 @@
 
         db.shipments.push(shipObj);
 
-        // Accounting 1: Customer Debit
         if(grandTotal > 0) addJournalEntry({ date, cust, desc: `فاکتور فروش شیپمنت ${code}`, category: 'finance', type: 'debit', amount: grandTotal, currency: 'CNY', isSystem: true, shipmentRef: code });
-
-        // Accounting 2: Forwarder Credit
         if(totalForwarderCredit > 0) addJournalEntry({ date, cust: line, desc: `هزینه‌های فورواردر شیپمنت ${code}`, category: 'finance', type: 'credit', amount: totalForwarderCredit, currency: 'CNY', isSystem: true, shipmentRef: code });
 
-        // Accounting 3: Purchase logic
         currentPurchases.forEach(p => {
             if (p.total > 0) addJournalEntry({ date, cust: p.supplierId, desc: `فاکتور خرید ${p.invNo} برای ${code}`, category: 'finance', type: 'credit', amount: p.total, currency: 'CNY', isSystem: true, shipmentRef: code });
             if (p.paid > 0) addJournalEntry({ date, cust: p.supplierId, desc: `پرداخت علی‌الحساب فاکتور ${p.invNo}`, category: 'finance', type: 'debit', amount: p.paid, currency: 'CNY', isSystem: true, shipmentRef: code });
         });
 
-        // Accounting 4: Clearance
         if (type.startsWith('FCL') && dest === 'Dubai') {
             const agent = document.getElementById('ship-clearance-agent').value;
             const clearAmt = parseFloat(document.getElementById('ship-clearance-amt').value) || 0;
@@ -1225,7 +1207,6 @@
                     el.style.color = val > 0 ? '#dc2626' : (val < 0 ? '#059669' : '#1f2937'); 
                 });
 
-                // دفتر تفصیلی با محاسبه مانده لحظه‌ای
                 const clTbody = document.getElementById('cust-ledger-tbody'); clTbody.innerHTML = '';
                 let runningBal = { CNY:0, USD:0, AED:0, IRT:0 };
                 let rowsHtml = [];
@@ -1265,10 +1246,8 @@
                 let days = Math.floor(diffTime / (1000 * 60 * 60 * 24));
                 let badge = days > 30 ? `<span class="badge badge-alert">هشدار (${days} روز)</span>` : `<span class="badge badge-safe">عادی (${days} روز)</span>`;
                 
-                // در تب بارهای در حال ارسال
-                actTbody.innerHTML += `<tr><td style="direction:ltr;">${s.id} <span style="color:gray;font-size:9px;">${markStr}</span></td><td>${s.cust.split('(')[0]}</td><td>${routeName}</td><td style="direction:ltr;">${cwStr}</td><td>${badge}</td><td><button class="btn btn-warning btn-small" onclick="editShipment('${s.id}')">✏️ ویرایش</button> <button class="btn btn-success btn-small" onclick="openSettlementModal('${s.id}')">تسویه ✔</button></td></tr>`;
+                actTbody.innerHTML += `<tr><td style="direction:ltr;">${s.id} <span style="color:gray;font-size:9px;">${markStr}</span></td><td>${s.cust.split('(')[0]}</td><td>${routeName}</td><td style="direction:ltr;">${cwStr}</td><td>${badge}</td><td><button class="btn btn-warning btn-small" onclick="editShipment('${s.id}')">✏️</button> <button class="btn btn-success btn-small" onclick="openSettlementModal('${s.id}')">تسویه ✔</button></td></tr>`;
 
-                // در صفحه لاگ‌ها
                 gTbody.innerHTML += `<tr><td style="direction:ltr;">${s.id}</td><td>${s.cust.split('(')[0]}</td><td>${s.dest}</td><td style="direction:ltr;">${s.cbm} CBM</td><td>${(s.purchases||[]).length} فاکتور</td><td>${days} روز</td><td>${badge}</td><td>-</td></tr>`;
 
                 if (activeCustomerId && s.cust === activeCustomerId) {
@@ -1278,7 +1257,6 @@
         });
     }
 
-    // Helper functions
     function toggleLogFields() { const isFin = document.getElementById('log-category').value === 'finance'; document.querySelectorAll('.fin-field').forEach(el => el.style.display = isFin ? 'flex' : 'none'); document.querySelectorAll('.log-field').forEach(el => el.style.display = !isFin ? 'flex' : 'none'); populateDropdowns(); }
     function openModal(id) { document.getElementById(id).style.display = 'flex'; }
     function closeModal(id) { document.getElementById(id).style.display = 'none'; }
