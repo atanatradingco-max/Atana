@@ -1043,6 +1043,24 @@
         currentPurchases = []; renderPurchasesList(); calcTotalShipping(); calcTotalForwarder();
     }
 
+    function deleteShipment(shipId) {
+        document.getElementById('confirm-title').innerText = 'تاییدیه حذف شیپمنت';
+        document.getElementById('confirm-body').innerText = `آیا واقعاً می‌خواهید شیپمنت "${shipId}" را حذف کنید؟ تمام تراکنش‌های مالی مرتبط با این بار به طور کامل از حساب مشتری، فورواردر و تامین‌کنندگان پاک خواهند شد!`;
+        let btn = document.getElementById('confirm-yes-btn');
+        btn.innerText = 'بله، حذف کن';
+        btn.onclick = () => {
+            db.shipments = db.shipments.filter(s => s.id !== shipId);
+            db.journal = db.journal.filter(j => j.shipmentRef !== shipId);
+            recalcBalances();
+            saveToLocal();
+            closeModal('confirmModal');
+            updateUI();
+            updateAnnualStats();
+            showMsg('موفقیت', 'شیپمنت و تمام تراکنش‌های مالی مرتبط با آن با موفقیت حذف شدند.');
+        };
+        openModal('confirmModal');
+    }
+
     function registerShipment() {
         if (!activeLogisticsCustomerId) return showMsg('خطا', 'ابتدا از لیست سمت راست مشتری را انتخاب کنید.');
         const cust = activeLogisticsCustomerId;
@@ -1114,8 +1132,7 @@
         cancelShipmentEdit();
         updateUI(); updateAnnualStats();
         
-        // Show success and redirect to Active Shipments
-        showMsg("ثبت موفقیت‌آمیز", "سند ثبت شد.", () => {
+        showMsg("ثبت موفقیت‌آمیز", "شیپمنت و تمام اسناد مالی با موفقیت پردازش شد.", () => {
             navTo('page-active-shipments', document.querySelectorAll('.menu-btn')[3]);
         });
     }
@@ -1306,12 +1323,12 @@
                 let days = Math.floor(diffTime / (1000 * 60 * 60 * 24));
                 let badge = days > 30 ? `<span class="badge badge-alert">هشدار (${days} روز)</span>` : `<span class="badge badge-safe">عادی (${days} روز)</span>`;
                 
-                actTbody.innerHTML += `<tr><td style="direction:ltr;">${s.id} <span style="color:gray;font-size:9px;">${markStr}</span></td><td>${s.cust.split('(')[0]}</td><td>${routeName}</td><td style="direction:ltr;">${cwStr}</td><td>${badge}</td><td><button class="btn btn-warning btn-small" onclick="editShipment('${s.id}')">✏️ ویرایش</button> <button class="btn btn-success btn-small" onclick="openSettlementModal('${s.id}')">تسویه ✔</button></td></tr>`;
+                actTbody.innerHTML += `<tr><td style="direction:ltr;">${s.id} <span style="color:gray;font-size:9px;">${markStr}</span></td><td>${s.cust.split('(')[0]}</td><td>${routeName}</td><td style="direction:ltr;">${cwStr}</td><td>${badge}</td><td><button class="btn btn-warning btn-small" onclick="editShipment('${s.id}')">✏️ ویرایش</button> <button class="btn btn-danger btn-small" onclick="deleteShipment('${s.id}')">✖ حذف</button> <button class="btn btn-success btn-small" onclick="openSettlementModal('${s.id}')">تسویه ✔</button></td></tr>`;
 
                 gTbody.innerHTML += `<tr><td style="direction:ltr;">${s.id}</td><td>${s.cust.split('(')[0]}</td><td>${s.dest}</td><td style="direction:ltr;">${s.cbm} CBM</td><td>${(s.purchases||[]).length} فاکتور</td><td>${days} روز</td><td>${badge}</td><td>-</td></tr>`;
 
                 if (activeCustomerId && s.cust === activeCustomerId) {
-                    caTbody.innerHTML += `<tr><td style="direction:ltr;">${s.id} <span style="color:gray;font-size:9px;">${markStr}</span></td><td>${routeName}</td><td>${s.date}</td><td style="direction:ltr;">${cwStr}</td><td>${badge}</td><td>-</td></tr>`;
+                    caTbody.innerHTML += `<tr><td style="direction:ltr;">${s.id} <span style="color:gray;font-size:9px;">${markStr}</span></td><td>${routeName}</td><td>${s.date}</td><td style="direction:ltr;">${cwStr}</td><td>${badge}</td><td><button class="btn btn-warning btn-small" onclick="editShipment('${s.id}')">✏️</button> <button class="btn btn-danger btn-small" onclick="deleteShipment('${s.id}')">✖</button></td></tr>`;
                 }
             } 
         });
