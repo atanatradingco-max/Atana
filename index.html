@@ -835,7 +835,19 @@
         let sortedCust = getSortedCustomers();
         const isFin = document.getElementById('log-category') ? document.getElementById('log-category').value === 'finance' : true;
         
-        ['log-customer', 'ship-line', 'pur-supplier', 'ship-clearance-agent'].forEach(id => {
+        // DataList baraye Taraf Hesab (Dashboard)
+        const logCustList = document.getElementById('log-customer-list');
+        if(logCustList) {
+            logCustList.innerHTML = '';
+            let list = isFin ? sortedCust : sortedCust.filter(c => c.type === 'forwarder' || c.type === 'clearance_agent');
+            list.forEach(c => {
+                let opt = document.createElement('option');
+                opt.value = c.id;
+                logCustList.appendChild(opt);
+            });
+        }
+
+        ['ship-line', 'pur-supplier', 'ship-clearance-agent'].forEach(id => {
             const el = document.getElementById(id);
             if(el) {
                 let v = el.value; el.innerHTML = '<option value="">-- انتخاب کنید --</option>';
