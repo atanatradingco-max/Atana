@@ -792,14 +792,14 @@
     function renderSidebar(context) {
         let containerId = context === 'cust' ? 'cust-list-container' : 'log-cust-list-container';
         let searchId = context === 'cust' ? 'cust-search' : 'log-search';
-        let tab = context === 'cust' ? currentSidebarTab : 'customer'; // لجستیک فقط مشتری لازم دارد
+        let tab = context === 'cust' ? currentSidebarTab : 'customer'; 
         
         const container = document.getElementById(containerId);
         const searchTerm = document.getElementById(searchId).value.trim().toLowerCase();
         container.innerHTML = '';
         
         let sortedCust = getSortedCustomers().filter(c => c.type === tab);
-        if (searchTerm) sortedCust = sortedCust.filter(c => c.name.toLowerCase().includes(searchTerm) || c.code.toLowerCase().includes(searchTerm));
+        if (searchTerm) sortedCust = sortedCust.filter(c => c.name.toLowerCase().includes(searchTerm) || (c.code && c.code.toLowerCase().includes(searchTerm)));
 
         sortedCust.forEach(c => {
             let isActive = context === 'cust' ? (c.id === activeCustomerId) : (c.id === activeLogisticsCustomerId);
@@ -1177,9 +1177,10 @@
     function toggleLogFields() { const isFin = document.getElementById('log-category').value === 'finance'; document.querySelectorAll('.fin-field').forEach(el => el.style.display = isFin ? 'flex' : 'none'); document.querySelectorAll('.log-field').forEach(el => el.style.display = !isFin ? 'flex' : 'none'); populateDropdowns(); }
     function openModal(id) { document.getElementById(id).style.display = 'flex'; }
     function closeModal(id) { document.getElementById(id).style.display = 'none'; }
-    function navTo(pageId, btnElement) { document.querySelectorAll('.page').forEach(p => p.classList.remove('active-page')); document.getElementById(pageId).classList.add('active-page'); document.querySelectorAll('.menu-btn').forEach(b => b.classList.remove('active')); btnElement.classList.add('active'); if(pageId === 'page-archive' || pageId === 'page-report') renderArchiveMonths(); updateUI(); }
+    function navTo(pageId, btnElement) { document.querySelectorAll('.page').forEach(p => p.classList.remove('active-page')); document.getElementById(pageId).classList.add('active-page'); document.querySelectorAll('.menu-btn').forEach(b => b.classList.remove('active')); btnElement.classList.add('active'); if(pageId === 'page-customer') renderSidebar('cust'); if(pageId === 'page-intransit') renderSidebar('log'); if(pageId === 'page-archive' || pageId === 'page-report') renderArchiveMonths(); updateUI(); }
     function switchCustTab(tabId, btnElement) { document.querySelectorAll('.cust-tab').forEach(t => t.style.display = 'none'); document.getElementById(tabId).style.display = 'block'; document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active')); btnElement.classList.add('active'); }
     function showMsg(title, body) { document.getElementById('msg-title').innerText = title; document.getElementById('msg-body').innerText = body; openModal('msgModal'); }
+    function toggleSidebar() { isSidebarVisible = !isSidebarVisible; const sb = document.getElementById('cust-sidebar'); if(sb) sb.style.display = isSidebarVisible ? 'block' : 'none'; }
 
     window.onload = function() {
         loadFromLocal();
