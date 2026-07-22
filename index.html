@@ -247,8 +247,8 @@
                     <h3 id="active-cust-title" style="margin: 0; color: #0369a1;">لطفا یک پرونده از لیست انتخاب کنید</h3>
                     <div style="display:flex; gap:10px;">
                         <button class="btn btn-success btn-small" id="btn-add-trx-cust" onclick="openProfileTransaction()" style="display:none;">💰 ثبت تراکنش</button>
-                        <button class="btn btn-warning btn-small" id="btn-edit-cust" onclick="openEditCustomerModal()" style="display:none; color:black;">✏️ ویرایش</button>
-                        <button class="btn btn-danger btn-small" id="btn-delete-cust" onclick="deleteActiveCustomer()" style="display:none;">🗑️ حذف</button>
+                        <button class="btn btn-warning btn-small" id="btn-edit-cust" onclick="openEditCustomerModal()" style="display:none; color:black;">✏️ ویرایش پرونده</button>
+                        <button class="btn btn-danger btn-small" id="btn-delete-cust" onclick="deleteActiveCustomer()" style="display:none;">🗑️ حذف پرونده</button>
                     </div>
                 </div>
 
@@ -273,7 +273,8 @@
                                     <th>شرح</th>
                                     <th>بدهکار (+)</th>
                                     <th>بستانکار (-)</th>
-                                    <th>مانده لحظه‌ای</th>
+                                    <th>مانده</th>
+                                    <th>ویرایش</th>
                                 </tr>
                             </thead>
                             <tbody id="cust-ledger-tbody"></tbody>
@@ -578,6 +579,21 @@
     </div>
 </div>
 
+<!-- Edit Journal Modal -->
+<div class="modal-overlay" id="editModal">
+    <div class="modal">
+        <div class="modal-header">✏️ ویرایش تراکنش مالی</div>
+        <input type="hidden" id="edit-id">
+        <div class="form-group" style="margin-bottom: 10px;"><label>تاریخ</label><input type="date" id="edit-date"></div>
+        <div class="form-group" style="margin-bottom: 10px;"><label>شرح</label><input type="text" id="edit-desc"></div>
+        <div class="form-group" id="edit-amount-group" style="margin-bottom: 10px;"><label>مبلغ</label><input type="number" id="edit-amount"></div>
+        <div class="modal-actions">
+            <button class="btn btn-outline" onclick="closeModal('editModal')">انصراف</button>
+            <button class="btn btn-warning" onclick="saveEdit()">ذخیره</button>
+        </div>
+    </div>
+</div>
+
 <div class="modal-overlay" id="confirmModal">
     <div class="modal">
         <div class="modal-header" id="confirm-title" style="color: #dc2626;">اخطار سیستم</div>
@@ -607,7 +623,7 @@
     <div class="modal">
         <div class="modal-header" id="msg-title">پیام سیستم</div>
         <div id="msg-body" style="line-height: 1.6;"></div>
-        <div class="modal-actions"><button class="btn btn-dark" onclick="closeModal('msgModal')">متوجه شدم</button></div>
+        <div class="modal-actions"><button class="btn btn-dark" id="msg-ok-btn">متوجه شدم</button></div>
     </div>
 </div>
 
@@ -620,9 +636,9 @@
 
     let db = { customers: [], journal: [], shipments: [], idCounter: 1 };
 
-    function saveToLocal() { localStorage.setItem('atana_erp_v6', JSON.stringify(db)); }
+    function saveToLocal() { localStorage.setItem('atana_erp_v7', JSON.stringify(db)); }
     function loadFromLocal() {
-        let d = localStorage.getItem('atana_erp_v6');
+        let d = localStorage.getItem('atana_erp_v7');
         if (d) db = JSON.parse(d);
     }
 
@@ -641,7 +657,7 @@
         let paid = parseFloat(document.getElementById('pur-paid').value) || 0;
         let due = document.getElementById('pur-due').value;
 
-        if(!supplierId || total <= 0) return showMsg('خطا', 'لطفاً مبلغ کل فاکتور را وارد کنید.');
+        if(!supplierId || total <= 0) return showMsg('خطا', 'لطفاً مبلغ کل فاکتور و تامین کننده را وارد کنید.');
 
         let supplierName = db.customers.find(c => c.id === supplierId)?.name || supplierId;
 
@@ -822,13 +838,13 @@
         ['log-customer', 'ship-line', 'pur-supplier', 'ship-clearance-agent'].forEach(id => {
             const el = document.getElementById(id);
             if(el) {
-                let v = el.value; el.innerHTML = '';
+                let v = el.value; el.innerHTML = '<option value="">-- انتخاب کنید --</option>';
                 let list = sortedCust;
                 if(id === 'ship-line') list = sortedCust.filter(c => c.type === 'forwarder');
                 if(id === 'pur-supplier') list = sortedCust.filter(c => c.type === 'supplier');
                 if(id === 'ship-clearance-agent') list = sortedCust.filter(c => c.type === 'clearance_agent');
                 
-                list.forEach(c => { let opt = document.createElement('option'); opt.value = c.id; opt.innerText = c.id; el.appendChild(opt); });
+                list.forEach(c => { let opt = document.createElement('option'); opt.value = c.id; opt.innerText = c.id.split('(')[0]; el.appendChild(opt); });
                 if(v && list.find(x => x.id === v)) el.value = v;
             }
         });
@@ -846,7 +862,6 @@
         
         if (!fname) return showMsg('خطا', 'نام شخص/شرکت الزامی است.');
         
-        // Fixed Duplication Validation Logic
         if (db.customers.find(c => c.name.toLowerCase() === fname.toLowerCase())) {
             return showMsg('خطا', 'این نام شخص یا شرکت قبلاً در سیستم ثبت شده است.');
         }
@@ -866,8 +881,11 @@
         });
 
         document.getElementById('new-cust-fullname').value = ''; document.getElementById('new-cust-code').value = ''; document.getElementById('new-cust-wechat').value = '';
-        saveToLocal(); populateDropdowns(); renderSidebar('cust'); renderSidebar('log'); closeModal('customerModal'); updateUI();
-        showMsg('موفقیت', 'پرونده با موفقیت ثبت شد.');
+        saveToLocal(); populateDropdowns(); renderSidebar('cust'); renderSidebar('log'); updateUI();
+        
+        // Form is cleared, modal is closed, then message
+        closeModal('customerModal'); 
+        setTimeout(() => { showMsg('موفقیت', 'پرونده با موفقیت ثبت شد.'); }, 100);
     }
 
     function deleteActiveCustomer() {
@@ -930,6 +948,27 @@
         recalcBalances(); saveToLocal(); updateUI();
     }
 
+    function editJournalEntry(id) {
+        let j = db.journal.find(x => x.id === id);
+        if(!j) return;
+        document.getElementById('edit-id').value = id;
+        document.getElementById('edit-date').value = j.date;
+        document.getElementById('edit-desc').value = j.desc;
+        document.getElementById('edit-amount').value = j.amount;
+        openModal('editModal');
+    }
+
+    function saveEdit() {
+        let id = document.getElementById('edit-id').value;
+        let j = db.journal.find(x => x.id === id);
+        if(!j) return;
+        j.date = document.getElementById('edit-date').value;
+        j.desc = document.getElementById('edit-desc').value;
+        j.amount = parseFloat(document.getElementById('edit-amount').value) || 0;
+        recalcBalances(); saveToLocal(); updateUI(); closeModal('editModal');
+        showMsg('موفقیت', 'تراکنش با موفقیت ویرایش شد.');
+    }
+
     function recalcBalances() {
         db.customers.forEach(c => c.balances = { CNY: 0, USD: 0, AED: 0, IRT: 0 });
         db.journal.forEach(j => {
@@ -941,6 +980,15 @@
                 }
             }
         });
+    }
+
+    function toggleClearanceFields() {
+        const type = document.getElementById('ship-type').value;
+        const dest = document.getElementById('ship-dest').value;
+        const section = document.getElementById('clearance-section');
+        const fields = document.getElementById('clearance-fields');
+        if (type.startsWith('FCL') && dest === 'Dubai') { section.style.display = 'block'; fields.style.display = 'grid'; } 
+        else { section.style.display = 'none'; fields.style.display = 'none'; }
     }
 
     function editShipment(shipId) {
@@ -998,7 +1046,15 @@
     function registerShipment() {
         if (!activeLogisticsCustomerId) return showMsg('خطا', 'ابتدا از لیست سمت راست مشتری را انتخاب کنید.');
         const cust = activeLogisticsCustomerId;
-        const code = document.getElementById('ship-code').value || (editingShipmentId ? editingShipmentId : `SH-${Math.floor(Math.random()*10000)}`);
+        
+        let rawCode = document.getElementById('ship-code').value.trim();
+        let code = rawCode || (editingShipmentId ? editingShipmentId : `SH-${Math.floor(Math.random()*10000)}`);
+        
+        // Duplicate Code Validation
+        if (db.shipments.find(s => s.id === code && s.id !== editingShipmentId)) {
+            return showMsg('خطا', 'این سند قبلاً ثبت شده است! لطفا کد دیگری وارد کنید.');
+        }
+
         const date = document.getElementById('ship-date').value;
         const type = document.getElementById('ship-type').value;
         const dest = document.getElementById('ship-dest').value;
@@ -1055,9 +1111,13 @@
         }
 
         saveToLocal();
-        showMsg("ثبت موفقیت‌آمیز", "شیپمنت و تمام اسناد مالی با موفقیت پردازش شد.");
         cancelShipmentEdit();
         updateUI(); updateAnnualStats();
+        
+        // Show success and redirect to Active Shipments
+        showMsg("ثبت موفقیت‌آمیز", "سند ثبت شد.", () => {
+            navTo('page-active-shipments', document.querySelectorAll('.menu-btn')[3]);
+        });
     }
 
     function processSettlement() {
@@ -1225,7 +1285,7 @@
                     let credStr = j.type === 'credit' && j.amount > 0 ? j.amount.toLocaleString() : '-';
                     let descStr = j.category === 'logistic' ? `<span class="badge badge-safe">رویداد</span> ${j.desc}` : j.desc;
                     
-                    rowsHtml.push(`<tr><td>${j.date}</td><td style="font-size:11px;">${descStr}</td><td class="text-debit">${debStr}</td><td class="text-credit">${credStr}</td><td>${balStr}</td></tr>`);
+                    rowsHtml.push(`<tr><td>${j.date}</td><td style="font-size:11px;">${descStr}</td><td class="text-debit">${debStr}</td><td class="text-credit">${credStr}</td><td>${balStr}</td><td><button class="btn btn-small btn-warning" onclick="editJournalEntry('${j.id}')">✏️ ویرایش</button></td></tr>`);
                 });
                 
                 rowsHtml.reverse().forEach(row => clTbody.innerHTML += row);
@@ -1246,7 +1306,7 @@
                 let days = Math.floor(diffTime / (1000 * 60 * 60 * 24));
                 let badge = days > 30 ? `<span class="badge badge-alert">هشدار (${days} روز)</span>` : `<span class="badge badge-safe">عادی (${days} روز)</span>`;
                 
-                actTbody.innerHTML += `<tr><td style="direction:ltr;">${s.id} <span style="color:gray;font-size:9px;">${markStr}</span></td><td>${s.cust.split('(')[0]}</td><td>${routeName}</td><td style="direction:ltr;">${cwStr}</td><td>${badge}</td><td><button class="btn btn-warning btn-small" onclick="editShipment('${s.id}')">✏️</button> <button class="btn btn-success btn-small" onclick="openSettlementModal('${s.id}')">تسویه ✔</button></td></tr>`;
+                actTbody.innerHTML += `<tr><td style="direction:ltr;">${s.id} <span style="color:gray;font-size:9px;">${markStr}</span></td><td>${s.cust.split('(')[0]}</td><td>${routeName}</td><td style="direction:ltr;">${cwStr}</td><td>${badge}</td><td><button class="btn btn-warning btn-small" onclick="editShipment('${s.id}')">✏️ ویرایش</button> <button class="btn btn-success btn-small" onclick="openSettlementModal('${s.id}')">تسویه ✔</button></td></tr>`;
 
                 gTbody.innerHTML += `<tr><td style="direction:ltr;">${s.id}</td><td>${s.cust.split('(')[0]}</td><td>${s.dest}</td><td style="direction:ltr;">${s.cbm} CBM</td><td>${(s.purchases||[]).length} فاکتور</td><td>${days} روز</td><td>${badge}</td><td>-</td></tr>`;
 
@@ -1262,7 +1322,13 @@
     function closeModal(id) { document.getElementById(id).style.display = 'none'; }
     function navTo(pageId, btnElement) { document.querySelectorAll('.page').forEach(p => p.classList.remove('active-page')); document.getElementById(pageId).classList.add('active-page'); document.querySelectorAll('.menu-btn').forEach(b => b.classList.remove('active')); btnElement.classList.add('active'); if(pageId === 'page-customer') renderSidebar('cust'); if(pageId === 'page-intransit') renderSidebar('log'); if(pageId === 'page-archive' || pageId === 'page-report') renderArchiveMonths(); updateUI(); }
     function switchCustTab(tabId, btnElement) { document.querySelectorAll('.cust-tab').forEach(t => t.style.display = 'none'); document.getElementById(tabId).style.display = 'block'; document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active')); btnElement.classList.add('active'); }
-    function showMsg(title, body) { document.getElementById('msg-title').innerText = title; document.getElementById('msg-body').innerText = body; openModal('msgModal'); }
+    function showMsg(title, body, callback=null) { 
+        document.getElementById('msg-title').innerText = title; 
+        document.getElementById('msg-body').innerText = body; 
+        let btn = document.getElementById('msg-ok-btn');
+        btn.onclick = () => { closeModal('msgModal'); if(callback) callback(); };
+        openModal('msgModal'); 
+    }
     function toggleSidebar() { isSidebarVisible = !isSidebarVisible; const sb = document.getElementById('cust-sidebar'); if(sb) sb.style.display = isSidebarVisible ? 'block' : 'none'; }
 
     window.onload = function() {
