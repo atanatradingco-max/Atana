@@ -664,7 +664,7 @@
     <!-- PAGE 6: Monthly Report -->
     <div id="page-report" class="page">
         <div class="card">
-            <div class="card-header">📈 گزارش عملکرد ماهانه بر اساس ارزش خرید مشتریان</div>
+            <div class="card-header">📈 گزارش عملکرد ماهانه (بر اساس تاریخ ارسال بار)</div>
             <div class="filter-bar">
                 <input list="flt-rep-cust-list" id="filter-rep-cust" placeholder="مشتری" oninput="generateMonthlyReport()">
                 <datalist id="flt-rep-cust-list"></datalist>
@@ -677,13 +677,27 @@
                 <button class="btn btn-outline btn-small" onclick="clearFilters('rep')">پاک کردن فیلترها</button>
             </div>
             <div class="form-group" style="width:200px; margin-bottom:20px;">
-                <label>انتخاب ماه</label>
+                <label>انتخاب ماه (بر اساس تاریخ ارسال)</label>
                 <select id="report-month" onchange="generateMonthlyReport()"></select>
             </div>
             
-            <h4 style="margin-top:20px; color:#1e3a8a;">برترین مشتریان این ماه (بر اساس ارزش خرید)</h4>
+            <div class="currency-dash" id="report-dash-container">
+                <!-- Dynamically populated stats -->
+            </div>
+            
+            <h4 style="margin-top:20px; color:#1e3a8a;">برترین مشتریان این ماه (بر اساس سود ایجاد شده برای ما)</h4>
             <table>
-                <thead><tr><th>رتبه</th><th>نام مشتری</th><th>تعداد Shipment</th><th>ارزش کل خرید مشتری</th><th>ارز</th></tr></thead>
+                <thead>
+                    <tr>
+                        <th>رتبه</th>
+                        <th>نام مشتری</th>
+                        <th>تعداد Shipment</th>
+                        <th>مجموع CBM</th>
+                        <th>ارزش کل خرید مشتری</th>
+                        <th>سود ایجادشده برای ما</th>
+                        <th>ارز</th>
+                    </tr>
+                </thead>
                 <tbody id="rep-customers-tbody"></tbody>
             </table>
         </div>
@@ -803,6 +817,20 @@
     </div>
 </div>
 
+<div class="modal-overlay" id="settlementModal">
+    <div class="modal">
+        <div class="modal-header">🏁 تحویل بار در مقصد</div>
+        <input type="hidden" id="settle-ship-id">
+        <div class="form-group" style="margin-bottom: 10px;"><label>هزینه متفرقه مقصد (مثلا درهم برای دبی)</label><input type="number" id="settle-dest-cost"></div>
+        <div class="form-group" style="margin-bottom: 10px;"><label>نرخ تبدیل به یوان (جهت شارژ فورواردر)</label><input type="number" id="settle-exchange-rate" value="2"></div>
+        <div class="form-group" style="margin-bottom: 10px;"><label>مجموع هزینه به یوان</label><input type="number" id="settle-total-cny" disabled style="background:#f1f5f9; font-weight:bold;"></div>
+        <div class="modal-actions">
+            <button class="btn btn-outline" onclick="closeModal('settlementModal')">انصراف</button>
+            <button class="btn btn-success" onclick="processSettlement()">ثبت تحویل نهایی ✔</button>
+        </div>
+    </div>
+</div>
+
 <div class="modal-overlay" id="msgModal">
     <div class="modal">
         <div class="modal-header" id="msg-title">پیام سیستم</div>
@@ -821,13 +849,13 @@
 
     let db = { customers: [], journal: [], shipments: [], idCounter: 1, shipmentCounter: 1 };
 
-    function saveToLocal() { localStorage.setItem('atana_erp_v12', JSON.stringify(db)); }
+    function saveToLocal() { localStorage.setItem('atana_erp_v13', JSON.stringify(db)); }
     function loadFromLocal() {
-        let d = localStorage.getItem('atana_erp_v12');
+        let d = localStorage.getItem('atana_erp_v13');
         if (d) {
             db = JSON.parse(d);
         } else {
-            let oldD = localStorage.getItem('atana_erp_v11');
+            let oldD = localStorage.getItem('atana_erp_v12');
             if (oldD) db = JSON.parse(oldD);
         }
         if (!db.shipmentCounter) {
@@ -1433,14 +1461,17 @@
             typeGrp.style.display = 'none';
         }
 
-        let isGeneral = (method === 'sea' && typeVal === 'LCL');
+        let isGeneral = (method !== 'sea' || typeVal === 'LCL');
         
         document.getElementById('fwd-lcl-fields').style.display = isGeneral ? 'grid' : 'none';
         document.getElementById('fwd-fcl-fields').style.display = isGeneral ? 'none' : 'grid';
         
         if(!isGeneral) {
-            document.getElementById('lbl-fwd-main-cost').innerText = (method === 'sea') ? 'هزینه کانتینر' : 'هزینه حمل';
-            document.getElementById('lbl-ship-main-cost').innerText = (method === 'sea') ? 'هزینه کانتینر' : 'هزینه حمل';
+            document.getElementById('lbl-fwd-main-cost').innerText = 'هزینه کانتینر';
+            document.getElementById('lbl-ship-main-cost').innerText = 'هزینه کانتینر';
+        } else if (method !== 'sea') {
+            document.getElementById('lbl-fwd-main-cost').innerText = 'هزینه حمل';
+            document.getElementById('lbl-ship-main-cost').innerText = 'هزینه حمل';
         }
 
         // Pricing model toggle
@@ -1541,7 +1572,7 @@
         document.getElementById('ship-total-irt').value = ship.totalIrt || '';
         document.getElementById('ship-total-desc').value = ship.totalDesc || '';
         
-        let isGeneral = (ship.transportMethod === 'sea' && ship.type === 'LCL');
+        let isGeneral = (ship.transportMethod !== 'sea' || ship.type === 'LCL');
         if (!isGeneral) {
             document.getElementById('fwd-fcl-cost').value = ship.fclFwdCost || '';
             document.getElementById('fwd-fcl-curr').value = ship.fclFwdCurr || 'CNY';
@@ -1699,7 +1730,7 @@
         if (purTotalSum === 0) errors.push("مبلغ کل خرید وارد نشده است.");
         
         let dest = document.getElementById('ship-dest').value;
-        let isGeneral = (method === 'sea' && typeVal === 'LCL');
+        let isGeneral = (method !== 'sea' || typeVal === 'LCL');
         
         if (!isGeneral) {
             let fwdOther = parseFloat(document.getElementById('fwd-fcl-other').value) || 0;
@@ -1978,53 +2009,135 @@
         let m = document.getElementById('report-month').value;
         if (!m) return;
         
-        let profit = 0, cbm = 0, kg = 0, cont = 0;
-        let custStats = {};
-        
         let repFilters = getActiveFilters('rep');
+
+        let totalProfit = { CNY: 0, USD: 0, AED: 0, IRT: 0 };
+        let totalSales = { CNY: 0, USD: 0, AED: 0, IRT: 0 };
+        let totalCbm = 0;
+        let totalCont20 = 0;
+        let totalCont40 = 0;
+        let totalKg = 0;
+        let totalShipments = 0;
+
+        let custStats = {}; 
 
         db.shipments.forEach(s => {
             if (!applyShipmentFilters(s, repFilters)) return;
             
-            if (s.date.startsWith(m) || (s.status === 'delivered' && s.deliveredDate && s.deliveredDate.startsWith(m))) {
-                if (s.status === 'delivered') profit += s.netProfit || 0;
-                if (s.date.startsWith(m)) {
-                    let sCbm = parseFloat(s.cbm) || 0;
-                    cbm += sCbm;
-                    kg += parseFloat(s.weight) || parseFloat(s.fclShipGross) || 0;
-                    if (s.transportMethod === 'sea' && s.type && s.type.startsWith('FCL')) cont += 1;
+            if (s.date.startsWith(m)) {
+                totalShipments++;
 
-                    if (!custStats[s.cust]) custStats[s.cust] = { count: 0, sales: {} };
-                    custStats[s.cust].count += 1;
-                    
-                    if(s.pricingModel === 'total') {
-                        if(s.totalCny > 0) custStats[s.cust].sales['CNY'] = (custStats[s.cust].sales['CNY']||0) + parseFloat(s.totalCny);
-                        if(s.totalIrt > 0) custStats[s.cust].sales['IRT'] = (custStats[s.cust].sales['IRT']||0) + parseFloat(s.totalIrt);
-                    } else {
-                        let gc = s.grandTotalCurr || 'CNY';
-                        if(s.grandTotal > 0) custStats[s.cust].sales[gc] = (custStats[s.cust].sales[gc]||0) + parseFloat(s.grandTotal);
-                    }
+                let sCbm = 0;
+                let sWeight = 0;
+
+                if (s.transportMethod === 'sea' && s.type && s.type.startsWith('FCL')) {
+                    if (s.type === 'FCL_20') totalCont20++;
+                    if (s.type === 'FCL_40') totalCont40++;
+                    sWeight = parseFloat(s.fclShipGross) || 0;
+                } else {
+                    sCbm = parseFloat(s.cbm) || 0;
+                    sWeight = parseFloat(s.weight) || 0;
+                    totalCbm += sCbm;
                 }
+                totalKg += sWeight;
+
+                let sSales = { CNY: 0, USD: 0, AED: 0, IRT: 0 };
+                let sCosts = { CNY: 0, USD: 0, AED: 0, IRT: 0 };
+
+                if (s.pricingModel === 'total') {
+                    sSales.CNY += parseFloat(s.totalCny) || 0;
+                    sSales.IRT += parseFloat(s.totalIrt) || 0;
+                } else {
+                    let gCurr = s.grandTotalCurr || 'CNY';
+                    sSales[gCurr] += parseFloat(s.grandTotal) || 0;
+                }
+
+                (s.purchases || []).forEach(p => {
+                    sCosts.CNY += parseFloat(p.total) || 0;
+                });
+                sCosts.CNY += parseFloat(s.fwdTotal) || 0;
+                
+                if (s.clearDubaiChecked) sCosts.AED += parseFloat(s.clearAmt) || 0;
+                if (s.clearIranChecked) sCosts.IRT += parseFloat(s.clearTotalIran) || 0;
+
+                let sProfit = {
+                    CNY: sSales.CNY - sCosts.CNY,
+                    USD: sSales.USD - sCosts.USD,
+                    AED: sSales.AED - sCosts.AED,
+                    IRT: sSales.IRT - sCosts.IRT
+                };
+
+                ['CNY', 'USD', 'AED', 'IRT'].forEach(curr => {
+                    totalProfit[curr] += sProfit[curr];
+                    totalSales[curr] += sSales[curr];
+                });
+
+                if (!custStats[s.cust]) {
+                    custStats[s.cust] = { count: 0, cbm: 0, sales: { CNY: 0, USD: 0, AED: 0, IRT: 0 }, profit: { CNY: 0, USD: 0, AED: 0, IRT: 0 } };
+                }
+                custStats[s.cust].count += 1;
+                custStats[s.cust].cbm += sCbm;
+                ['CNY', 'USD', 'AED', 'IRT'].forEach(curr => {
+                    custStats[s.cust].sales[curr] += sSales[curr];
+                    custStats[s.cust].profit[curr] += sProfit[curr];
+                });
             }
         });
 
-        document.getElementById('rep-profit').innerText = profit.toLocaleString();
-        document.getElementById('rep-cbm').innerText = cbm.toFixed(2);
-        document.getElementById('rep-kg').innerText = kg.toLocaleString();
-        document.getElementById('rep-cont').innerText = cont;
+        let reportDash = document.getElementById('report-dash-container');
+        let htmlDash = '';
+        
+        let profitStrs = [];
+        ['CNY', 'USD', 'AED', 'IRT'].forEach(curr => {
+            if (totalProfit[curr] !== 0) profitStrs.push(`<div style="font-size:13px; margin-top:3px; direction:ltr; font-weight:bold; color:${totalProfit[curr] > 0 ? '#059669' : '#dc2626'}">${(totalProfit[curr]>0?'+':'')}${totalProfit[curr].toLocaleString()} ${currFa[curr]||curr}</div>`);
+        });
+        if(profitStrs.length === 0) profitStrs.push(`<div style="font-size:13px; margin-top:3px; color:#059669; font-weight:bold;">0</div>`);
 
-        let flatSales = [];
+        let salesStrs = [];
+        ['CNY', 'USD', 'AED', 'IRT'].forEach(curr => {
+            if (totalSales[curr] !== 0) salesStrs.push(`<div style="font-size:13px; margin-top:3px; direction:ltr; font-weight:bold;">${totalSales[curr].toLocaleString()} ${currFa[curr]||curr}</div>`);
+        });
+        if(salesStrs.length === 0) salesStrs.push(`<div style="font-size:13px; margin-top:3px; font-weight:bold;">0</div>`);
+
+        htmlDash += `<div class="curr-box" style="background:#d1fae5; border-color:#34d399;"><div class="curr-title">سود کل ماه</div>${profitStrs.join('')}</div>`;
+        htmlDash += `<div class="curr-box"><div class="curr-title">ارزش کل خرید مشتریان</div>${salesStrs.join('')}</div>`;
+        htmlDash += `<div class="curr-box"><div class="curr-title">آمار Shipment و CBM</div><div style="font-size:12px; margin-top:5px; font-weight:bold;">تعداد: ${totalShipments} شیپمنت</div><div style="font-size:12px; margin-top:5px; direction:ltr; font-weight:bold;">${totalCbm.toFixed(2)} CBM</div></div>`;
+        htmlDash += `<div class="curr-box"><div class="curr-title">کانتینرها و تناژ</div><div style="font-size:12px; margin-top:5px; direction:ltr; font-weight:bold;">20FT: ${totalCont20} | 40FT: ${totalCont40}</div><div style="font-size:12px; margin-top:5px; direction:ltr; font-weight:bold;">${totalKg.toLocaleString()} KG</div></div>`;
+        
+        reportDash.innerHTML = htmlDash;
+
+        let flatStats = [];
         for (let custId in custStats) {
             let data = custStats[custId];
-            for (let curr in data.sales) {
-                flatSales.push({ name: custId.split('(')[0], count: data.count, val: data.sales[curr], curr: curr });
-            }
+            ['CNY', 'USD', 'AED', 'IRT'].forEach(curr => {
+                if (data.sales[curr] !== 0 || data.profit[curr] !== 0) {
+                    flatStats.push({ 
+                        name: db.customers.find(c=>c.id===custId)?.name || custId.split('(')[0], 
+                        count: data.count, 
+                        cbm: data.cbm,
+                        sales: data.sales[curr], 
+                        profit: data.profit[curr], 
+                        curr: curr 
+                    });
+                }
+            });
         }
-        flatSales.sort((a,b) => b.val - a.val);
+        
+        flatStats.sort((a,b) => b.profit - a.profit);
 
-        let tbody = document.getElementById('rep-customers-tbody'); tbody.innerHTML = '';
-        flatSales.forEach((entry, idx) => {
-            tbody.innerHTML += `<tr><td>${idx+1}</td><td>${entry.name}</td><td>${entry.count}</td><td style="direction:ltr;">${entry.val.toLocaleString()}</td><td>${currFa[entry.curr]||entry.curr}</td></tr>`;
+        let tbody = document.getElementById('rep-customers-tbody'); 
+        tbody.innerHTML = '';
+        flatStats.forEach((entry, idx) => {
+            let pColor = entry.profit > 0 ? '#059669' : (entry.profit < 0 ? '#dc2626' : '#475569');
+            tbody.innerHTML += `<tr>
+                <td>${idx+1}</td>
+                <td>${entry.name}</td>
+                <td>${entry.count}</td>
+                <td style="direction:ltr;">${entry.cbm.toFixed(2)}</td>
+                <td style="direction:ltr;">${entry.sales.toLocaleString()}</td>
+                <td style="direction:ltr; font-weight:bold; color:${pColor};">${(entry.profit>0?'+':'')}${entry.profit.toLocaleString()}</td>
+                <td>${currFa[entry.curr]||entry.curr}</td>
+            </tr>`;
         });
     }
 
