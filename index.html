@@ -857,20 +857,16 @@
 <script>
     const currFa = { CNY: 'یوان', USD: 'دلار', AED: 'درهم', IRT: 'تومان' };
     const SYSTEM_DATE = new Date().toISOString().split('T')[0];
-    document.getElementById('log-date').value = SYSTEM_DATE;
-    document.getElementById('ship-date').value = SYSTEM_DATE;
-    document.getElementById('pur-due').value = SYSTEM_DATE;
-    document.getElementById('prof-log-date').value = SYSTEM_DATE;
 
     let db = { customers: [], journal: [], shipments: [], idCounter: 1, shipmentCounter: 1 };
 
-    function saveToLocal() { localStorage.setItem('atana_erp_v15', JSON.stringify(db)); }
+    function saveToLocal() { localStorage.setItem('atana_erp_v16', JSON.stringify(db)); }
     function loadFromLocal() {
-        let d = localStorage.getItem('atana_erp_v15');
+        let d = localStorage.getItem('atana_erp_v16');
         if (d) {
             db = JSON.parse(d);
         } else {
-            let oldD = localStorage.getItem('atana_erp_v14');
+            let oldD = localStorage.getItem('atana_erp_v15');
             if (oldD) db = JSON.parse(oldD);
         }
         if (!db.shipmentCounter) {
@@ -883,7 +879,6 @@
             });
             db.shipmentCounter = maxAT + 1;
         }
-        
         db.journal.forEach(j => {
             if(j.shipmentRef && !j.relatedShipmentId) j.relatedShipmentId = j.shipmentRef;
         });
@@ -896,6 +891,24 @@
     let currentPurchases = []; 
     let editPurchaseId = null;
     let editingShipmentId = null;
+
+    function navTo(pageId, btnElement) { 
+        document.querySelectorAll('.page').forEach(p => p.classList.remove('active-page')); 
+        document.getElementById(pageId).classList.add('active-page'); 
+        document.querySelectorAll('.menu-btn').forEach(b => b.classList.remove('active')); 
+        btnElement.classList.add('active'); 
+        if(pageId === 'page-customer') renderSidebar('cust'); 
+        if(pageId === 'page-intransit') { 
+            renderSidebar('log'); 
+            if(!editingShipmentId && document.getElementById('ship-code').value==='') { 
+                document.getElementById('ship-code').value = `AT-${String(db.shipmentCounter).padStart(4, '0')}`; 
+            } 
+        } 
+        if(pageId === 'page-archive' || pageId === 'page-report') renderArchiveMonths(); 
+        updateUI(); 
+    }
+
+    window.navTo = navTo;
 
     function syncPhysicalInfo() {
         let method = document.getElementById('ship-transport-method').value;
@@ -919,6 +932,7 @@
         calcTotalForwarder();
         calcTotalShipping();
     }
+    window.syncPhysicalInfo = syncPhysicalInfo;
 
     function addPurchaseItem() {
         let supplierRaw = document.getElementById('pur-supplier').value;
@@ -956,6 +970,7 @@
         document.getElementById('pur-supplier').value = ''; document.getElementById('pur-total').value = ''; document.getElementById('pur-paid').value = ''; document.getElementById('pur-inv').value = '';
         renderPurchasesList();
     }
+    window.addPurchaseItem = addPurchaseItem;
 
     function editPurchaseItem(id) {
         let p = currentPurchases.find(x => x.id === id);
@@ -971,6 +986,7 @@
         saveBtn.innerText = '✅ ثبت تغییرات';
         saveBtn.classList.replace('btn-warning', 'btn-success');
     }
+    window.editPurchaseItem = editPurchaseItem;
 
     function cancelEditPurchase() {
         editPurchaseId = null;
@@ -980,11 +996,13 @@
         saveBtn.classList.replace('btn-success', 'btn-warning');
         document.getElementById('pur-supplier').value = ''; document.getElementById('pur-total').value = ''; document.getElementById('pur-paid').value = ''; document.getElementById('pur-inv').value = '';
     }
+    window.cancelEditPurchase = cancelEditPurchase;
 
     function removePurchaseItem(id) {
         currentPurchases = currentPurchases.filter(p => p.id !== id);
         renderPurchasesList();
     }
+    window.removePurchaseItem = removePurchaseItem;
 
     function renderPurchasesList() {
         const tbody = document.getElementById('pur-list-tbody'); tbody.innerHTML = '';
@@ -1010,6 +1028,7 @@
         document.getElementById('ship-total-cargo').value = totalCargo > 0 ? totalCargo : '';
         calcCommission();
     }
+    window.renderPurchasesList = renderPurchasesList;
 
     function calcCommission() {
         let totalCargo = parseFloat(document.getElementById('ship-total-cargo').value) || 0;
@@ -1022,6 +1041,7 @@
         }
         calcGrandTotal();
     }
+    window.calcCommission = calcCommission;
 
     function calcTotalShipping() {
         let method = document.getElementById('ship-transport-method').value;
@@ -1063,6 +1083,7 @@
         if(document.getElementById('ship-lcl-iran-freight-cny')) document.getElementById('ship-lcl-iran-freight-cny').value = total > 0 ? total : '';
         calcGrandTotal();
     }
+    window.calcTotalShipping = calcTotalShipping;
     
     function calcTotalForwarder() {
         let method = document.getElementById('ship-transport-method').value;
@@ -1102,6 +1123,7 @@
         
         document.getElementById('fwd-total-cost').value = total > 0 ? total : '';
     }
+    window.calcTotalForwarder = calcTotalForwarder;
 
     function calcTotalClearanceIran() {
         let amt = parseFloat(document.getElementById('ship-clearance-amt-iran').value) || 0;
@@ -1110,6 +1132,7 @@
         let total = amt + trans + other;
         document.getElementById('ship-clearance-total-iran').value = total > 0 ? total : '';
     }
+    window.calcTotalClearanceIran = calcTotalClearanceIran;
 
     function calcGrandTotal() {
         let method = document.getElementById('ship-transport-method').value;
@@ -1145,11 +1168,13 @@
             document.getElementById('ship-grand-total').value = total > 0 ? total : '';
         }
     }
+    window.calcGrandTotal = calcGrandTotal;
 
     function toggleTopBar(id) {
         let el = document.getElementById(id);
         el.style.display = el.style.display === 'flex' ? 'none' : 'flex';
     }
+    window.toggleTopBar = toggleTopBar;
     
     function setSidebarTab(tabName, context, element) {
         if (context === 'cust') currentSidebarTab = tabName;
@@ -1160,6 +1185,7 @@
         element.classList.add('active');
         renderSidebar(context);
     }
+    window.setSidebarTab = setSidebarTab;
 
     function getSortedCustomers() { return [...db.customers].sort((a, b) => { return parseInt((a.code||'0').match(/\d+/)?.[0]||0) - parseInt((b.code||'0').match(/\d+/)?.[0]||0); }); }
 
@@ -1203,6 +1229,7 @@
             container.appendChild(div);
         });
     }
+    window.renderSidebar = renderSidebar;
 
     function populateDropdowns() {
         let sortedCust = getSortedCustomers();
@@ -1277,10 +1304,14 @@
             }
         });
     }
+    window.populateDropdowns = populateDropdowns;
 
     function quickAddCustomer() { document.getElementById('new-cust-type').value = 'customer'; openModal('customerModal'); }
     function quickAddSupplier() { document.getElementById('new-cust-type').value = 'supplier'; openModal('customerModal'); }
     function quickAddClearance() { document.getElementById('new-cust-type').value = 'clearance_agent'; openModal('customerModal'); }
+    window.quickAddCustomer = quickAddCustomer;
+    window.quickAddSupplier = quickAddSupplier;
+    window.quickAddClearance = quickAddClearance;
 
     function saveNewCustomer() {
         let fname = document.getElementById('new-cust-fullname').value.trim();
@@ -1314,6 +1345,7 @@
         closeModal('customerModal'); 
         setTimeout(() => { showMsg('موفقیت', 'پرونده با موفقیت ثبت شد.'); }, 100);
     }
+    window.saveNewCustomer = saveNewCustomer;
 
     function openEditCustomerModal() {
         let cust = db.customers.find(c => c.id === activeCustomerId);
@@ -1333,6 +1365,7 @@
         
         openModal('editCustomerModal');
     }
+    window.openEditCustomerModal = openEditCustomerModal;
 
     function saveEditedCustomer() {
         let newName = document.getElementById('edit-cust-fullname').value.trim();
@@ -1371,6 +1404,7 @@
             updateUI();
         }
     }
+    window.saveEditedCustomer = saveEditedCustomer;
 
     function deleteActiveCustomer() {
         if (!activeCustomerId) return;
@@ -1391,6 +1425,7 @@
         };
         openModal('confirmModal');
     }
+    window.deleteActiveCustomer = deleteActiveCustomer;
 
     function openProfileTransaction() {
         document.getElementById('prof-log-date').value = SYSTEM_DATE;
@@ -1400,6 +1435,7 @@
         btn.disabled = false;
         openModal('profileFinModal');
     }
+    window.openProfileTransaction = openProfileTransaction;
 
     function saveProfileTransaction() {
         let btn = document.getElementById('btn-save-trx-direct');
@@ -1424,6 +1460,7 @@
         btn.disabled = false;
         showMsg('موفقیت', 'تراکنش با موفقیت ثبت شد.');
     }
+    window.saveProfileTransaction = saveProfileTransaction;
 
     function addJournalEntry(entryObj = null) {
         let jId = 'J' + (db.idCounter++);
@@ -1467,6 +1504,7 @@
         db.journal.push(entryObj);
         recalcBalances(); saveToLocal(); updateUI();
     }
+    window.addJournalEntry = addJournalEntry;
 
     function editJournalEntry(id) {
         let j = db.journal.find(x => x.id === id);
@@ -1484,6 +1522,7 @@
         document.getElementById('edit-type').value = j.type;
         openModal('editModal');
     }
+    window.editJournalEntry = editJournalEntry;
 
     function saveEdit() {
         let id = document.getElementById('edit-id').value;
@@ -1497,6 +1536,7 @@
         recalcBalances(); saveToLocal(); updateUI(); closeModal('editModal');
         showMsg('موفقیت', 'تراکنش با موفقیت ویرایش شد.');
     }
+    window.saveEdit = saveEdit;
 
     function deleteTransaction(id) {
         let j = db.journal.find(x => x.id === id);
@@ -1514,6 +1554,7 @@
         };
         openModal('confirmModal');
     }
+    window.deleteTransaction = deleteTransaction;
 
     function recalcBalances() {
         db.customers.forEach(c => c.balances = { CNY: 0, USD: 0, AED: 0, IRT: 0 });
@@ -1527,6 +1568,7 @@
             }
         });
     }
+    window.recalcBalances = recalcBalances;
 
     function toggleShipmentFields() {
         let method = document.getElementById('ship-transport-method').value;
@@ -1545,7 +1587,6 @@
 
         // Air Logic
         let airTrans = document.getElementById('air-transport-by').value;
-        let airClear = document.getElementById('air-clearance-by').value;
         
         document.getElementById('air-settings-group').style.display = isAir ? 'grid' : 'none';
         
@@ -1626,6 +1667,7 @@
 
         toggleClearanceFields();
     }
+    window.toggleShipmentFields = toggleShipmentFields;
 
     function toggleClearanceFields() {
         let method = document.getElementById('ship-transport-method').value;
@@ -1669,11 +1711,18 @@
             if (toggleDubai.checked) {
                 secDubai.style.display = 'block'; fieldsDubai.style.display = 'grid'; 
             }
+            toggleIranGroup.style.display = 'none'; secIran.style.display = 'none'; fieldsIran.style.display = 'none';
+            toggleIran.checked = false;
         } 
         else if ((isSeaFCL || method==='land' || method==='train') && dest === 'Iran') {
+            toggleDubaiGroup.style.display = 'none'; secDubai.style.display = 'none'; fieldsDubai.style.display = 'none'; 
+            toggleDubai.checked = false;
+            
             toggleIranGroup.style.display = 'block';
             if (toggleIran.checked) {
                 secIran.style.display = 'block'; fieldsIran.style.display = 'grid';
+            } else {
+                secIran.style.display = 'none'; fieldsIran.style.display = 'none';
             }
         }
         else if (isSeaLCLIran) {
@@ -1688,9 +1737,16 @@
                 document.getElementById('lcl-iran-tarkibi-fields').style.display = 'grid';
             }
         }
+        else { 
+            toggleDubaiGroup.style.display = 'none'; secDubai.style.display = 'none'; fieldsDubai.style.display = 'none'; 
+            toggleDubai.checked = false;
+            toggleIranGroup.style.display = 'none'; secIran.style.display = 'none'; fieldsIran.style.display = 'none';
+            toggleIran.checked = false;
+        }
 
         calcGrandTotal();
     }
+    window.toggleClearanceFields = toggleClearanceFields;
 
     function editShipment(shipId) {
         let ship = db.shipments.find(s => s.id === shipId);
@@ -1813,6 +1869,7 @@
         document.getElementById('btn-cancel-shipment-edit').style.display = 'block';
         navTo('page-intransit', document.querySelectorAll('.menu-btn')[2]);
     }
+    window.editShipment = editShipment;
 
     function cancelShipmentEdit() {
         editingShipmentId = null;
@@ -1839,6 +1896,7 @@
         
         currentPurchases = []; renderPurchasesList(); toggleShipmentFields();
     }
+    window.cancelShipmentEdit = cancelShipmentEdit;
 
     function deleteShipment(shipId) {
         document.getElementById('confirm-title').innerText = 'تاییدیه حذف شیپمنت';
@@ -1857,6 +1915,7 @@
         };
         openModal('confirmModal');
     }
+    window.deleteShipment = deleteShipment;
 
     function registerShipment() {
         let btnSubmit = document.getElementById('btn-submit-shipment');
@@ -2162,6 +2221,7 @@
         let fwdName = line ? db.customers.find(c=>c.id===line)?.name||line : line;
         if(totalForwarderCredit > 0 && !isAirTransByCust) {
             let descFwd = `هزینه حمل برای مشتری ${custName}، تعداد ${repCartons||0} کارتن، حجم ${repCbm||0} CBM، بابت Shipment ${code} ثبت شد.`;
+            if (isAir) descFwd = `بابت حمل هوایی Shipment ${code} مبلغ ${totalForwarderCredit} یوان برای Forwarder ${fwdName.split('(')[0]} ثبت شد.`;
             addJournalEntry({ date, cust: line, desc: descFwd, category: 'finance', type: 'credit', amount: totalForwarderCredit, currency: 'CNY', isSystem: true, relatedShipmentId: code });
         }
 
@@ -2190,6 +2250,7 @@
             navTo('page-active-shipments', document.querySelectorAll('.menu-btn')[3]);
         });
     }
+    window.registerShipment = registerShipment;
 
     function processDelivered(shipId) {
         let ship = db.shipments.find(s => s.id === shipId);
@@ -2199,6 +2260,7 @@
         addJournalEntry({ date: SYSTEM_DATE, cust: ship.cust, desc: `Shipment ${shipId} مربوط به مشتری ${db.customers.find(c=>c.id===ship.cust)?.name || ship.cust} تحویل شد.`, category: 'logistic', type: 'event', amount: 0, currency: 'CNY', isSystem: true, relatedShipmentId: shipId, eventType: 'SHIPMENT_DELIVERED' });
         saveToLocal(); updateUI();
     }
+    window.processDelivered = processDelivered;
     
     function returnDelivered(shipId) {
         document.getElementById('confirm-title').innerText = 'بازگشت به بارهای در حال ارسال';
@@ -2216,6 +2278,7 @@
         };
         openModal('confirmModal');
     }
+    window.returnDelivered = returnDelivered;
 
     function openDestCost(shipId) {
         document.getElementById('dest-cost-ship-id').value = shipId;
@@ -2226,12 +2289,14 @@
         document.getElementById('dest-cost-cny').value = '';
         openModal('destCostModal');
     }
+    window.openDestCost = openDestCost;
 
     function calcDestCost() {
         let amt = parseFloat(document.getElementById('dest-cost-amt').value) || 0;
         let rate = parseFloat(document.getElementById('dest-cost-rate').value) || 0;
         document.getElementById('dest-cost-cny').value = amt * rate;
     }
+    window.calcDestCost = calcDestCost;
 
     function saveDestCost() {
         let shipId = document.getElementById('dest-cost-ship-id').value;
@@ -2248,6 +2313,7 @@
         closeModal('destCostModal'); saveToLocal(); updateUI();
         showMsg('موفقیت', 'هزینه مقصد به بدهی شرکت حمل اضافه شد.');
     }
+    window.saveDestCost = saveDestCost;
 
     function updateAnnualStats() {
         let year = new Date(SYSTEM_DATE).getFullYear();
@@ -2264,6 +2330,7 @@
         document.getElementById('stat-20').innerText = cont20; document.getElementById('stat-40').innerText = cont40;
         document.getElementById('stat-cbm').innerText = lclCbm.toFixed(2); document.getElementById('stat-kg').innerText = weight;
     }
+    window.updateAnnualStats = updateAnnualStats;
 
     function generateMonthlyReport() {
         let m = document.getElementById('report-month').value;
@@ -2422,6 +2489,7 @@
             </tr>`;
         });
     }
+    window.generateMonthlyReport = generateMonthlyReport;
 
     function renderArchiveMonths() {
         const c = document.getElementById('archive-months-container'); c.innerHTML = '';
@@ -2441,6 +2509,7 @@
         document.getElementById('archive-days-container').innerHTML = ''; document.getElementById('archive-data-container').innerHTML = '';
         if(months.length > 0) generateMonthlyReport();
     }
+    window.renderArchiveMonths = renderArchiveMonths;
 
     function renderArchiveDays(month) {
         const c = document.getElementById('archive-days-container'); c.innerHTML = '';
@@ -2454,6 +2523,7 @@
         });
         document.getElementById('archive-data-container').innerHTML = '';
     }
+    window.renderArchiveDays = renderArchiveDays;
 
     function renderArchiveData(date) {
         const c = document.getElementById('archive-data-container');
@@ -2466,6 +2536,7 @@
         });
         c.innerHTML = html + `</tbody></table>`;
     }
+    window.renderArchiveData = renderArchiveData;
 
     function clearFilters(type) {
         if(type === 'act') {
@@ -2478,6 +2549,7 @@
         }
         if(type !== 'rep') updateUI();
     }
+    window.clearFilters = clearFilters;
 
     function getActiveFilters(type) {
         let prefix = type === 'act' ? 'filter-act-' : (type === 'del' ? 'filter-del-' : 'filter-rep-');
@@ -2560,124 +2632,4 @@
                     <td>${lclBtn}</td>
                     <td><button class="btn btn-warning btn-small" onclick="editShipment('${s.id}')">✏️ ویرایش</button></td>
                     <td><button class="btn btn-danger btn-small" onclick="deleteShipment('${s.id}')">✖ حذف</button></td>
-                    <td><button class="btn btn-success btn-small" onclick="processDelivered('${s.id}')">تحویل شد ✔</button></td>
-                </tr>`;
-            } else if (s.status === 'delivered') {
-                if (!applyShipmentFilters(s, delFilters)) return;
-                
-                let valStr = '';
-                if(s.pricingModel === 'total') {
-                    if(s.totalCny>0) valStr += `${s.totalCny} CNY `;
-                    if(s.totalIrt>0) valStr += `${s.totalIrt} IRT`;
-                } else if (s.transportMethod === 'sea' && s.type === 'LCL' && s.dest === 'Iran') {
-                    let y = 0, t = 0;
-                    if(s.lclIranType === 'yekja') {
-                        y = (parseFloat(s.totalCargo)||0) + (parseFloat(s.commVal)||0);
-                        t = parseFloat(s.lclIranTotalIrt)||0;
-                    } else {
-                        y = (parseFloat(s.totalCargo)||0) + (parseFloat(s.commVal)||0) + (parseFloat(s.lclIranFreightCny)||0);
-                        t = parseFloat(s.lclIranClearIrt)||0;
-                    }
-                    if(y>0) valStr += `${y} CNY `;
-                    if(t>0) valStr += `${t} IRT`;
-                } else {
-                    valStr = `${s.grandTotal||0} ${s.grandTotalCurr||'CNY'}`;
-                }
-                
-                tbDel.innerHTML += `<tr>
-                    <td>${cName}</td>
-                    <td style="direction:ltr;">${s.id}</td>
-                    <td>${fwdName}</td>
-                    <td>${cCartons}</td>
-                    <td style="direction:ltr;">${cCbm}</td>
-                    <td style="direction:ltr;">${valStr}</td>
-                    <td>${s.deliveredDate}</td>
-                    <td><button class="btn btn-warning btn-small" onclick="returnDelivered('${s.id}')">بازگشت به بارهای در حال ارسال</button></td>
-                </tr>`;
-            }
-        });
-
-        // Update Ledger and Global
-        let global = { CNY: 0, USD: 0, AED: 0, IRT: 0 };
-        db.customers.forEach(c => { global.CNY += c.balances.CNY; global.USD += c.balances.USD; global.AED += c.balances.AED; global.IRT += c.balances.IRT; });
-        ['cny', 'usd', 'aed', 'irt'].forEach(curr => {
-            let val = global[curr.toUpperCase()]; let el = document.getElementById(`glb-${curr}`);
-            el.innerText = (val > 0 ? '+' : '') + val.toLocaleString(); el.style.color = val > 0 ? '#86efac' : (val < 0 ? '#fca5a5' : 'white');
-        });
-
-        const jTbody = document.getElementById('journal-tbody'); jTbody.innerHTML = '';
-        [...db.journal].reverse().forEach(j => {
-            jTbody.innerHTML += `<tr><td>${j.date}</td><td>${db.customers.find(c=>c.id===j.cust)?.name||j.cust}</td><td><span class="badge badge-safe">${j.category === 'finance' ? 'مالی' : 'لجستیک'}</span></td><td>${j.desc}</td><td class="text-debit">${j.type === 'debit'?j.amount:''}</td><td class="text-credit">${j.type === 'credit'?j.amount:''}</td></tr>`;
-        });
-
-        if (activeCustomerId) {
-            const custObj = db.customers.find(c => c.id === activeCustomerId);
-            if (custObj) {
-                document.getElementById('active-cust-title').innerText = `پرونده: ${custObj.name}`;
-                document.getElementById('btn-add-trx-cust').style.display = 'block';
-                document.getElementById('btn-edit-cust').style.display = 'block'; document.getElementById('btn-delete-cust').style.display = 'block';
-                document.getElementById('cust-currency-dash').style.display = 'grid'; document.getElementById('cust-tabs-card').style.display = 'block';
-
-                ['cny', 'usd', 'aed', 'irt'].forEach(curr => {
-                    let val = custObj.balances[curr.toUpperCase()]; let el = document.getElementById(`bal-${curr}`);
-                    el.innerText = (val > 0 ? '+' : '') + val.toLocaleString(); 
-                    el.style.color = val > 0 ? '#dc2626' : (val < 0 ? '#059669' : '#1f2937'); 
-                });
-
-                let thRow = document.getElementById('ledger-th-row');
-                if (custObj.type === 'supplier') {
-                    thRow.innerHTML = `<th>تاریخ</th><th>شرح</th><th>بدهکار (+)</th><th>بستانکار (-)</th><th>مانده</th><th>موعد پرداخت</th><th>عملیات</th>`;
-                } else {
-                    thRow.innerHTML = `<th>تاریخ</th><th>شرح</th><th>بدهکار (+)</th><th>بستانکار (-)</th><th>مانده</th><th>عملیات</th>`;
-                }
-
-                const clTbody = document.getElementById('cust-ledger-tbody'); clTbody.innerHTML = '';
-                let runningBal = { CNY:0, USD:0, AED:0, IRT:0 };
-                let rowsHtml = [];
-                let entries = db.journal.filter(j => j.cust === activeCustomerId).sort((a,b) => new Date(a.date) - new Date(b.date));
-                
-                entries.forEach(j => {
-                    let balStr = '-';
-                    if (j.category === 'finance') {
-                        if (j.type === 'debit') runningBal[j.currency] += j.amount;
-                        if (j.type === 'credit') runningBal[j.currency] -= j.amount;
-                        let balVal = runningBal[j.currency];
-                        balStr = `<span style="direction:ltr; font-weight:bold; color:${balVal > 0 ? '#dc2626' : '#059669'}">${(balVal>0?'+':'')}${balVal.toLocaleString()} ${currFa[j.currency]}</span>`;
-                    }
-                    
-                    let debStr = j.type === 'debit' && j.amount > 0 ? j.amount.toLocaleString() : '-';
-                    let credStr = j.type === 'credit' && j.amount > 0 ? j.amount.toLocaleString() : '-';
-                    let descStr = j.category === 'logistic' ? `<span class="badge badge-safe">رویداد</span> ${j.desc}` : j.desc;
-                    let delBtn = `<button class="btn btn-small btn-danger" onclick="deleteTransaction('${j.id}')">✖</button>`;
-                    
-                    let extraCol = custObj.type === 'supplier' ? `<td>${j.dueDate || '-'}</td>` : '';
-
-                    rowsHtml.push(`<tr><td>${j.date}</td><td style="font-size:11px;">${descStr}</td><td class="text-debit">${debStr}</td><td class="text-credit">${credStr}</td><td>${balStr}</td>${extraCol}<td><button class="btn btn-small btn-warning" onclick="editJournalEntry('${j.id}')">✏️</button> ${delBtn}</td></tr>`);
-                });
-                
-                rowsHtml.reverse().forEach(row => clTbody.innerHTML += row);
-            }
-        }
-    }
-
-    function toggleLogFields() { const isFin = document.getElementById('log-category') && document.getElementById('log-category').value === 'finance'; document.querySelectorAll('.fin-field').forEach(el => el.style.display = isFin ? 'flex' : 'none'); document.querySelectorAll('.log-field').forEach(el => el.style.display = !isFin ? 'flex' : 'none'); populateDropdowns(); }
-    function openModal(id) { document.getElementById(id).style.display = 'flex'; }
-    function closeModal(id) { document.getElementById(id).style.display = 'none'; }
-    function navTo(pageId, btnElement) { document.querySelectorAll('.page').forEach(p => p.classList.remove('active-page')); document.getElementById(pageId).classList.add('active-page'); document.querySelectorAll('.menu-btn').forEach(b => b.classList.remove('active')); btnElement.classList.add('active'); if(pageId === 'page-customer') renderSidebar('cust'); if(pageId === 'page-intransit') { renderSidebar('log'); if(!editingShipmentId && document.getElementById('ship-code').value==='') { document.getElementById('ship-code').value = `AT-${String(db.shipmentCounter).padStart(4, '0')}`; } } if(pageId === 'page-archive' || pageId === 'page-report') renderArchiveMonths(); updateUI(); }
-    function switchCustTab(tabId, btnElement) { document.querySelectorAll('.cust-tab').forEach(t => t.style.display = 'none'); document.getElementById(tabId).style.display = 'block'; document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active')); btnElement.classList.add('active'); }
-    function showMsg(title, body, callback=null) { 
-        document.getElementById('msg-title').innerText = title; 
-        document.getElementById('msg-body').innerText = body; 
-        let btn = document.getElementById('msg-ok-btn');
-        btn.onclick = () => { closeModal('msgModal'); if(callback) callback(); };
-        openModal('msgModal'); 
-    }
-
-    window.onload = function() {
-        loadFromLocal();
-        if(db.customers.length > 0) activeCustomerId = getSortedCustomers()[0].id;
-        populateDropdowns(); renderSidebar('cust'); renderSidebar('log'); toggleShipmentFields(); updateUI(); toggleLogFields(); updateAnnualStats();
-    };
-</script>
-</body>
-</html>
+                    <td><button class="btn btn-success btn-small" onclick="process
