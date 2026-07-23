@@ -2667,4 +2667,17 @@
     function switchCustTab(tabId, btnElement) { document.querySelectorAll('.cust-tab').forEach(t => t.style.display = 'none'); document.getElementById(tabId).style.display = 'block'; document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active')); btnElement.classList.add('active'); }
     function showMsg(title, body, callback=null) { 
         document.getElementById('msg-title').innerText = title; 
-        document.getElementById('msg-body').innerText = body;
+        document.getElementById('msg-body').innerText = body; 
+        let btn = document.getElementById('msg-ok-btn');
+        btn.onclick = () => { closeModal('msgModal'); if(callback) callback(); };
+        openModal('msgModal'); 
+    }
+
+    window.onload = function() {
+        loadFromLocal();
+        if(db.customers.length > 0) activeCustomerId = getSortedCustomers()[0].id;
+        populateDropdowns(); renderSidebar('cust'); renderSidebar('log'); toggleShipmentFields(); updateUI(); toggleLogFields(); updateAnnualStats();
+    };
+</script>
+</body>
+</html>
