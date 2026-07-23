@@ -20,6 +20,7 @@
 
         body { font-family: 'Vazirmatn', Tahoma, sans-serif; background-color: var(--bg); margin: 0; color: #1f2937; font-size: 13px; }
 
+        /* Navbar & Global Balance */
         .navbar { background-color: var(--primary); color: white; padding: 10px 20px; display: flex; justify-content: space-between; align-items: center; }
         
         .top-bar-hidden { background: #0f172a; color: white; padding: 10px 20px; display: none; gap: 20px; font-size: 13px; align-items: center; overflow-x: auto; border-bottom: 2px solid #3b82f6; }
@@ -34,6 +35,7 @@
         .page { display: none; }
         .page.active-page { display: block; }
 
+        /* Cards & Form Elements */
         .card { background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 20px; margin-bottom: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
         .card-header { font-size: 16px; font-weight: bold; color: var(--primary); margin-bottom: 15px; border-bottom: 1px solid var(--border); padding-bottom: 10px;}
         
@@ -65,10 +67,12 @@
         .text-debit { color: var(--danger); font-weight: bold; direction: ltr;}
         .text-credit { color: var(--success); font-weight: bold; direction: ltr;}
 
+        /* Sidebar Layout */
         .layout-flex { display: flex; gap: 15px; align-items: flex-start; }
         .sidebar { width: 280px; background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 15px; flex-shrink: 0; transition: 0.3s; box-shadow: 0 1px 3px rgba(0,0,0,0.05);}
         .main-content { flex: 1; min-width: 0; }
         
+        /* Sidebar Tabs */
         .sb-tabs { display: flex; border-bottom: 1px solid #cbd5e1; margin-bottom: 10px; }
         .sb-tab { flex: 1; text-align: center; padding: 5px; cursor: pointer; font-size: 11px; font-weight: bold; border-bottom: 2px solid transparent; color: #64748b; }
         .sb-tab.active { border-color: var(--primary); color: var(--primary); }
@@ -247,6 +251,7 @@
                                     <th>بدهکار (+)</th>
                                     <th>بستانکار (-)</th>
                                     <th>مانده</th>
+                                    <!-- موعد پرداخت برای تامین کنندگان -->
                                     <th>عملیات</th>
                                 </tr>
                             </thead>
@@ -859,13 +864,13 @@
 
     let db = { customers: [], journal: [], shipments: [], idCounter: 1, shipmentCounter: 1 };
 
-    function saveToLocal() { localStorage.setItem('atana_erp_v14', JSON.stringify(db)); }
+    function saveToLocal() { localStorage.setItem('atana_erp_v15', JSON.stringify(db)); }
     function loadFromLocal() {
-        let d = localStorage.getItem('atana_erp_v14');
+        let d = localStorage.getItem('atana_erp_v15');
         if (d) {
             db = JSON.parse(d);
         } else {
-            let oldD = localStorage.getItem('atana_erp_v13');
+            let oldD = localStorage.getItem('atana_erp_v14');
             if (oldD) db = JSON.parse(oldD);
         }
         if (!db.shipmentCounter) {
@@ -2148,7 +2153,7 @@
             if (airClearByUs) {
                 let amt = parseFloat(shipObj.airClearAmt) || 0;
                 let c = shipObj.airClearCurr;
-                if(amt > 0) addJournalEntry({ date, cust, desc: `مشتری ${custName} بابت ترخیص Shipment ${code} به مبلغ ${amt} ${currFa[c]} بدهکار شد.`, category: 'finance', type: 'debit', amount: amt, currency: c, isSystem: true, relatedShipmentId: code });
+                if(amt > 0) addJournalEntry({ date, cust, desc: `بابت ترخیص Shipment ${code}، تعداد ${repCartons||0} کارتن، حجم ${repCbm||0} CBM، به ارزش ${amt} ${currFa[c]} بدهکار شد.`, category: 'finance', type: 'debit', amount: amt, currency: c, isSystem: true, relatedShipmentId: code });
             }
         } else {
             if(grandTotal > 0) addJournalEntry({ date, cust, desc: `بابت Shipment ${code}، تعداد ${repCartons||0} کارتن، حجم ${repCbm||0} CBM، به ارزش ${grandTotal} ${currFa[grandCurr]||grandCurr} بدهکار شد.`, category: 'finance', type: 'debit', amount: grandTotal, currency: grandCurr, isSystem: true, relatedShipmentId: code });
@@ -2157,7 +2162,6 @@
         let fwdName = line ? db.customers.find(c=>c.id===line)?.name||line : line;
         if(totalForwarderCredit > 0 && !isAirTransByCust) {
             let descFwd = `هزینه حمل برای مشتری ${custName}، تعداد ${repCartons||0} کارتن، حجم ${repCbm||0} CBM، بابت Shipment ${code} ثبت شد.`;
-            if (isAir) descFwd = `بابت حمل هوایی Shipment ${code} مبلغ ${totalForwarderCredit} یوان برای Forwarder ${fwdName.split('(')[0]} ثبت شد.`;
             addJournalEntry({ date, cust: line, desc: descFwd, category: 'finance', type: 'credit', amount: totalForwarderCredit, currency: 'CNY', isSystem: true, relatedShipmentId: code });
         }
 
@@ -2173,7 +2177,7 @@
         
         if (clearIranChecked && clearTotalIran > 0) {
             let aIranName = db.customers.find(c=>c.id===clearAgentIran)?.name || clearAgentIran;
-            if(!isSeaLclIran) addJournalEntry({ date, cust, desc: `بابت ترخیص Shipment ${code} مبلغ ${clearTotalIran} تومان بدهکار شد.`, category: 'finance', type: 'debit', amount: clearTotalIran, currency: 'IRT', isSystem: true, relatedShipmentId: code });
+            if(!isSeaLclIran) addJournalEntry({ date, cust, desc: `بابت ترخیص Shipment ${code}، تعداد ${repCartons||0} کارتن، حجم ${repCbm||0} CBM، به ارزش ${clearTotalIran} تومان بدهکار شد.`, category: 'finance', type: 'debit', amount: clearTotalIran, currency: 'IRT', isSystem: true, relatedShipmentId: code });
             addJournalEntry({ date, cust: clearAgentIran, desc: `هزینه ترخیص Shipment ${code} مربوط به مشتری ${custName} به مبلغ ${clearTotalIran} تومان ثبت شد.`, category: 'finance', type: 'credit', amount: clearTotalIran, currency: 'IRT', isSystem: true, relatedShipmentId: code });
         }
 
@@ -2529,7 +2533,7 @@
             if (s.status === 'active') {
                 if (!applyShipmentFilters(s, actFilters)) return;
 
-                let limit = 30;
+                let limit = 30; // default
                 if (s.dest === 'Iran') { limit = (s.transportMethod === 'sea' && s.type === 'LCL') || s.type === 'General' ? 75 : 45; }
                 else if (s.dest === 'Dubai') { limit = 30; }
 
@@ -2593,6 +2597,7 @@
             }
         });
 
+        // Update Ledger and Global
         let global = { CNY: 0, USD: 0, AED: 0, IRT: 0 };
         db.customers.forEach(c => { global.CNY += c.balances.CNY; global.USD += c.balances.USD; global.AED += c.balances.AED; global.IRT += c.balances.IRT; });
         ['cny', 'usd', 'aed', 'irt'].forEach(curr => {
@@ -2610,7 +2615,7 @@
             if (custObj) {
                 document.getElementById('active-cust-title').innerText = `پرونده: ${custObj.name}`;
                 document.getElementById('btn-add-trx-cust').style.display = 'block';
-                document.getElementById('btn-edit-cust').style.display = 'block';
+                document.getElementById('btn-edit-cust').style.display = 'block'; document.getElementById('btn-delete-cust').style.display = 'block';
                 document.getElementById('cust-currency-dash').style.display = 'grid'; document.getElementById('cust-tabs-card').style.display = 'block';
 
                 ['cny', 'usd', 'aed', 'irt'].forEach(curr => {
@@ -2662,13 +2667,4 @@
     function switchCustTab(tabId, btnElement) { document.querySelectorAll('.cust-tab').forEach(t => t.style.display = 'none'); document.getElementById(tabId).style.display = 'block'; document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active')); btnElement.classList.add('active'); }
     function showMsg(title, body, callback=null) { 
         document.getElementById('msg-title').innerText = title; 
-        document.getElementById('msg-body').innerText = body; 
-        let btn = document.getElementById('msg-ok-btn');
-        btn.onclick = () => { closeModal('msgModal'); if(callback) callback(); };
-        openModal('msgModal'); 
-    }
-
-    window.onload = function() {
-        loadFromLocal();
-        if(db.customers.length > 0) activeCustomerId = getSortedCustomers()[0].id;
-        populateDropdowns(); renderSidebar('cust'); renderSidebar('log'); toggleShipmentFields(); updateUI(); toggleLogFields(); updateAnnualStats();
+        document.getElementById('msg-body').innerText = body;
