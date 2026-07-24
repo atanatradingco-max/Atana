@@ -313,6 +313,16 @@
                         <div class="form-group"><label>مارک شیپمنت</label><input type="text" id="ship-mark"></div>
                     </div>
 
+                    <!-- Air Settings Toggle -->
+                    <div id="air-settings-group" class="grid-6" style="display:none; background:#f0f9ff; padding:10px; border-radius:5px; margin-top:10px;">
+                        <div class="form-group"><label>هزینه و انجام حمل به عهده چه کسی است؟</label>
+                            <select id="air-transport-by" onchange="toggleShipmentFields()"><option value="us">شرکت ما</option><option value="cust">مشتری</option></select>
+                        </div>
+                        <div class="form-group"><label>ترخیص به عهده چه کسی است؟</label>
+                            <select id="air-clearance-by" onchange="toggleShipmentFields()"><option value="us">شرکت ما</option><option value="cust">مشتری</option></select>
+                        </div>
+                    </div>
+
                     <!-- Forwarder Costs -->
                     <div id="forwarder-main-section">
                         <div class="section-title">🚢 خرید حمل و نقل (بدهی به فورواردر)</div>
@@ -323,7 +333,7 @@
                             </div>
                         </div>
                         
-                        <!-- General / LCL Forwarder -->
+                        <!-- General / Sea LCL Forwarder -->
                         <div id="fwd-lcl-fields" class="grid-8" style="margin-top:10px;">
                             <div class="form-group"><label>حجم (CBM)</label><input type="number" id="fwd-cbm" oninput="syncPhysicalInfo()"></div>
                             <div class="form-group"><label>تعداد کارتن</label><input type="number" id="fwd-cartons" oninput="syncPhysicalInfo()"></div>
@@ -334,7 +344,7 @@
                             <div class="form-group"><label>لیفتراک چین</label><input type="number" id="fwd-cost-fork" oninput="calcTotalForwarder()"></div>
                         </div>
 
-                        <!-- FCL Forwarder -->
+                        <!-- FCL / Land / Air(Us) Forwarder -->
                         <div id="fwd-fcl-fields" class="grid-responsive" style="display:none; margin-top:10px;">
                             <div class="form-group" id="grp-fwd-fcl-cost">
                                 <label id="lbl-fwd-main-cost">هزینه کانتینر</label>
@@ -344,22 +354,27 @@
                                 </div>
                             </div>
                             <div class="form-group" id="fwd-usd-rate-grp" style="display:none;"><label>نرخ تبدیل USD به CNY</label><input type="number" id="fwd-fcl-usd-rate" oninput="calcTotalForwarder()"></div>
+                            <div class="form-group" id="grp-fwd-air-freight" style="display:none;"><label>مبلغ کل حمل (یوان)</label><input type="number" id="fwd-air-freight" oninput="calcTotalForwarder()"></div>
                             <div class="form-group"><label>هزینه داخلی چین</label><input type="number" id="fwd-fcl-int" oninput="calcTotalForwarder()"></div>
                             <div class="form-group" id="fwd-fcl-labor-grp"><label>هزینه کارگر</label><input type="number" id="fwd-fcl-labor" oninput="calcTotalForwarder()"></div>
                             <div class="form-group"><label>هزینه بسته‌بندی</label><input type="number" id="fwd-fcl-pack" oninput="calcTotalForwarder()"></div>
                             <div class="form-group" id="fwd-fcl-forklift-grp"><label>هزینه لیفتراک</label><input type="number" id="fwd-fcl-forklift" oninput="calcTotalForwarder()"></div>
                             <div class="form-group" id="fwd-fcl-wh-grp"><label>هزینه انبارداری</label><input type="number" id="fwd-fcl-wh" oninput="calcTotalForwarder()"></div>
+                            <div class="form-group" id="fwd-fcl-zirmizi-grp"><label>زیرمیزی</label><input type="number" id="fwd-fcl-zirmizi" oninput="calcTotalForwarder()"></div>
                             <div class="form-group" id="fwd-fcl-telex-grp"><label>هزینه Telex</label><input type="number" id="fwd-fcl-telex" oninput="calcTotalForwarder()"></div>
+                            <div class="form-group" id="fwd-fcl-insure-grp"><label>بیمه</label><input type="number" id="fwd-fcl-insure" oninput="calcTotalForwarder()"></div>
                             <div class="form-group"><label>تعداد کارتن</label><input type="number" id="fwd-fcl-cartons" oninput="syncPhysicalInfo()"></div>
+                            <div class="form-group" id="fwd-fcl-vol-grp"><label>حجم (CBM)</label><input type="number" id="fwd-fcl-vol" oninput="syncPhysicalInfo()"></div>
                             <div class="form-group" id="fwd-fcl-net-grp"><label>وزن خالص</label><input type="number" id="fwd-fcl-net" oninput="syncPhysicalInfo()"></div>
                             <div class="form-group"><label>وزن ناخالص / کل</label><input type="number" id="fwd-fcl-gross" oninput="syncPhysicalInfo()"></div>
                             <div class="form-group" id="fwd-fcl-other-grp"><label>سایر هزینه‌ها</label><input type="number" id="fwd-fcl-other" oninput="calcTotalForwarder()"></div>
                             <div class="form-group" id="fwd-fcl-other-desc-grp" style="grid-column: span 2;"><label>شرح سایر هزینه‌ها</label><input type="text" id="fwd-fcl-other-desc"></div>
+                            <div class="form-group" style="grid-column: 1 / -1;"><label>توضیحات</label><input type="text" id="fwd-fcl-desc"></div>
                         </div>
 
                         <div class="grid-6" style="margin-top:10px;">
                             <div class="form-group" style="grid-column: span 6;">
-                                <label style="color:#b45309; font-weight:bold;">مجموع بدهی شما به فورواردری (یوان):</label>
+                                <label style="color:#b45309; font-weight:bold;">مجموع بدهی شما به فورواردری بابت این بار (یوان):</label>
                                 <input type="number" id="fwd-total-cost" disabled style="background:#fef3c7; color:#b45309; font-weight:bold; font-size:15px; text-align:center;">
                             </div>
                         </div>
@@ -367,6 +382,16 @@
 
                     <!-- Customer Sale Prices -->
                     <div class="section-title">⚖️ اطلاعات فیزیکی و فروش به مشتری</div>
+                    <div class="grid-6" id="pricing-model-container">
+                        <div class="form-group">
+                            <label>مدل قیمت‌گذاری مشتری</label>
+                            <select id="ship-pricing-model" onchange="toggleShipmentFields()">
+                                <option value="detailed">هزینه‌ها به‌صورت تفکیکی</option>
+                                <option value="total">قیمت نهایی تحویل صفر تا صد</option>
+                            </select>
+                        </div>
+                    </div>
+
                     <div id="pricing-detailed-section">
                         <!-- General / LCL Customer -->
                         <div id="cust-lcl-fields" class="grid-8" style="margin-top:10px;">
@@ -380,7 +405,7 @@
                             <div class="form-group"><label>8. لیفتراک</label><input type="number" id="ship-cost-fork" oninput="calcTotalShipping()"></div>
                         </div>
 
-                        <!-- FCL Customer -->
+                        <!-- FCL / Land / Air(Us) Customer -->
                         <div id="cust-fcl-fields" class="grid-responsive" style="display:none; margin-top:10px;">
                             <div class="form-group" id="grp-ship-fcl-cost">
                                 <label id="lbl-ship-main-cost">هزینه کانتینر</label>
@@ -390,17 +415,22 @@
                                 </div>
                             </div>
                             <div class="form-group" id="ship-usd-rate-grp" style="display:none;"><label>نرخ تبدیل USD به CNY</label><input type="number" id="ship-fcl-usd-rate" oninput="calcTotalShipping()"></div>
+                            <div class="form-group" id="grp-ship-air-freight" style="display:none;"><label>مبلغ کل حمل مشتری (یوان)</label><input type="number" id="ship-air-freight" oninput="calcTotalShipping()"></div>
                             <div class="form-group"><label>هزینه داخلی چین</label><input type="number" id="ship-fcl-int" oninput="calcTotalShipping()"></div>
                             <div class="form-group" id="ship-fcl-labor-grp"><label>هزینه کارگر</label><input type="number" id="ship-fcl-labor" oninput="calcTotalShipping()"></div>
                             <div class="form-group"><label>هزینه بسته‌بندی</label><input type="number" id="ship-fcl-pack" oninput="calcTotalShipping()"></div>
                             <div class="form-group" id="ship-fcl-forklift-grp"><label>هزینه لیفتراک</label><input type="number" id="ship-fcl-forklift" oninput="calcTotalShipping()"></div>
                             <div class="form-group" id="ship-fcl-wh-grp"><label>هزینه انبارداری</label><input type="number" id="ship-fcl-wh" oninput="calcTotalShipping()"></div>
+                            <div class="form-group" id="ship-fcl-zirmizi-grp"><label>زیرمیزی</label><input type="number" id="ship-fcl-zirmizi" oninput="calcTotalShipping()"></div>
                             <div class="form-group" id="ship-fcl-telex-grp"><label>هزینه Telex</label><input type="number" id="ship-fcl-telex" oninput="calcTotalShipping()"></div>
+                            <div class="form-group" id="ship-fcl-insure-grp"><label>بیمه</label><input type="number" id="ship-fcl-insure" oninput="calcTotalShipping()"></div>
                             <div class="form-group"><label>تعداد کارتن</label><input type="number" id="ship-fcl-cartons"></div>
+                            <div class="form-group" id="ship-fcl-vol-grp"><label>حجم (CBM)</label><input type="number" id="ship-fcl-vol"></div>
                             <div class="form-group" id="ship-fcl-net-grp"><label>وزن خالص</label><input type="number" id="ship-fcl-net"></div>
                             <div class="form-group"><label>وزن ناخالص / کل</label><input type="number" id="ship-fcl-gross"></div>
                             <div class="form-group" id="ship-fcl-other-grp"><label>سایر هزینه‌ها</label><input type="number" id="ship-fcl-other" oninput="calcTotalShipping()"></div>
                             <div class="form-group" id="ship-fcl-other-desc-grp" style="grid-column: span 2;"><label>شرح سایر هزینه‌ها</label><input type="text" id="ship-fcl-other-desc"></div>
+                            <div class="form-group" style="grid-column: 1 / -1;"><label>توضیحات</label><input type="text" id="ship-fcl-desc"></div>
                         </div>
 
                         <div class="grid-6" id="grp-sum-ship-cost-main" style="margin-top:10px;">
@@ -408,6 +438,36 @@
                                 <label style="color:#059669; font-weight:bold;">مجموع کل هزینه ارسال مشتری (یوان):</label>
                                 <input type="number" id="ship-total-shipping" disabled style="background:#d1fae5; color:#065f46; font-weight:bold; font-size:15px; text-align:center;">
                             </div>
+                        </div>
+                    </div>
+
+                    <!-- Pricing Total Section (0 to 100) -->
+                    <div id="pricing-total-section" style="display:none; background:#f0fdf4; padding:15px; border:1px solid #86efac; border-radius:5px; margin-top:10px;">
+                        <div class="grid-6">
+                            <div class="form-group"><label>نوع تحویل</label>
+                                <select id="ship-total-delivery-type"><option value="full">تحویل کامل</option><option value="combo">تحویل ترکیبی</option></select>
+                            </div>
+                            <div class="form-group"><label>محل تحویل بار</label><input type="text" id="ship-total-delivery-loc"></div>
+                            <div class="form-group"><label>مبلغ توافق‌شده (یوان)</label><input type="number" id="ship-total-cny" oninput="calcGrandTotal()"></div>
+                            <div class="form-group"><label>مبلغ توافق‌شده (تومان)</label><input type="number" id="ship-total-irt" oninput="calcGrandTotal()"></div>
+                            <div class="form-group" style="grid-column: span 2;"><label>توضیحات قرارداد</label><input type="text" id="ship-total-desc"></div>
+                        </div>
+                    </div>
+
+                    <!-- Sea LCL Iran Clearance Options -->
+                    <div id="clearance-lcl-iran-toggle-section" class="form-group" style="display:none; margin-top: 15px; background:#e0f2fe; padding:10px; border-radius:5px;">
+                        <label style="color:#1e40af;">نوع ترخیص در ایران (LCL)</label>
+                        <select id="ship-lcl-iran-clearance-type" onchange="toggleClearanceFields()">
+                            <option value="yekja">ترخیص یکجا</option>
+                            <option value="tarkibi">ترخیص ترکیبی</option>
+                        </select>
+                        
+                        <div id="lcl-iran-yekja-fields" class="grid-6" style="margin-top:10px;">
+                            <div class="form-group"><label>قیمت کل ترخیص و تحویل به مشتری (تومان)</label><input type="number" id="ship-lcl-iran-total-irt" oninput="calcGrandTotal()"></div>
+                        </div>
+                        <div id="lcl-iran-tarkibi-fields" class="grid-6" style="display:none; margin-top:10px;">
+                            <div class="form-group"><label>قیمت کل حمل به یوان</label><input type="number" id="ship-lcl-iran-freight-cny" oninput="calcGrandTotal()"></div>
+                            <div class="form-group"><label>قیمت کل ترخیص به تومان</label><input type="number" id="ship-lcl-iran-clear-irt" oninput="calcGrandTotal()"></div>
                         </div>
                     </div>
 
@@ -423,10 +483,12 @@
                     <div id="clearance-fields" class="grid-6" style="display:none; background:#fef3c7; padding:10px; border-radius:5px;">
                         <div class="form-group">
                             <label>ترخیص‌کار</label>
-                            <input list="ship-clearance-agent-list" id="ship-clearance-agent" placeholder="جستجو با نام یا کد...">
+                            <input list="ship-clearance-agent-list" id="ship-clearance-agent" placeholder="جستجو با نام، کد یا شماره مغازه...">
                             <datalist id="ship-clearance-agent-list"></datalist>
                         </div>
                         <div class="form-group"><label>مبلغ ترخیص (AED)</label><input type="number" id="ship-clearance-amt"></div>
+                        <div class="form-group"><label>سایر هزینه‌ها (AED)</label><input type="number" id="ship-clearance-other-dubai"></div>
+                        <div class="form-group" style="grid-column: span 3;"><label>شرح سایر هزینه‌ها</label><input type="text" id="ship-clearance-other-desc-dubai"></div>
                     </div>
 
                     <!-- FCL Iran Clearance Checkbox -->
@@ -437,6 +499,7 @@
                         </label>
                     </div>
 
+                    <!-- FCL Iran Clearance Fields -->
                     <div id="clearance-iran-section" class="section-title" style="display:none; color: #1e40af;">🛂 جزئیات ترخیص ایران (FCL)</div>
                     <div id="clearance-iran-fields" class="grid-responsive" style="display:none; background:#e0f2fe; padding:10px; border-radius:5px;">
                         <div class="form-group">
@@ -451,6 +514,14 @@
                         <div class="form-group" style="grid-column: 1 / -1;">
                             <label style="color:#0369a1; font-weight:bold;">جمع کل هزینه ترخیص (تومان):</label>
                             <input type="number" id="ship-clearance-total-iran" disabled style="background:#bae6fd; color:#0369a1; font-weight:bold; font-size:15px; text-align:center;">
+                        </div>
+                    </div>
+
+                    <!-- Air Clearance Fields -->
+                    <div id="air-clearance-section" style="display:none; background:#e0f2fe; padding:10px; border-radius:5px; margin-top:10px;">
+                        <div class="grid-6">
+                            <div class="form-group"><label>مبلغ کل ترخیص</label><input type="number" id="air-clearance-amt" oninput="calcGrandTotal()"></div>
+                            <div class="form-group"><label>ارز مبلغ ترخیص</label><select id="air-clearance-curr" onchange="calcGrandTotal()"><option value="CNY">یوان (CNY)</option><option value="IRT">تومان (IRT)</option></select></div>
                         </div>
                     </div>
 
@@ -502,6 +573,10 @@
                                     <option value="AED">AED</option>
                                 </select>
                             </div>
+                        </div>
+                        <div class="form-group" style="grid-column: span 2; display:none;" id="grand-total-irt-group">
+                            <label style="color:#dc2626; font-weight:bold; font-size:14px;">بدهی مشتری به تومان:</label>
+                            <input type="number" id="ship-grand-total-irt" disabled style="background:#fee2e2; color:#dc2626; font-weight:bold; font-size:18px; text-align:center; padding:12px; border:1px solid #fca5a5;">
                         </div>
                     </div>
 
@@ -732,6 +807,26 @@
         <div class="modal-actions">
             <button class="btn btn-outline" onclick="closeModal('editModal')">انصراف</button>
             <button class="btn btn-warning" onclick="saveEdit()">ذخیره</button>
+        </div>
+    </div>
+</div>
+
+<div class="modal-overlay" id="editInitBalModal">
+    <div class="modal">
+        <div class="modal-header">✏️ ویرایش تراز اولیه چندارزی</div>
+        <input type="hidden" id="edit-init-cust-id">
+        <div style="background:#f1f5f9; padding:10px; border-radius:5px; margin-bottom:10px;">
+            <label style="font-weight:bold; font-size:11px; color:#1e3a8a;">تراز اولیه (اعداد مثبت = بدهکار به ما، اعداد منفی = بستانکار)</label>
+            <div class="grid-4" style="margin-top:5px;">
+                <div class="form-group"><input type="number" id="edit-init-bal-cny" placeholder="یوان (CNY)"></div>
+                <div class="form-group"><input type="number" id="edit-init-bal-usd" placeholder="دلار (USD)"></div>
+                <div class="form-group"><input type="number" id="edit-init-bal-aed" placeholder="درهم (AED)"></div>
+                <div class="form-group"><input type="number" id="edit-init-bal-irt" placeholder="تومان (IRT)"></div>
+            </div>
+        </div>
+        <div class="modal-actions">
+            <button class="btn btn-outline" onclick="closeModal('editInitBalModal')">انصراف</button>
+            <button class="btn btn-warning" onclick="saveInitBalEdit()">ذخیره تغییرات</button>
         </div>
     </div>
 </div>
@@ -1107,18 +1202,23 @@
             });
         }
 
-        ['ship-line', 'ship-clearance-agent', 'ship-clearance-agent-iran'].forEach(id => {
+        ['ship-clearance-agent', 'ship-clearance-agent-iran'].forEach(id => {
             const el = document.getElementById(id);
             if(el) {
                 let v = el.value; el.innerHTML = '<option value="">-- انتخاب کنید --</option>';
-                let list = sortedCust;
-                if(id === 'ship-line') list = sortedCust.filter(c => c.type === 'forwarder');
-                if(id === 'ship-clearance-agent' || id === 'ship-clearance-agent-iran') list = sortedCust.filter(c => c.type === 'clearance_agent');
-                
+                let list = sortedCust.filter(c => c.type === 'clearance_agent');
                 list.forEach(c => { let opt = document.createElement('option'); opt.value = c.id; opt.innerText = c.id.split('(')[0]; el.appendChild(opt); });
                 if(v && list.find(x => x.id === v)) el.value = v;
             }
         });
+
+        const shipLineList = document.getElementById('ship-line-list');
+        if (shipLineList) {
+            shipLineList.innerHTML = '';
+            sortedCust.filter(c => c.type === 'forwarder').forEach(c => {
+                let opt = document.createElement('option'); opt.value = c.id; opt.text = c.name + (c.code ? ` (${c.code})` : ''); shipLineList.appendChild(opt);
+            });
+        }
 
         ['flt-act-cust-list', 'flt-del-cust-list', 'flt-rep-cust-list'].forEach(id => {
             let el = document.getElementById(id);
@@ -1160,7 +1260,6 @@
             return showMsg('خطا', 'نام شخص/شرکت الزامی است.');
         }
         
-        // Fixed Duplication Validation Logic
         if (db.customers.find(c => c.name.toLowerCase() === fname.toLowerCase())) {
             isSavingCustomer = false;
             return showMsg('خطا', 'این نام شخص یا شرکت قبلاً در سیستم ثبت شده است.');
@@ -1177,14 +1276,13 @@
         
         ['cny', 'usd', 'aed', 'irt'].forEach(curr => {
             let val = parseFloat(document.getElementById('init-'+curr).value) || 0;
-            if (val !== 0) addJournalEntry({ cust: idName, date: SYSTEM_DATE, desc: 'تراز اولیه', category: 'finance', type: val > 0 ? 'debit' : 'credit', amount: Math.abs(val), currency: curr.toUpperCase(), isSystem: true, shipmentRef: 'INIT' });
+            if (val !== 0) addJournalEntry({ cust: idName, date: SYSTEM_DATE, desc: 'تراز اولیه', category: 'finance', type: val > 0 ? 'debit' : 'credit', amount: Math.abs(val), currency: curr.toUpperCase(), isSystem: true, relatedShipmentId: 'INIT' });
             document.getElementById('init-'+curr).value = '';
         });
 
         document.getElementById('new-cust-fullname').value = ''; document.getElementById('new-cust-code').value = ''; document.getElementById('new-cust-wechat').value = '';
         saveToLocal(); populateDropdowns(); renderSidebar('cust'); renderSidebar('log'); updateUI();
         
-        // Form is cleared, modal is closed, then message
         closeModal('customerModal'); 
         setTimeout(() => { 
             showMsg('موفقیت', 'پرونده با موفقیت ثبت شد.'); 
@@ -1192,6 +1290,61 @@
         }, 100);
     }
     window.saveNewCustomer = saveNewCustomer;
+
+    function openEditCustomerModal() {
+        if (!activeCustomerId) return;
+        let cust = db.customers.find(c => c.id === activeCustomerId);
+        if (!cust) return;
+        
+        document.getElementById('edit-cust-fullname').value = cust.name || '';
+        document.getElementById('edit-cust-code').value = cust.code || '';
+        document.getElementById('edit-cust-wechat').value = cust.wechat || '';
+        
+        // Clear init balance inputs
+        document.getElementById('edit-init-cny').value = '';
+        document.getElementById('edit-init-usd').value = '';
+        document.getElementById('edit-init-aed').value = '';
+        document.getElementById('edit-init-irt').value = '';
+        
+        openModal('editCustomerModal');
+    }
+    window.openEditCustomerModal = openEditCustomerModal;
+
+    function saveEditedCustomer() {
+        let newName = document.getElementById('edit-cust-fullname').value.trim();
+        let newCode = document.getElementById('edit-cust-code').value.trim();
+        let newWechat = document.getElementById('edit-cust-wechat').value.trim();
+        
+        if (!newName) return showMsg('خطا', 'نام الزامی است.');
+
+        let cust = db.customers.find(c => c.id === activeCustomerId);
+        if (cust) {
+            cust.name = newName;
+            cust.code = newCode;
+            cust.wechat = newWechat;
+            
+            db.journal = db.journal.filter(j => !(j.cust === cust.id && j.relatedShipmentId === 'INIT'));
+            
+            ['cny', 'usd', 'aed', 'irt'].forEach(curr => {
+                let val = parseFloat(document.getElementById(`edit-init-${curr}`).value) || 0;
+                if (val !== 0) {
+                    db.journal.push({
+                        id: 'J' + (db.idCounter++), date: SYSTEM_DATE, cust: cust.id, desc: 'تراز اولیه', 
+                        category: 'finance', type: val > 0 ? 'debit' : 'credit', amount: Math.abs(val), 
+                        currency: curr.toUpperCase(), isSystem: true, relatedShipmentId: 'INIT'
+                    });
+                }
+            });
+            
+            recalcBalances();
+            saveToLocal();
+            closeModal('editCustomerModal'); 
+            populateDropdowns(); 
+            renderSidebar('cust'); 
+            renderSidebar('log'); 
+            updateUI();
+        }
+    }
 
     function deleteActiveCustomer() {
         if (!activeCustomerId) return;
@@ -1292,12 +1445,81 @@
     function editJournalEntry(id) {
         let j = db.journal.find(x => x.id === id);
         if(!j) return;
-        document.getElementById('edit-id').value = id;
-        document.getElementById('edit-date').value = j.date;
-        document.getElementById('edit-desc').value = j.desc;
-        document.getElementById('edit-amount').value = j.amount;
-        openModal('editModal');
+        
+        if (j.relatedShipmentId === 'INIT' || j.desc === 'تراز اولیه') {
+            document.getElementById('edit-init-cust-id').value = j.cust;
+            
+            let inits = db.journal.filter(x => x.cust === j.cust && (x.relatedShipmentId === 'INIT' || x.desc === 'تراز اولیه'));
+            let vals = { CNY: '', USD: '', AED: '', IRT: '' };
+            
+            inits.forEach(entry => {
+                let val = entry.type === 'debit' ? entry.amount : -entry.amount;
+                vals[entry.currency] = val;
+            });
+            
+            document.getElementById('edit-init-bal-cny').value = vals.CNY;
+            document.getElementById('edit-init-bal-usd').value = vals.USD;
+            document.getElementById('edit-init-bal-aed').value = vals.AED;
+            document.getElementById('edit-init-bal-irt').value = vals.IRT;
+            
+            openModal('editInitBalModal');
+        } else {
+            document.getElementById('edit-id').value = id;
+            document.getElementById('edit-date').value = j.date;
+            document.getElementById('edit-desc').value = j.desc;
+            document.getElementById('edit-amount').value = j.amount;
+            
+            if(document.getElementById('edit-type')) document.getElementById('edit-type').value = j.type;
+            if(document.getElementById('edit-currency')) document.getElementById('edit-currency').value = j.currency;
+
+            openModal('editModal');
+        }
     }
+    window.editJournalEntry = editJournalEntry;
+
+    function saveInitBalEdit() {
+        let custId = document.getElementById('edit-init-cust-id').value;
+        if (!custId) return;
+        
+        let existingInits = db.journal.filter(j => j.cust === custId && (j.relatedShipmentId === 'INIT' || j.desc === 'تراز اولیه'));
+        let initDate = existingInits.length > 0 ? existingInits[0].date : SYSTEM_DATE;
+
+        db.journal = db.journal.filter(j => !(j.cust === custId && (j.relatedShipmentId === 'INIT' || j.desc === 'تراز اولیه')));
+        
+        let currs = [
+            { code: 'CNY', val: document.getElementById('edit-init-bal-cny').value },
+            { code: 'USD', val: document.getElementById('edit-init-bal-usd').value },
+            { code: 'AED', val: document.getElementById('edit-init-bal-aed').value },
+            { code: 'IRT', val: document.getElementById('edit-init-bal-irt').value }
+        ];
+
+        currs.forEach(c => {
+            if (c.val !== '' && c.val !== null) {
+                let numVal = parseFloat(c.val);
+                if (!isNaN(numVal) && numVal !== 0) {
+                    db.journal.push({
+                        id: 'J' + (db.idCounter++),
+                        date: initDate,
+                        cust: custId,
+                        desc: 'تراز اولیه',
+                        category: 'finance',
+                        type: numVal > 0 ? 'debit' : 'credit',
+                        amount: Math.abs(numVal),
+                        currency: c.code,
+                        isSystem: true,
+                        relatedShipmentId: 'INIT'
+                    });
+                }
+            }
+        });
+
+        recalcBalances();
+        saveToLocal();
+        updateUI();
+        closeModal('editInitBalModal');
+        showMsg('موفقیت', 'تراز اولیه با موفقیت ویرایش شد.');
+    }
+    window.saveInitBalEdit = saveInitBalEdit;
 
     function saveEdit() {
         let id = document.getElementById('edit-id').value;
@@ -1306,9 +1528,14 @@
         j.date = document.getElementById('edit-date').value;
         j.desc = document.getElementById('edit-desc').value;
         j.amount = parseFloat(document.getElementById('edit-amount').value) || 0;
+        
+        if(document.getElementById('edit-type')) j.type = document.getElementById('edit-type').value;
+        if(document.getElementById('edit-currency')) j.currency = document.getElementById('edit-currency').value;
+
         recalcBalances(); saveToLocal(); updateUI(); closeModal('editModal');
         showMsg('موفقیت', 'تراکنش با موفقیت ویرایش شد.');
     }
+    window.saveEdit = saveEdit;
 
     function deleteTransaction(id) {
         let j = db.journal.find(x => x.id === id);
@@ -1559,8 +1786,10 @@
         let typeVal = document.getElementById('ship-type').value;
         if (method === 'sea' && !typeVal) errors.push("نوع بار انتخاب نشده است.");
 
-        let line = document.getElementById('ship-line').value;
-        if (!line) errors.push("شرکت حمل انتخاب نشده است.");
+        let lineRaw = document.getElementById('ship-line').value.trim();
+        let lineObj = db.customers.find(c => c.type === 'forwarder' && (c.id === lineRaw || c.name === lineRaw || c.code === lineRaw));
+        let line = lineObj ? lineObj.id : '';
+        if (!line) errors.push("شرکت حمل (فورواردر) معتبر انتخاب نشده است.");
         
         let shipTotalStr = document.getElementById('ship-total-shipping').value;
         if (shipTotalStr === "") errors.push("هزینه ارسال مشتری وارد نشده است.");
@@ -1589,16 +1818,20 @@
 
         let isDubaiClearance = isFCL && dest === 'Dubai' && document.getElementById('ship-clear-dubai-toggle').checked;
         if (isDubaiClearance) {
-            let agent = document.getElementById('ship-clearance-agent').value;
-            if (!agent) errors.push("ترخیص‌کار دبی انتخاب نشده است.");
+            let agentRaw = document.getElementById('ship-clearance-agent').value.trim();
+            let agentObj = db.customers.find(c => c.type === 'clearance_agent' && (c.id === agentRaw || c.name === agentRaw || c.code === agentRaw));
+            let agent = agentObj ? agentObj.id : '';
+            if (!agent) errors.push("ترخیص‌کار دبی معتبر انتخاب نشده است.");
             let amt = document.getElementById('ship-clearance-amt').value;
             if (amt === "" || parseFloat(amt) === 0) errors.push("مبلغ ترخیص دبی وارد نشده است.");
         }
 
         let isIranClearance = isFCL && dest === 'Iran' && document.getElementById('ship-clear-iran-toggle').checked;
         if (isIranClearance) {
-            let agentIran = document.getElementById('ship-clearance-agent-iran').value;
-            if (!agentIran) errors.push("ترخیص‌کار ایران انتخاب نشده است.");
+            let agentIranRaw = document.getElementById('ship-clearance-agent-iran').value.trim();
+            let agentIranObj = db.customers.find(c => c.type === 'clearance_agent' && (c.id === agentIranRaw || c.name === agentIranRaw || c.code === agentIranRaw));
+            let agentIran = agentIranObj ? agentIranObj.id : '';
+            if (!agentIran) errors.push("ترخیص‌کار ایران معتبر انتخاب نشده است.");
             let amtIran = document.getElementById('ship-clearance-amt-iran').value;
             if (amtIran === "" || parseFloat(amtIran) === 0) errors.push("مبلغ ترخیص ایران وارد نشده است.");
             
@@ -1633,7 +1866,9 @@
         let clearAmt = '';
         if(isDubaiClearance) {
             clearDubaiChecked = true;
-            clearAgent = document.getElementById('ship-clearance-agent').value;
+            let agentRaw = document.getElementById('ship-clearance-agent').value.trim();
+            let agentObj = db.customers.find(c => c.type === 'clearance_agent' && (c.id === agentRaw || c.name === agentRaw || c.code === agentRaw));
+            clearAgent = agentObj ? agentObj.id : '';
             clearAmt = document.getElementById('ship-clearance-amt').value;
         }
 
@@ -1647,7 +1882,9 @@
 
         if (isIranClearance) {
             clearIranChecked = true;
-            clearAgentIran = document.getElementById('ship-clearance-agent-iran').value;
+            let agentIranRaw = document.getElementById('ship-clearance-agent-iran').value.trim();
+            let agentIranObj = db.customers.find(c => c.type === 'clearance_agent' && (c.id === agentIranRaw || c.name === agentIranRaw || c.code === agentIranRaw));
+            clearAgentIran = agentIranObj ? agentIranObj.id : '';
             clearAmtIran = document.getElementById('ship-clearance-amt-iran').value;
             clearTransitIran = document.getElementById('ship-clearance-transit-iran').value;
             clearOtherIran = document.getElementById('ship-clearance-other-iran').value;
@@ -1943,6 +2180,9 @@
                 let daysElapsed = Math.floor(diffTime / (1000 * 60 * 60 * 24));
                 let remDays = limit - daysElapsed;
                 let badge = remDays < 0 ? `<span class="badge badge-alert">هشدار (${Math.abs(remDays)} روز تأخیر)</span>` : `<span class="badge badge-safe">عادی (${remDays} روز مانده)</span>`;
+                
+                let check20 = (s.transportMethod === 'sea' && s.type === 'FCL_20') ? '✓' : '-';
+                let check40 = (s.transportMethod === 'sea' && s.type === 'FCL_40') ? '✓' : '-';
                 
                 actTbody.innerHTML += `<tr>
                     <td>${s.date}</td>
