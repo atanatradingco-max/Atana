@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>آتانا ERP - سیستم جامع بازرگانی</title>
+    <!-- SheetJS for Excel Export -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;700&display=swap');
         
@@ -111,6 +113,25 @@
         .archive-btn { padding: 8px 15px; background: #f1f5f9; border: 1px solid #cbd5e1; border-radius: 4px; cursor: pointer; font-weight: bold; transition: 0.2s; }
         .archive-btn:hover, .archive-btn.active { background: #e0f2fe; border-color: #7dd3fc; color: #0369a1; }
 
+        /* Invoice Table Dynamic inputs */
+        .inv-cell-input { width: 100%; border: 1px solid transparent; background: transparent; text-align: center; font-family: inherit; font-size: 12px; padding: 4px; box-sizing: border-box; }
+        .inv-cell-input:focus { border-color: #3b82f6; outline: none; background: #fff; }
+        .hide-col { display: none !important; }
+
+        /* Print Media Styles */
+        @media print {
+            body { background: white; margin: 0; padding: 0; }
+            body * { visibility: hidden; }
+            #invoice-print-area, #invoice-print-area * { visibility: visible; }
+            #invoice-print-area { position: absolute; left: 0; top: 0; width: 100%; direction: rtl;}
+            .no-print, .action-col { display: none !important; }
+            .hide-col { display: none !important; }
+            input, select, textarea { border: none !important; background: transparent !important; appearance: none; -webkit-appearance: none; resize: none; overflow: hidden; color: #000;}
+            ::-webkit-scrollbar { display: none; }
+            .card { border: none; box-shadow: none; padding: 0; }
+            .card-header { display: none; }
+        }
+
         @media (max-width: 768px) {
             .layout-flex { flex-direction: column; }
             .sidebar { width: 100%; box-sizing: border-box; }
@@ -119,7 +140,7 @@
 </head>
 <body>
 
-<div class="navbar">
+<div class="navbar no-print">
     <div style="font-size: 18px; font-weight: bold;">🏢 آتانا ERP</div>
     <div style="display: flex; gap: 10px; align-items: center;">
         <button class="btn btn-small" style="background: rgba(255,255,255,0.2); color: white; border: 1px solid white;" onclick="toggleTopBar('globalStatsContainer')">
@@ -132,7 +153,7 @@
     </div>
 </div>
 
-<div class="top-bar-hidden" id="globalBalanceContainer">
+<div class="top-bar-hidden no-print" id="globalBalanceContainer">
     <div>🌍 تراز کل دارایی/بدهی:</div>
     <div>یوان: <span id="glb-cny">0</span></div>
     <div>دلار: <span id="glb-usd">0</span></div>
@@ -140,7 +161,7 @@
     <div>تومان: <span id="glb-irt">0</span></div>
 </div>
 
-<div class="top-bar-hidden" id="globalStatsContainer" style="background: #1e40af;">
+<div class="top-bar-hidden no-print" id="globalStatsContainer" style="background: #1e40af;">
     <div>📊 آمار کل ارسال در سال جاری:</div>
     <div>کانتینر ۲۰ فوت: <span id="stat-20">0</span> دستگاه</div>
     <div>کانتینر ۴۰ فوت: <span id="stat-40">0</span> دستگاه</div>
@@ -148,9 +169,10 @@
     <div>وزن کل تناژ: <span id="stat-kg">0</span> KG</div>
 </div>
 
-<div class="main-menu">
+<div class="main-menu no-print">
     <div class="menu-btn active" onclick="navTo('page-dashboard', this)">📝 دفتر روزنامه</div>
     <div class="menu-btn" onclick="navTo('page-customer', this)">👤 پرونده اشخاص</div>
+    <div class="menu-btn" onclick="navTo('page-invoices', this)">🧾 فاکتور و Packing List</div>
     <div class="menu-btn" onclick="navTo('page-intransit', this)">🌍 ثبت و مدیریت لجستیک</div>
     <div class="menu-btn" style="background:#fef3c7; color:#b45309; border:1px solid #fde68a;" onclick="navTo('page-active-shipments', this)">🚀 بارهای در حال ارسال</div>
     <div class="menu-btn" onclick="navTo('page-delivered', this)">📦 بارهای تحویل‌شده</div>
@@ -162,7 +184,7 @@
 
     <!-- PAGE 1: Dashboard -->
     <div id="page-dashboard" class="page active-page">
-        <div class="card">
+        <div class="card no-print">
             <div class="card-header">➕ ثبت سریع رویداد مالی</div>
             <div class="grid-4">
                 <div class="form-group"><label>تاریخ رویداد</label><input type="date" id="log-date"></div>
@@ -191,7 +213,7 @@
             <button class="btn btn-dark" style="margin-top: 15px;" id="btn-save-journal" onclick="addJournalEntry()">ثبت در دفتر کل روزنامه</button>
         </div>
 
-        <div class="card">
+        <div class="card no-print">
             <div class="card-header">📑 دفتر روزنامه (تایم‌لاین وقایع اخیر)</div>
             <div style="overflow-x: auto;">
                 <table>
@@ -205,7 +227,7 @@
     </div>
 
     <!-- PAGE 2: Customer Profiles -->
-    <div id="page-customer" class="page">
+    <div id="page-customer" class="page no-print">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
             <button class="btn btn-dark" onclick="openModal('customerModal')">+ تعریف شخص/شرکت جدید</button>
         </div>
@@ -263,8 +285,82 @@
         </div>
     </div>
 
+    <!-- PAGE INVOICES (NEW) -->
+    <div id="page-invoices" class="page">
+        <div class="layout-flex">
+            <div class="sidebar no-print">
+                <div class="sb-tabs">
+                    <div class="sb-tab active" onclick="setInvoiceTab('pending', this)">در انتظار ارسال</div>
+                    <div class="sb-tab" onclick="setInvoiceTab('sent', this)">ارسال‌شده</div>
+                </div>
+                <input type="text" class="search-input" id="inv-search" placeholder="🔍 جستجو فاکتور..." onkeyup="renderInvoiceSidebar()">
+                <div class="cust-list" id="inv-list-container"></div>
+                <button class="btn btn-outline" style="width:100%; margin-top:10px;" onclick="createNewInvoice()">+ فاکتور جدید</button>
+            </div>
+
+            <div class="main-content" id="invoice-print-area">
+                <div class="card" style="border: 2px solid #10b981;">
+                    <div class="card-header no-print">🛒 فرم فاکتور خرید و Packing List</div>
+                    
+                    <div class="section-title">اطلاعات سربرگ</div>
+                    <div class="grid-6">
+                        <div class="form-group"><label>نام شرکت</label><input type="text" id="inv-company"></div>
+                        <div class="form-group"><label>شماره تلفن</label><input type="text" id="inv-phone"></div>
+                        <div class="form-group">
+                            <label>تأمین‌کننده</label>
+                            <input list="inv-supplier-list" id="inv-supplier" placeholder="جستجو (نام، کد)...">
+                            <datalist id="inv-supplier-list"></datalist>
+                        </div>
+                        <div class="form-group"><label>شماره فاکتور</label><input type="text" id="inv-no"></div>
+                        <div class="form-group"><label>تاریخ فاکتور</label><input type="date" id="inv-date"></div>
+                        <div class="form-group"><label>وضعیت سیستم</label><input type="text" id="inv-status-lbl" disabled value="جدید"></div>
+                    </div>
+
+                    <div class="section-title no-print">تنظیمات ستون‌ها (جهت چاپ و خروجی)</div>
+                    <div class="card no-print" style="background: #f8fafc; padding: 10px; margin-bottom: 15px;">
+                        <div id="inv-col-checkboxes" style="display:flex; flex-wrap:wrap; gap:10px; font-size:12px;"></div>
+                        
+                        <div style="margin-top:15px; display:flex; gap:10px; align-items:flex-end;">
+                            <div class="form-group"><label>نام ستون سفارشی جدید</label><input type="text" id="inv-new-col-name" placeholder="مثال: رنگ"></div>
+                            <button class="btn btn-dark btn-small" onclick="addCustomInvColumn()">+ افزودن ستون</button>
+                            <button class="btn btn-primary btn-small" style="margin-right:auto;" onclick="togglePackingListMode()">📦 تغییر به حالت Packing List</button>
+                        </div>
+                    </div>
+
+                    <div class="section-title">جدول اقلام فاکتور</div>
+                    <div style="overflow-x:auto; margin-bottom:15px;">
+                        <table id="invoice-export-table">
+                            <thead id="inv-table-head"></thead>
+                            <tbody id="inv-table-body"></tbody>
+                            <tfoot id="inv-table-foot" style="background:#e2e8f0; font-weight:bold;"></tfoot>
+                        </table>
+                    </div>
+                    <div class="no-print" style="margin-bottom:15px;">
+                        <button class="btn btn-outline btn-small" onclick="addInvoiceRow()">➕ افزودن ردیف جدید</button>
+                    </div>
+
+                    <div class="grid-4 no-print" style="background:#fff7ed; border:1px solid #fed7aa; padding:15px; border-radius:5px;">
+                        <div class="form-group">
+                            <label style="color:#b45309;">پیش‌پرداخت / علی‌الحساب پرداختی (یوان)</label>
+                            <input type="number" id="inv-deposit" placeholder="0">
+                        </div>
+                        <div class="form-group" style="justify-content:flex-end;">
+                            <button class="btn btn-warning" onclick="savePurchaseInvoice()" id="btn-save-invoice">💾 ذخیره فاکتور</button>
+                        </div>
+                    </div>
+
+                    <div class="no-print" style="display:flex; gap:10px; margin-top:20px; border-top:1px solid #e2e8f0; padding-top:15px;">
+                        <button class="btn btn-dark" onclick="window.print()">🖨️ چاپ / ذخیره PDF</button>
+                        <button class="btn btn-success" onclick="exportInvoiceExcel()">📊 خروجی Excel</button>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- PAGE 3: Logistics (In Transit) -->
-    <div id="page-intransit" class="page">
+    <div id="page-intransit" class="page no-print">
         <div class="layout-flex">
             <div class="sidebar">
                 <div class="sb-tabs">
@@ -472,13 +568,6 @@
                     </div>
 
                     <!-- FCL Dubai Clearance Fields -->
-                    <div id="clearance-dubai-toggle-section" class="form-group" style="display:none; margin-top: 15px;">
-                        <label style="display:flex; align-items:center; gap:5px; font-size:14px; color:#d97706; cursor:pointer;">
-                            <input type="checkbox" id="ship-clear-dubai-toggle" onchange="toggleClearanceFields()">
-                            ترخیص در دبی
-                        </label>
-                    </div>
-
                     <div id="clearance-section" class="section-title" style="display:none; color: #d97706;">🛂 جزئیات ترخیص دبی (FCL)</div>
                     <div id="clearance-fields" class="grid-6" style="display:none; background:#fef3c7; padding:10px; border-radius:5px;">
                         <div class="form-group">
@@ -525,36 +614,31 @@
                         </div>
                     </div>
 
-                    <!-- Purchases -->
-                    <div class="section-title">🛒 فاکتور خرید کالا و تأمین‌کنندگان</div>
-                    <div class="grid-8" style="background:#f8fafc; border:1px solid #cbd5e1; padding:15px; border-radius:5px; margin-bottom:15px; align-items:end;">
-                        <div class="form-group">
-                            <label>تأمین‌کننده</label>
-                            <input list="pur-supplier-list" id="pur-supplier" placeholder="جستجو (نام، کد، ویچت)...">
-                            <datalist id="pur-supplier-list"></datalist>
+                    <!-- Purchase Invoices Integration (NEW) -->
+                    <div class="section-title">🛒 فاکتورهای خرید (فقط فاکتورهای در انتظار ارسال قابل انتخاب هستند)</div>
+                    <div class="grid-6" style="background:#f8fafc; border:1px solid #cbd5e1; padding:15px; border-radius:5px; margin-bottom:15px; align-items:end;">
+                        <div class="form-group" style="grid-column: span 4;">
+                            <label>انتخاب فاکتور</label>
+                            <input list="pending-inv-list" id="ship-invoice-selector" placeholder="جستجو (شماره فاکتور، نام یا کد تأمین‌کننده)...">
+                            <datalist id="pending-inv-list"></datalist>
                         </div>
-                        <div class="form-group"><label>شماره فاکتور</label><input type="text" id="pur-inv"></div>
-                        <div class="form-group"><label>مبلغ کل فاکتور (یوان)</label><input type="number" id="pur-total"></div>
-                        <div class="form-group"><label>علی‌الحساب (پرداختی)</label><input type="number" id="pur-paid"></div>
-                        <div class="form-group"><label>موعد پرداخت</label><input type="date" id="pur-due"></div>
-                        <div class="form-group" style="grid-column:span 2; display:flex; gap:5px;">
-                            <button class="btn btn-warning" id="btn-save-purchase" onclick="addPurchaseItem()" style="flex:1; font-size:12px;">➕ ثبت فاکتور</button>
-                            <button class="btn btn-outline" onclick="cancelEditPurchase()" style="display:none;" id="btn-cancel-pur-edit">انصراف</button>
+                        <div class="form-group" style="grid-column: span 2;">
+                            <button class="btn btn-warning" onclick="attachInvoiceToShipment()" style="width:100%;">➕ افزودن فاکتور به لیست</button>
                         </div>
                     </div>
 
                     <table style="margin-bottom:20px;">
                         <thead>
                             <tr>
-                                <th>تأمین‌کننده</th>
                                 <th>شماره فاکتور</th>
+                                <th>تأمین‌کننده</th>
+                                <th>تاریخ</th>
                                 <th>مبلغ کل (CNY)</th>
-                                <th>پرداختی</th>
                                 <th>عملیات</th>
                             </tr>
                         </thead>
-                        <tbody id="pur-list-tbody">
-                            <tr><td colspan="5" style="color:gray;">هیچ فاکتوری برای این شیپمنت ثبت نشده است.</td></tr>
+                        <tbody id="ship-attached-inv-tbody">
+                            <tr><td colspan="5" style="color:gray;">هیچ فاکتوری برای این شیپمنت انتخاب نشده است.</td></tr>
                         </tbody>
                     </table>
 
@@ -588,7 +672,7 @@
     </div>
 
     <!-- PAGE 3.5: Active Shipments -->
-    <div id="page-active-shipments" class="page">
+    <div id="page-active-shipments" class="page no-print">
         <div class="card">
             <div class="card-header">🚀 بارهای در حال ارسال</div>
             <div class="filter-bar">
@@ -612,7 +696,10 @@
                             <th>ارسال‌کننده</th>
                             <th>تعداد کارتن</th>
                             <th>CBM</th>
+                            <th>کانتینر 20 فوت</th>
+                            <th>کانتینر 40 فوت</th>
                             <th>وضعیت بار و روز مانده</th>
+                            <th>هزینه مقصد LCL</th>
                             <th>ویرایش</th>
                             <th>حذف</th>
                             <th>تحویل شد</th>
@@ -625,7 +712,7 @@
     </div>
 
     <!-- PAGE 4: Delivered -->
-    <div id="page-delivered" class="page">
+    <div id="page-delivered" class="page no-print">
         <div class="card">
             <div class="card-header">📦 بارهای تحویل‌شده</div>
             <div class="filter-bar">
@@ -650,6 +737,7 @@
                             <th>CBM</th>
                             <th>ارزش کالا (CNY)</th>
                             <th>تاریخ تحویل</th>
+                            <th>عملیات</th>
                         </tr>
                     </thead>
                     <tbody id="delivered-tbody"></tbody>
@@ -659,7 +747,7 @@
     </div>
 
     <!-- PAGE 5: Archive -->
-    <div id="page-archive" class="page">
+    <div id="page-archive" class="page no-print">
         <div class="card">
             <div class="card-header">🗂️ آرشیو کارهای روزانه (تایم‌لاین سیستم)</div>
             <div style="font-size:12px; color:gray; margin-bottom:10px;">ابتدا روی یک ماه (پوشه ماهانه) کلیک کنید، سپس روز مورد نظر را انتخاب کنید تا لیست وقایع نمایش داده شود.</div>
@@ -671,22 +759,28 @@
     </div>
 
     <!-- PAGE 6: Monthly Report -->
-    <div id="page-report" class="page">
+    <div id="page-report" class="page no-print">
         <div class="card">
             <div class="card-header">📈 گزارش عملکرد ماهانه (بر اساس سود خالص)</div>
+            <div class="filter-bar">
+                <input list="flt-rep-cust-list" id="filter-rep-cust" placeholder="مشتری" oninput="generateMonthlyReport()">
+                <datalist id="flt-rep-cust-list"></datalist>
+                <input list="flt-rep-fwd-list" id="filter-rep-fwd" placeholder="ارسال‌کننده" oninput="generateMonthlyReport()">
+                <datalist id="flt-rep-fwd-list"></datalist>
+                <input type="date" id="filter-rep-date" oninput="generateMonthlyReport()">
+                <input type="text" id="filter-rep-code" placeholder="کد Shipment" oninput="generateMonthlyReport()">
+                <input type="number" id="filter-rep-cbm" placeholder="CBM" oninput="generateMonthlyReport()">
+                <input type="number" id="filter-rep-weight" placeholder="وزن" oninput="generateMonthlyReport()">
+                <button class="btn btn-outline btn-small" onclick="clearFilters('rep')">پاک کردن فیلترها</button>
+            </div>
             <div class="form-group" style="width:200px; margin-bottom:20px;">
                 <label>انتخاب ماه (بر اساس تاریخ ارسال)</label>
                 <select id="report-month" onchange="generateMonthlyReport()"></select>
             </div>
             
-            <div class="currency-dash" id="report-dash-container">
-                <div class="curr-box" style="background:#d1fae5; border-color:#34d399;"><div class="curr-title">سود خالص ماه (یوان)</div><span id="rep-profit" style="color:#065f46;">0</span></div>
-                <div class="curr-box"><div class="curr-title">مجموع CBM ارسالی</div><span id="rep-cbm">0</span></div>
-                <div class="curr-box"><div class="curr-title">مجموع کانتینرها (20/40)</div><span id="rep-cont">0</span></div>
-                <div class="curr-box"><div class="curr-title">مجموع تناژ (KG)</div><span id="rep-kg">0</span></div>
-            </div>
+            <div class="currency-dash" id="report-dash-container"></div>
             
-            <h4 style="margin-top:20px; color:#1e3a8a;">برترین مشتریان این ماه (بر اساس حجم بار)</h4>
+            <h4 style="margin-top:20px; color:#1e3a8a;">برترین مشتریان این ماه (بر اساس سود ایجاد شده برای ما)</h4>
             <table>
                 <thead>
                     <tr>
@@ -694,6 +788,9 @@
                         <th>نام مشتری</th>
                         <th>تعداد Shipment</th>
                         <th>مجموع CBM</th>
+                        <th>ارزش کل خرید مشتری</th>
+                        <th>سود ایجادشده برای ما</th>
+                        <th>ارز</th>
                     </tr>
                 </thead>
                 <tbody id="rep-customers-tbody"></tbody>
@@ -705,7 +802,7 @@
 
 <!-- Modals -->
 
-<div class="modal-overlay" id="profileFinModal">
+<div class="modal-overlay no-print" id="profileFinModal">
     <div class="modal">
         <div class="modal-header">💰 ثبت تراکنش مستقیم</div>
         <div class="form-group" style="margin-bottom: 10px;"><label>تاریخ</label><input type="date" id="prof-log-date"></div>
@@ -731,7 +828,7 @@
     </div>
 </div>
 
-<div class="modal-overlay" id="customerModal">
+<div class="modal-overlay no-print" id="customerModal">
     <div class="modal">
         <div class="modal-header">👤 تعریف شخص/شرکت جدید</div>
         <div class="form-group" style="margin-bottom: 10px;"><label>نام شخص / شرکت (الزامی)</label><input type="text" id="new-cust-fullname"></div>
@@ -762,7 +859,7 @@
     </div>
 </div>
 
-<div class="modal-overlay" id="editCustomerModal">
+<div class="modal-overlay no-print" id="editCustomerModal">
     <div class="modal">
         <div class="modal-header">✏️ ویرایش مشخصات پرونده</div>
         <div class="form-group" style="margin-bottom: 10px;"><label>نام</label><input type="text" id="edit-cust-fullname"></div>
@@ -784,7 +881,7 @@
     </div>
 </div>
 
-<div class="modal-overlay" id="editModal">
+<div class="modal-overlay no-print" id="editModal">
     <div class="modal">
         <div class="modal-header">✏️ ویرایش تراکنش مالی دستی</div>
         <input type="hidden" id="edit-id">
@@ -811,27 +908,7 @@
     </div>
 </div>
 
-<div class="modal-overlay" id="editInitBalModal">
-    <div class="modal">
-        <div class="modal-header">✏️ ویرایش تراز اولیه چندارزی</div>
-        <input type="hidden" id="edit-init-cust-id">
-        <div style="background:#f1f5f9; padding:10px; border-radius:5px; margin-bottom:10px;">
-            <label style="font-weight:bold; font-size:11px; color:#1e3a8a;">تراز اولیه (اعداد مثبت = بدهکار به ما، اعداد منفی = بستانکار)</label>
-            <div class="grid-4" style="margin-top:5px;">
-                <div class="form-group"><input type="number" id="edit-init-bal-cny" placeholder="یوان (CNY)"></div>
-                <div class="form-group"><input type="number" id="edit-init-bal-usd" placeholder="دلار (USD)"></div>
-                <div class="form-group"><input type="number" id="edit-init-bal-aed" placeholder="درهم (AED)"></div>
-                <div class="form-group"><input type="number" id="edit-init-bal-irt" placeholder="تومان (IRT)"></div>
-            </div>
-        </div>
-        <div class="modal-actions">
-            <button class="btn btn-outline" onclick="closeModal('editInitBalModal')">انصراف</button>
-            <button class="btn btn-warning" onclick="saveInitBalEdit()">ذخیره تغییرات</button>
-        </div>
-    </div>
-</div>
-
-<div class="modal-overlay" id="confirmModal">
+<div class="modal-overlay no-print" id="confirmModal">
     <div class="modal">
         <div class="modal-header" id="confirm-title" style="color: #dc2626;">اخطار سیستم</div>
         <div id="confirm-body" style="line-height: 1.6; font-weight: bold;"></div>
@@ -842,7 +919,25 @@
     </div>
 </div>
 
-<div class="modal-overlay" id="msgModal">
+<div class="modal-overlay no-print" id="destCostModal">
+    <div class="modal">
+        <div class="modal-header">ثبت هزینه مقصد (مخصوص LCL)</div>
+        <input type="hidden" id="dest-cost-ship-id">
+        <div class="form-group" style="margin-bottom: 10px;"><label>شرح هزینه مقصد</label><input type="text" id="dest-cost-desc" placeholder="مثال: هزینه ترخیص و جابجایی دبی"></div>
+        <div class="form-group" style="margin-bottom: 10px;"><label>مبلغ اصلی</label><input type="number" id="dest-cost-amt"></div>
+        <div class="form-group" style="margin-bottom: 10px;"><label>ارز مبلغ اصلی</label>
+            <select id="dest-cost-curr"><option value="AED">درهم (AED)</option><option value="USD">دلار (USD)</option><option value="IRT">تومان (IRT)</option></select>
+        </div>
+        <div class="form-group" style="margin-bottom: 10px;"><label>نرخ تبدیل به یوان</label><input type="number" id="dest-cost-rate" value="2" oninput="calcDestCost()"></div>
+        <div class="form-group" style="margin-bottom: 10px;"><label>مبلغ معادل یوان</label><input type="number" id="dest-cost-cny" disabled style="background:#f1f5f9; font-weight:bold;"></div>
+        <div class="modal-actions">
+            <button class="btn btn-outline" onclick="closeModal('destCostModal')">انصراف</button>
+            <button class="btn btn-success" onclick="saveDestCost()">ذخیره هزینه مقصد</button>
+        </div>
+    </div>
+</div>
+
+<div class="modal-overlay no-print" id="msgModal">
     <div class="modal">
         <div class="modal-header" id="msg-title">پیام سیستم</div>
         <div id="msg-body" style="line-height: 1.6; white-space: pre-line;"></div>
@@ -854,27 +949,88 @@
     const currFa = { CNY: 'یوان', USD: 'دلار', AED: 'درهم', IRT: 'تومان' };
     const SYSTEM_DATE = new Date().toISOString().split('T')[0];
 
-    let db = { customers: [], journal: [], shipments: [], idCounter: 1, shipmentCounter: 1 };
+    // standard invoice cols
+    const INV_COLS = [
+        {id:'row', lbl:'ردیف'}, {id:'date', lbl:'تاریخ'}, {id:'itemNo', lbl:'Item Number'}, 
+        {id:'photo', lbl:'عکس'}, {id:'desc', lbl:'توضیحات'}, {id:'cartons', lbl:'تعداد کارتن'},
+        {id:'len', lbl:'طول'}, {id:'wid', lbl:'عرض'}, {id:'hgt', lbl:'ارتفاع'},
+        {id:'cbm', lbl:'CBM'}, {id:'totCbm', lbl:'CBM کل'}, {id:'wt', lbl:'وزن'},
+        {id:'totWt', lbl:'وزن کل'}, {id:'price', lbl:'قیمت هر واحد'}, {id:'totPrice', lbl:'جمع کل'},
+        {id:'mark', lbl:'Shipping Mark'}
+    ];
 
-    function saveToLocal() { localStorage.setItem('atana_erp_v18', JSON.stringify(db)); }
-    function loadFromLocal() {
+    let db = { customers: [], journal: [], shipments: [], purchaseInvoices: [], idCounter: 1, shipmentCounter: 1 };
+
+    window.onload = function() {
         try {
-            let d = localStorage.getItem('atana_erp_v18');
-            if (d) {
-                db = JSON.parse(d);
-            } else {
-                let oldD = localStorage.getItem('atana_erp_v17');
-                if (oldD) db = JSON.parse(oldD);
-            }
-        } catch(e) {
-            console.error("Local storage initialization error:", e);
-        }
+            if(document.getElementById('log-date')) document.getElementById('log-date').value = SYSTEM_DATE;
+            if(document.getElementById('ship-date')) document.getElementById('ship-date').value = SYSTEM_DATE;
+            if(document.getElementById('pur-due')) document.getElementById('pur-due').value = SYSTEM_DATE;
+            if(document.getElementById('prof-log-date')) document.getElementById('prof-log-date').value = SYSTEM_DATE;
 
-        if(!db || typeof db !== 'object') db = {};
-        if(!db.customers || !Array.isArray(db.customers)) db.customers = [];
-        if(!db.journal || !Array.isArray(db.journal)) db.journal = [];
-        if(!db.shipments || !Array.isArray(db.shipments)) db.shipments = [];
-        if(!db.idCounter) db.idCounter = 1;
+            loadFromLocal();
+            if(db.customers.length > 0) activeCustomerId = getSortedCustomers()[0].id;
+            populateDropdowns(); 
+            renderSidebar('cust'); 
+            renderSidebar('log'); 
+            toggleShipmentFields(); 
+            updateUI(); 
+            toggleLogFields(); 
+            updateAnnualStats();
+            
+            // Initialization for Invoice module
+            document.getElementById('inv-date').value = SYSTEM_DATE;
+            renderInvoiceSidebar();
+        } catch(e) {
+            console.error("Initialization Error:", e);
+        }
+    };
+
+    function saveToLocal() { localStorage.setItem('atana_erp_v17', JSON.stringify(db)); }
+    function loadFromLocal() {
+        let d = localStorage.getItem('atana_erp_v17');
+        if (d) {
+            db = JSON.parse(d);
+        } else {
+            let oldD = localStorage.getItem('atana_erp_v16');
+            if (oldD) db = JSON.parse(oldD);
+        }
+        
+        // Ensure purchaseInvoices array exists
+        if (!db.purchaseInvoices) db.purchaseInvoices = [];
+
+        // Migrate old purchases logic to purchaseInvoices if not done yet
+        db.shipments.forEach(s => {
+            if (s.purchases && s.purchases.length > 0) {
+                s.purchases.forEach(p => {
+                    let invId = 'INV-' + (db.idCounter++);
+                    let newInv = {
+                        id: invId,
+                        invoiceNo: p.invNo || ('INV-'+Math.floor(Math.random()*10000)),
+                        supplierId: p.supplierId,
+                        companyName: '', phone: '', date: p.due || s.date,
+                        status: 'sent', relatedShipmentId: s.id,
+                        items: [], customColumns: [],
+                        visibleColumns: ['row','date','itemNo','desc','cartons','cbm','totCbm','wt','totWt','price','totPrice','mark'],
+                        deposit: p.paid || 0,
+                        totalAmount: p.total || 0,
+                        totalCartons: 0, totalCbm: 0, totalWt: 0
+                    };
+                    db.purchaseInvoices.push(newInv);
+                    
+                    db.journal.forEach(j => {
+                        if (j.relatedShipmentId === s.id && j.cust === p.supplierId) {
+                            if (j.amount === p.total && j.type === 'credit') j.relatedInvoiceId = invId;
+                            if (j.amount === p.paid && j.type === 'debit') {
+                                j.relatedInvoiceId = invId;
+                                j.relatedShipmentId = null; // Detach deposit from shipment per rules
+                            }
+                        }
+                    });
+                });
+                delete s.purchases; 
+            }
+        });
 
         if (!db.shipmentCounter) {
             let maxAT = 0;
@@ -889,15 +1045,24 @@
         db.journal.forEach(j => {
             if(j.shipmentRef && !j.relatedShipmentId) j.relatedShipmentId = j.shipmentRef;
         });
+        
+        saveToLocal(); // persist migrations
     }
 
     let activeCustomerId = null; 
     let activeLogisticsCustomerId = null; 
     let currentSidebarTab = 'customer'; 
     let currentSidebarTabLog = 'customer';
-    let currentPurchases = []; 
-    let editPurchaseId = null;
+    
     let editingShipmentId = null;
+    let currentShipmentInvoices = []; // Array of invoice objects selected for shipment
+
+    // --- Invoice Module State ---
+    let currentInvTab = 'pending';
+    let currentInvoiceId = null;
+    let currentInvItems = [];
+    let currentCustomCols = [];
+    let currentHiddenCols = []; // array of IDs that are visually hidden
 
     function navTo(pageId, btnElement) { 
         document.querySelectorAll('.page').forEach(p => p.classList.remove('active-page')); 
@@ -912,15 +1077,442 @@
             } 
         } 
         if(pageId === 'page-archive' || pageId === 'page-report') renderArchiveMonths(); 
+        if(pageId === 'page-invoices') { renderInvoiceSidebar(); createNewInvoice(); }
         updateUI(); 
     }
+    window.navTo = navTo;
+
+    // ----- INVOICE MODULE START -----
+    
+    function setInvoiceTab(tab, el) {
+        currentInvTab = tab;
+        el.parentElement.querySelectorAll('.sb-tab').forEach(t=>t.classList.remove('active'));
+        el.classList.add('active');
+        renderInvoiceSidebar();
+    }
+    window.setInvoiceTab = setInvoiceTab;
+
+    function renderInvoiceSidebar() {
+        let container = document.getElementById('inv-list-container');
+        if(!container) return;
+        container.innerHTML = '';
+        let search = document.getElementById('inv-search').value.trim().toLowerCase();
+        
+        let filtered = db.purchaseInvoices.filter(i => i.status === currentInvTab);
+        if (search) {
+            filtered = filtered.filter(i => {
+                let supp = db.customers.find(c=>c.id === i.supplierId);
+                let suppName = supp ? supp.name.toLowerCase() : i.supplierId.toLowerCase();
+                return i.invoiceNo.toLowerCase().includes(search) || suppName.includes(search);
+            });
+        }
+        
+        filtered.sort((a,b) => new Date(b.date) - new Date(a.date));
+
+        filtered.forEach(inv => {
+            let supp = db.customers.find(c=>c.id === inv.supplierId);
+            let suppName = supp ? supp.name : inv.supplierId;
+            let div = document.createElement('div');
+            div.className = `cust-item ${inv.id === currentInvoiceId ? 'active' : ''}`;
+            div.innerHTML = `<div><strong style="direction:ltr;">${inv.invoiceNo}</strong><br><small>${suppName}</small></div><small>${inv.date}</small>`;
+            div.onclick = () => loadInvoice(inv.id);
+            container.appendChild(div);
+        });
+    }
+    window.renderInvoiceSidebar = renderInvoiceSidebar;
+
+    function createNewInvoice() {
+        currentInvoiceId = null;
+        currentInvItems = [];
+        currentCustomCols = [];
+        currentHiddenCols = [];
+        
+        document.getElementById('inv-company').value = '';
+        document.getElementById('inv-phone').value = '';
+        document.getElementById('inv-supplier').value = '';
+        document.getElementById('inv-no').value = '';
+        document.getElementById('inv-date').value = SYSTEM_DATE;
+        document.getElementById('inv-status-lbl').value = 'جدید';
+        document.getElementById('inv-deposit').value = '';
+        
+        renderInvoiceConfig();
+        renderInvoiceTable();
+        renderInvoiceSidebar();
+    }
+    window.createNewInvoice = createNewInvoice;
+
+    function loadInvoice(id) {
+        let inv = db.purchaseInvoices.find(i => i.id === id);
+        if(!inv) return;
+        currentInvoiceId = inv.id;
+        currentInvItems = JSON.parse(JSON.stringify(inv.items));
+        currentCustomCols = [...(inv.customColumns||[])];
+        
+        // Setup hidden columns (inverse of visibleColumns)
+        let allCols = INV_COLS.map(c=>c.id).concat(currentCustomCols);
+        let vis = inv.visibleColumns || allCols;
+        currentHiddenCols = allCols.filter(c => !vis.includes(c));
+        
+        document.getElementById('inv-company').value = inv.companyName || '';
+        document.getElementById('inv-phone').value = inv.phone || '';
+        document.getElementById('inv-supplier').value = inv.supplierId || '';
+        document.getElementById('inv-no').value = inv.invoiceNo || '';
+        document.getElementById('inv-date').value = inv.date || SYSTEM_DATE;
+        document.getElementById('inv-status-lbl').value = inv.status === 'pending' ? 'در انتظار ارسال' : 'ارسال‌شده (متصل به Shipment)';
+        document.getElementById('inv-deposit').value = inv.deposit > 0 ? inv.deposit : '';
+        
+        renderInvoiceConfig();
+        renderInvoiceTable();
+        renderInvoiceSidebar();
+    }
+    window.loadInvoice = loadInvoice;
+
+    function renderInvoiceConfig() {
+        let container = document.getElementById('inv-col-checkboxes');
+        container.innerHTML = '';
+        
+        let allCols = INV_COLS.map(c => ({id: c.id, lbl: c.lbl})).concat(currentCustomCols.map(c => ({id: 'cust_'+c, lbl: c})));
+        
+        allCols.forEach(c => {
+            let isHidden = currentHiddenCols.includes(c.id);
+            let div = document.createElement('div');
+            div.innerHTML = `<label style="display:flex; align-items:center; gap:3px; cursor:pointer;"><input type="checkbox" onchange="toggleInvCol('${c.id}')" ${!isHidden ? 'checked' : ''}> ${c.lbl}</label>`;
+            container.appendChild(div);
+        });
+    }
+    window.renderInvoiceConfig = renderInvoiceConfig;
+
+    function toggleInvCol(id) {
+        if(currentHiddenCols.includes(id)) {
+            currentHiddenCols = currentHiddenCols.filter(c => c !== id);
+        } else {
+            currentHiddenCols.push(id);
+        }
+        renderInvoiceTable();
+    }
+    window.toggleInvCol = toggleInvCol;
+
+    function togglePackingListMode() {
+        if(!currentHiddenCols.includes('price')) currentHiddenCols.push('price');
+        if(!currentHiddenCols.includes('totPrice')) currentHiddenCols.push('totPrice');
+        renderInvoiceConfig();
+        renderInvoiceTable();
+    }
+    window.togglePackingListMode = togglePackingListMode;
+
+    function addCustomInvColumn() {
+        let name = document.getElementById('inv-new-col-name').value.trim();
+        if(!name) return showMsg('خطا', 'نام ستون را وارد کنید.');
+        if(currentCustomCols.includes(name)) return showMsg('خطا', 'این ستون قبلا اضافه شده است.');
+        currentCustomCols.push(name);
+        document.getElementById('inv-new-col-name').value = '';
+        renderInvoiceConfig();
+        renderInvoiceTable();
+    }
+    window.addCustomInvColumn = addCustomInvColumn;
+
+    function addInvoiceRow() {
+        let rId = 'R' + Math.floor(Math.random()*100000);
+        let newRow = { id: rId, customData: {} };
+        INV_COLS.forEach(c => { if(!['row','photo'].includes(c.id)) newRow[c.id] = ''; });
+        currentCustomCols.forEach(c => newRow.customData[c] = '');
+        currentInvItems.push(newRow);
+        renderInvoiceTable();
+    }
+    window.addInvoiceRow = addInvoiceRow;
+
+    function removeInvoiceRow(id) {
+        currentInvItems = currentInvItems.filter(r => r.id !== id);
+        calcInvoiceTotals();
+        renderInvoiceTable();
+    }
+    window.removeInvoiceRow = removeInvoiceRow;
+
+    function handleInvoiceImage(input, rId) {
+        let file = input.files[0];
+        if(!file) return;
+        let reader = new FileReader();
+        reader.onload = function(e) {
+            let img = new Image();
+            img.onload = function() {
+                let canvas = document.createElement('canvas');
+                let ctx = canvas.getContext('2d');
+                let maxW = 300; let maxH = 300;
+                let width = img.width; let height = img.height;
+                if (width > height) { if (width > maxW) { height *= maxW / width; width = maxW; } }
+                else { if (height > maxH) { width *= maxH / height; height = maxH; } }
+                canvas.width = width; canvas.height = height;
+                ctx.drawImage(img, 0, 0, width, height);
+                let base64 = canvas.toDataURL('image/jpeg', 0.6);
+                
+                let rItem = currentInvItems.find(r => r.id === rId);
+                if(rItem) rItem.photo = base64;
+                renderInvoiceTable();
+            }
+            img.src = e.target.result;
+        }
+        reader.readAsDataURL(file);
+    }
+    window.handleInvoiceImage = handleInvoiceImage;
+
+    function onInvInput(rId, field, val, isCustom=false) {
+        let r = currentInvItems.find(x => x.id === rId);
+        if(!r) return;
+        if(isCustom) r.customData[field] = val;
+        else r[field] = val;
+        
+        // Auto calcs
+        let c = parseFloat(r.cartons) || 0;
+        let l = parseFloat(r.len) || 0;
+        let w = parseFloat(r.wid) || 0;
+        let h = parseFloat(r.hgt) || 0;
+        let wt = parseFloat(r.wt) || 0;
+        let pr = parseFloat(r.price) || 0;
+        
+        if(l>0 || w>0 || h>0) r.cbm = ((l*w*h)/1000000).toFixed(4);
+        let rcbm = parseFloat(r.cbm) || 0;
+        
+        if(rcbm>0 && c>0) r.totCbm = (rcbm * c).toFixed(4);
+        if(wt>0 && c>0) r.totWt = (wt * c).toFixed(2);
+        if(pr>0 && c>0) r.totPrice = (pr * c).toFixed(2);
+        
+        calcInvoiceTotals();
+        
+        // Soft update UI without full re-render
+        if(!isCustom && ['cartons','len','wid','hgt','wt','price'].includes(field)) {
+            let tr = document.getElementById('inv-tr-'+rId);
+            if(tr) {
+                if(tr.querySelector(`[data-f="cbm"]`)) tr.querySelector(`[data-f="cbm"]`).value = r.cbm || '';
+                if(tr.querySelector(`[data-f="totCbm"]`)) tr.querySelector(`[data-f="totCbm"]`).value = r.totCbm || '';
+                if(tr.querySelector(`[data-f="totWt"]`)) tr.querySelector(`[data-f="totWt"]`).value = r.totWt || '';
+                if(tr.querySelector(`[data-f="totPrice"]`)) tr.querySelector(`[data-f="totPrice"]`).value = r.totPrice || '';
+            }
+        }
+    }
+    window.onInvInput = onInvInput;
+
+    function calcInvoiceTotals() {
+        let tC = 0, tCbm = 0, tWt = 0, tPr = 0;
+        currentInvItems.forEach(r => {
+            tC += parseFloat(r.cartons) || 0;
+            tCbm += parseFloat(r.totCbm) || 0;
+            tWt += parseFloat(r.totWt) || 0;
+            tPr += parseFloat(r.totPrice) || 0;
+        });
+        document.getElementById('inv-sum-cartons').innerText = tC;
+        document.getElementById('inv-sum-cbm').innerText = tCbm.toFixed(4);
+        document.getElementById('inv-sum-wt').innerText = tWt.toFixed(2);
+        document.getElementById('inv-sum-price').innerText = tPr.toFixed(2);
+    }
+    window.calcInvoiceTotals = calcInvoiceTotals;
+
+    function renderInvoiceTable() {
+        let thead = document.getElementById('inv-table-head');
+        let tbody = document.getElementById('inv-table-body');
+        let tfoot = document.getElementById('inv-table-foot');
+        
+        let allCols = INV_COLS.map(c => ({id: c.id, lbl: c.lbl, isCust: false})).concat(currentCustomCols.map(c => ({id: 'cust_'+c, lbl: c, isCust: true})));
+        
+        let thHtml = `<tr>`;
+        allCols.forEach(c => {
+            let cls = currentHiddenCols.includes(c.id) ? 'hide-col' : '';
+            thHtml += `<th class="${cls}">${c.lbl}</th>`;
+        });
+        thHtml += `<th class="action-col no-print">عملیات</th></tr>`;
+        thead.innerHTML = thHtml;
+
+        tbody.innerHTML = '';
+        currentInvItems.forEach((r, idx) => {
+            let tr = `<tr id="inv-tr-${r.id}">`;
+            allCols.forEach(c => {
+                let cls = currentHiddenCols.includes(c.id) ? 'hide-col' : '';
+                let val = '';
+                if(c.id === 'row') val = idx + 1;
+                else if(c.isCust) val = r.customData[c.lbl] || '';
+                else val = r[c.id] || '';
+                
+                if(c.id === 'row') {
+                    tr += `<td class="${cls}">${val}</td>`;
+                } else if(c.id === 'photo') {
+                    let imgHtml = r.photo ? `<img src="${r.photo}" style="max-width:50px; max-height:50px; display:block; margin:auto;">` : '';
+                    tr += `<td class="${cls}">${imgHtml}<input type="file" accept="image/*" class="no-print" style="width:70px; font-size:9px;" onchange="handleInvoiceImage(this, '${r.id}')"></td>`;
+                } else {
+                    let oninp = c.isCust ? `oninput="onInvInput('${r.id}', '${c.lbl}', this.value, true)"` : `oninput="onInvInput('${r.id}', '${c.id}', this.value)"`;
+                    tr += `<td class="${cls}"><input type="text" class="inv-cell-input" data-f="${c.id}" value="${val}" ${oninp}></td>`;
+                }
+            });
+            tr += `<td class="action-col no-print"><button class="btn btn-danger btn-small" onclick="removeInvoiceRow('${r.id}')">✖</button></td></tr>`;
+            tbody.innerHTML += tr;
+        });
+
+        let tfHtml = `<tr>`;
+        allCols.forEach(c => {
+            let cls = currentHiddenCols.includes(c.id) ? 'hide-col' : '';
+            if(c.id === 'row') tfHtml += `<td class="${cls}">جمع</td>`;
+            else if(c.id === 'cartons') tfHtml += `<td class="${cls}" id="inv-sum-cartons">0</td>`;
+            else if(c.id === 'totCbm') tfHtml += `<td class="${cls}" id="inv-sum-cbm">0</td>`;
+            else if(c.id === 'totWt') tfHtml += `<td class="${cls}" id="inv-sum-wt">0</td>`;
+            else if(c.id === 'totPrice') tfHtml += `<td class="${cls}" id="inv-sum-price">0</td>`;
+            else tfHtml += `<td class="${cls}"></td>`;
+        });
+        tfHtml += `<td class="action-col no-print"></td></tr>`;
+        tfoot.innerHTML = tfHtml;
+        
+        calcInvoiceTotals();
+    }
+    window.renderInvoiceTable = renderInvoiceTable;
+
+    function savePurchaseInvoice() {
+        let supplierRaw = document.getElementById('inv-supplier').value;
+        let suppObj = db.customers.find(c => c.id === supplierRaw || c.name === supplierRaw || c.code === supplierRaw);
+        if(!suppObj) return showMsg('خطا', 'تأمین‌کننده وارد شده نامعتبر است.');
+        let suppId = suppObj.id;
+        
+        let invNo = document.getElementById('inv-no').value.trim();
+        if(!invNo) return showMsg('خطا', 'شماره فاکتور الزامی است.');
+        
+        // Prevent duplicate invoice number for the same supplier
+        if(db.purchaseInvoices.find(i => i.supplierId === suppId && i.invoiceNo === invNo && i.id !== currentInvoiceId)) {
+            return showMsg('خطا', 'این شماره فاکتور قبلاً برای این تأمین‌کننده ثبت شده است.');
+        }
+
+        let deposit = parseFloat(document.getElementById('inv-deposit').value) || 0;
+        let date = document.getElementById('inv-date').value;
+        let company = document.getElementById('inv-company').value.trim();
+        let phone = document.getElementById('inv-phone').value.trim();
+        
+        let tC=0, tCbm=0, tWt=0, tPr=0;
+        currentInvItems.forEach(r => { tC+=parseFloat(r.cartons)||0; tCbm+=parseFloat(r.totCbm)||0; tWt+=parseFloat(r.totWt)||0; tPr+=parseFloat(r.totPrice)||0; });
+
+        let allCols = INV_COLS.map(c=>c.id).concat(currentCustomCols.map(c=>'cust_'+c));
+        let visCols = allCols.filter(c => !currentHiddenCols.includes(c));
+
+        let isNew = !currentInvoiceId;
+        if(isNew) currentInvoiceId = 'INV-' + (db.idCounter++);
+        
+        let invObj = db.purchaseInvoices.find(i => i.id === currentInvoiceId);
+        if(!invObj) {
+            invObj = {
+                id: currentInvoiceId, status: 'pending', relatedShipmentId: null
+            };
+            db.purchaseInvoices.push(invObj);
+        }
+
+        invObj.invoiceNo = invNo;
+        invObj.supplierId = suppId;
+        invObj.companyName = company;
+        invObj.phone = phone;
+        invObj.date = date;
+        invObj.items = JSON.parse(JSON.stringify(currentInvItems));
+        invObj.customColumns = [...currentCustomCols];
+        invObj.visibleColumns = visCols;
+        invObj.deposit = deposit;
+        invObj.totalAmount = tPr;
+        invObj.totalCartons = tC;
+        invObj.totalCbm = tCbm;
+        invObj.totalWt = tWt;
+
+        // Deposit Handling (Creates Debit for supplier, no relatedShipmentId)
+        if (deposit > 0) {
+            let jDep = db.journal.find(j => j.relatedInvoiceId === currentInvoiceId && j.type === 'debit' && (!j.relatedShipmentId || j.relatedShipmentId === 'MANUAL' || j.relatedShipmentId === 'INIT'));
+            if(jDep) {
+                jDep.amount = deposit; jDep.cust = suppId; jDep.date = date;
+            } else {
+                db.journal.push({
+                    id: 'J'+(db.idCounter++), date: date, cust: suppId, desc: `پرداخت علی‌الحساب فاکتور ${invNo}`,
+                    category: 'finance', type: 'debit', amount: deposit, currency: 'CNY', isSystem: true, relatedInvoiceId: currentInvoiceId
+                });
+            }
+        } else {
+            db.journal = db.journal.filter(j => !(j.relatedInvoiceId === currentInvoiceId && j.type === 'debit' && (!j.relatedShipmentId || j.relatedShipmentId === 'MANUAL' || j.relatedShipmentId === 'INIT')));
+        }
+
+        saveToLocal();
+        recalcBalances();
+        populateDropdowns();
+        renderInvoiceSidebar();
+        showMsg('موفقیت', 'فاکتور با موفقیت ذخیره شد.');
+    }
+    window.savePurchaseInvoice = savePurchaseInvoice;
+
+    function exportInvoiceExcel() {
+        if(typeof XLSX === 'undefined') return showMsg('خطا', 'کتابخانه Excel بارگذاری نشده است.');
+        let table = document.getElementById('invoice-export-table').cloneNode(true);
+        let rows = table.querySelectorAll('tr');
+        rows.forEach(r => {
+            r.querySelectorAll('.hide-col, .action-col').forEach(c => c.remove());
+            r.querySelectorAll('td').forEach(td => {
+                let input = td.querySelector('input');
+                if(input) {
+                    if(input.type === 'file') td.innerText = td.querySelector('img') ? '[عکس]' : '';
+                    else td.innerText = input.value;
+                }
+            });
+        });
+        let wb = XLSX.utils.table_to_book(table, {sheet:"Invoice"});
+        XLSX.writeFile(wb, (document.getElementById('inv-no').value || "invoice") + ".xlsx");
+    }
+    window.exportInvoiceExcel = exportInvoiceExcel;
+
+    // ----- INVOICE MODULE END -----
+
+    function attachInvoiceToShipment() {
+        let selector = document.getElementById('ship-invoice-selector').value;
+        let invIdMatch = selector.match(/\[ID:([^\]]+)\]/);
+        let inv = null;
+        if(invIdMatch) inv = db.purchaseInvoices.find(i => i.id === invIdMatch[1]);
+        else inv = db.purchaseInvoices.find(i => i.invoiceNo === selector && i.status === 'pending');
+        
+        if(!inv) return showMsg('خطا', 'فاکتوری یافت نشد یا این فاکتور قبلاً متصل شده است.');
+        if(currentShipmentInvoices.find(i => i.id === inv.id)) return showMsg('خطا', 'این فاکتور قبلاً به لیست اضافه شده است.');
+        
+        currentShipmentInvoices.push(inv);
+        document.getElementById('ship-invoice-selector').value = '';
+        renderAttachedInvoices();
+    }
+    window.attachInvoiceToShipment = attachInvoiceToShipment;
+
+    function detachInvoice(id) {
+        currentShipmentInvoices = currentShipmentInvoices.filter(i => i.id !== id);
+        renderAttachedInvoices();
+    }
+    window.detachInvoice = detachInvoice;
+
+    function renderAttachedInvoices() {
+        let tbody = document.getElementById('ship-attached-inv-tbody');
+        tbody.innerHTML = '';
+        let total = 0;
+        if(currentShipmentInvoices.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="5" style="color:gray;">هیچ فاکتوری انتخاب نشده است.</td></tr>`;
+        } else {
+            currentShipmentInvoices.forEach(inv => {
+                let suppName = db.customers.find(c=>c.id===inv.supplierId)?.name || inv.supplierId;
+                total += (inv.totalAmount || 0);
+                tbody.innerHTML += `<tr>
+                    <td style="direction:ltr; font-weight:bold;">${inv.invoiceNo}</td>
+                    <td>${suppName}</td>
+                    <td>${inv.date}</td>
+                    <td style="direction:ltr;">${(inv.totalAmount||0).toLocaleString()}</td>
+                    <td><button class="btn btn-danger btn-small" onclick="detachInvoice('${inv.id}')">✖</button></td>
+                </tr>`;
+            });
+        }
+        document.getElementById('ship-total-cargo').value = total > 0 ? total : '';
+        calcCommission();
+    }
+    window.renderAttachedInvoices = renderAttachedInvoices;
 
     function syncPhysicalInfo() {
         let method = document.getElementById('ship-transport-method').value;
         let type = document.getElementById('ship-type').value;
-        let isFCL = method === 'sea' && type.startsWith('FCL');
+        let isAirUs = method === 'air' && document.getElementById('air-transport-by').value === 'us';
+        let isFCL = method !== 'air' && method !== 'sea_lcl' && (method !== 'sea' || type.startsWith('FCL'));
 
-        if (isFCL) {
+        if (isAirUs) {
+            document.getElementById('ship-cbm').value = document.getElementById('fwd-fcl-vol').value;
+            document.getElementById('ship-cartons').value = document.getElementById('fwd-fcl-cartons').value;
+            document.getElementById('ship-weight').value = document.getElementById('fwd-fcl-gross').value;
+        } else if (isFCL) {
             document.getElementById('ship-fcl-cartons').value = document.getElementById('fwd-fcl-cartons').value;
             document.getElementById('ship-fcl-net').value = document.getElementById('fwd-fcl-net').value;
             document.getElementById('ship-fcl-gross').value = document.getElementById('fwd-fcl-gross').value;
@@ -932,97 +1524,7 @@
         calcTotalForwarder();
         calcTotalShipping();
     }
-
-    function addPurchaseItem() {
-        let supplierRaw = document.getElementById('pur-supplier').value;
-        let supplierObj = db.customers.find(c => c.id === supplierRaw || c.name === supplierRaw || c.code === supplierRaw || c.wechat === supplierRaw);
-        
-        if(!supplierObj) return showMsg('خطا', 'تأمین‌کننده وارد شده معتبر نیست. لطفاً از لیست پیشنهادی انتخاب کنید.');
-        let supplierId = supplierObj.id;
-        let supplierName = supplierObj.name;
-
-        let invNo = document.getElementById('pur-inv').value || '';
-        let totalStr = document.getElementById('pur-total').value;
-        let total = parseFloat(totalStr) || 0;
-        let paid = parseFloat(document.getElementById('pur-paid').value) || 0;
-        let due = document.getElementById('pur-due').value;
-
-        if(!totalStr || total <= 0) return showMsg('خطا', 'لطفاً مبلغ کل فاکتور را وارد کنید.');
-
-        if(editPurchaseId) {
-            let p = currentPurchases.find(x => x.id === editPurchaseId);
-            if(p) {
-                p.supplierId = supplierId; p.supplierName = supplierName;
-                p.invNo = invNo; p.total = total; p.paid = paid; p.due = due;
-            }
-            editPurchaseId = null;
-            document.getElementById('btn-cancel-pur-edit').style.display = 'none';
-            document.getElementById('btn-save-purchase').innerText = '➕ ثبت فاکتور';
-            document.getElementById('btn-save-purchase').classList.replace('btn-success', 'btn-warning');
-        } else {
-            currentPurchases.push({
-                id: Math.random().toString(), supplierId, supplierName,
-                invNo, total, paid, due
-            });
-        }
-
-        document.getElementById('pur-supplier').value = ''; document.getElementById('pur-total').value = ''; document.getElementById('pur-paid').value = ''; document.getElementById('pur-inv').value = '';
-        renderPurchasesList();
-    }
-
-    function editPurchaseItem(id) {
-        let p = currentPurchases.find(x => x.id === id);
-        if(!p) return;
-        document.getElementById('pur-supplier').value = p.supplierId;
-        document.getElementById('pur-inv').value = p.invNo;
-        document.getElementById('pur-total').value = p.total;
-        document.getElementById('pur-paid').value = p.paid || '';
-        document.getElementById('pur-due').value = p.due;
-        editPurchaseId = id;
-        document.getElementById('btn-cancel-pur-edit').style.display = 'inline-block';
-        let saveBtn = document.getElementById('btn-save-purchase');
-        saveBtn.innerText = '✅ ثبت تغییرات';
-        saveBtn.classList.replace('btn-warning', 'btn-success');
-    }
-
-    function cancelEditPurchase() {
-        editPurchaseId = null;
-        document.getElementById('btn-cancel-pur-edit').style.display = 'none';
-        let saveBtn = document.getElementById('btn-save-purchase');
-        saveBtn.innerText = '➕ ثبت فاکتور';
-        saveBtn.classList.replace('btn-success', 'btn-warning');
-        document.getElementById('pur-supplier').value = ''; document.getElementById('pur-total').value = ''; document.getElementById('pur-paid').value = ''; document.getElementById('pur-inv').value = '';
-    }
-
-    function removePurchaseItem(id) {
-        currentPurchases = currentPurchases.filter(p => p.id !== id);
-        renderPurchasesList();
-    }
-
-    function renderPurchasesList() {
-        const tbody = document.getElementById('pur-list-tbody'); tbody.innerHTML = '';
-        let totalCargo = 0;
-        if (currentPurchases.length === 0) {
-            tbody.innerHTML = `<tr><td colspan="5" style="color:gray;">هیچ فاکتوری برای این شیپمنت ثبت نشده است.</td></tr>`;
-        } else {
-            currentPurchases.forEach(p => {
-                totalCargo += p.total;
-                tbody.innerHTML += `
-                    <tr>
-                        <td>${p.supplierName}</td><td>${p.invNo}</td>
-                        <td style="font-weight:bold; direction:ltr;">${p.total.toLocaleString()}</td>
-                        <td style="direction:ltr;">${p.paid ? p.paid.toLocaleString() : '-'}</td>
-                        <td>
-                            <button class="btn btn-warning btn-small" onclick="editPurchaseItem('${p.id}')">✏️</button>
-                            <button class="btn btn-danger btn-small" onclick="removePurchaseItem('${p.id}')">✖</button>
-                        </td>
-                    </tr>
-                `;
-            });
-        }
-        document.getElementById('ship-total-cargo').value = totalCargo > 0 ? totalCargo : '';
-        calcCommission();
-    }
+    window.syncPhysicalInfo = syncPhysicalInfo;
 
     function calcCommission() {
         let totalCargo = parseFloat(document.getElementById('ship-total-cargo').value) || 0;
@@ -1035,24 +1537,32 @@
         }
         calcGrandTotal();
     }
+    window.calcCommission = calcCommission;
 
     function calcTotalShipping() {
         let method = document.getElementById('ship-transport-method').value;
         let type = document.getElementById('ship-type').value;
         let total = 0;
 
-        if (method === 'sea' && type.startsWith('FCL')) {
+        let isGeneral = (method === 'sea' && type === 'LCL');
+        let isAirUs = method === 'air' && document.getElementById('air-transport-by').value === 'us';
+
+        if (isAirUs) {
+            total += parseFloat(document.getElementById('ship-air-freight').value) || 0;
+        } else if (!isGeneral) {
             let cost = parseFloat(document.getElementById('ship-fcl-cost').value) || 0;
             let curr = document.getElementById('ship-fcl-curr').value;
             let usdRate = parseFloat(document.getElementById('ship-fcl-usd-rate').value) || 1;
             if (curr === 'USD') cost = cost * usdRate;
             total += cost;
             total += parseFloat(document.getElementById('ship-fcl-int').value) || 0;
-            total += parseFloat(document.getElementById('ship-fcl-telex').value) || 0;
             total += parseFloat(document.getElementById('ship-fcl-labor').value) || 0;
-            total += parseFloat(document.getElementById('ship-fcl-forklift').value) || 0;
             total += parseFloat(document.getElementById('ship-fcl-pack').value) || 0;
+            total += parseFloat(document.getElementById('ship-fcl-forklift').value) || 0;
             total += parseFloat(document.getElementById('ship-fcl-wh').value) || 0;
+            total += parseFloat(document.getElementById('ship-fcl-zirmizi').value) || 0;
+            total += parseFloat(document.getElementById('ship-fcl-telex').value) || 0;
+            total += parseFloat(document.getElementById('ship-fcl-insure').value) || 0;
             total += parseFloat(document.getElementById('ship-fcl-other').value) || 0;
         } else {
             let cbm = parseFloat(document.getElementById('ship-cbm').value) || 0;
@@ -1065,27 +1575,38 @@
         }
 
         document.getElementById('ship-total-shipping').value = total > 0 ? total : '';
-        document.getElementById('sum-ship-cost').value = total > 0 ? total : '';
+        if(document.getElementById('sum-ship-cost')) document.getElementById('sum-ship-cost').value = total > 0 ? total : '';
+        if(document.getElementById('ship-lcl-iran-freight-cny')) document.getElementById('ship-lcl-iran-freight-cny').value = total > 0 ? total : '';
         calcGrandTotal();
     }
+    window.calcTotalShipping = calcTotalShipping;
     
     function calcTotalForwarder() {
         let method = document.getElementById('ship-transport-method').value;
         let type = document.getElementById('ship-type').value;
         let total = 0;
 
-        if (method === 'sea' && type.startsWith('FCL')) {
+        let isGeneral = (method === 'sea' && type === 'LCL');
+        let isAirUs = method === 'air' && document.getElementById('air-transport-by').value === 'us';
+
+        if (isAirUs) {
+            total += parseFloat(document.getElementById('fwd-air-freight').value) || 0;
+            total += parseFloat(document.getElementById('fwd-fcl-int').value) || 0;
+            total += parseFloat(document.getElementById('fwd-fcl-pack').value) || 0;
+        } else if (!isGeneral) {
             let cost = parseFloat(document.getElementById('fwd-fcl-cost').value) || 0;
             let curr = document.getElementById('fwd-fcl-curr').value;
             let usdRate = parseFloat(document.getElementById('fwd-fcl-usd-rate').value) || 1;
             if (curr === 'USD') cost = cost * usdRate;
             total += cost;
             total += parseFloat(document.getElementById('fwd-fcl-int').value) || 0;
-            total += parseFloat(document.getElementById('fwd-fcl-telex').value) || 0;
             total += parseFloat(document.getElementById('fwd-fcl-labor').value) || 0;
-            total += parseFloat(document.getElementById('fwd-fcl-forklift').value) || 0;
             total += parseFloat(document.getElementById('fwd-fcl-pack').value) || 0;
+            total += parseFloat(document.getElementById('fwd-fcl-forklift').value) || 0;
             total += parseFloat(document.getElementById('fwd-fcl-wh').value) || 0;
+            total += parseFloat(document.getElementById('fwd-fcl-zirmizi').value) || 0;
+            total += parseFloat(document.getElementById('fwd-fcl-telex').value) || 0;
+            total += parseFloat(document.getElementById('fwd-fcl-insure').value) || 0;
             total += parseFloat(document.getElementById('fwd-fcl-other').value) || 0;
         } else {
             let fwdCbm = parseFloat(document.getElementById('fwd-cbm').value) || 0;
@@ -1098,6 +1619,7 @@
         
         document.getElementById('fwd-total-cost').value = total > 0 ? total : '';
     }
+    window.calcTotalForwarder = calcTotalForwarder;
 
     function calcTotalClearanceIran() {
         let amt = parseFloat(document.getElementById('ship-clearance-amt-iran').value) || 0;
@@ -1106,17 +1628,47 @@
         let total = amt + trans + other;
         document.getElementById('ship-clearance-total-iran').value = total > 0 ? total : '';
     }
+    window.calcTotalClearanceIran = calcTotalClearanceIran;
 
     function calcGrandTotal() {
-        let shipping = parseFloat(document.getElementById('ship-total-shipping').value) || 0;
-        let cargo = parseFloat(document.getElementById('ship-total-cargo').value) || 0;
-        let comm = parseFloat(document.getElementById('ship-comm-val').value) || 0;
-        document.getElementById('ship-grand-total').value = shipping + cargo + comm;
+        let method = document.getElementById('ship-transport-method').value;
+        let type = document.getElementById('ship-type').value;
+        let dest = document.getElementById('ship-dest').value;
+        let pricing = document.getElementById('ship-pricing-model').value;
+        
+        let lclIranType = document.getElementById('ship-lcl-iran-clearance-type').value;
+        let isSeaLclIran = (method === 'sea' && type === 'LCL' && dest === 'Iran');
+
+        if (isSeaLclIran) {
+            let purchases = parseFloat(document.getElementById('ship-total-cargo').value) || 0;
+            let comm = parseFloat(document.getElementById('ship-comm-val').value) || 0;
+            let freight = parseFloat(document.getElementById('ship-total-shipping').value) || 0;
+            
+            if (lclIranType === 'yekja') {
+                document.getElementById('ship-grand-total').value = (purchases + comm) > 0 ? (purchases + comm) : '';
+                document.getElementById('ship-grand-total-irt').value = document.getElementById('ship-lcl-iran-total-irt').value;
+            } else {
+                document.getElementById('ship-grand-total').value = (purchases + comm + freight) > 0 ? (purchases + comm + freight) : '';
+                document.getElementById('ship-grand-total-irt').value = document.getElementById('ship-lcl-iran-clear-irt').value;
+            }
+            return;
+        }
+
+        if(pricing === 'total') {
+            // Handled during save
+        } else {
+            let shipping = parseFloat(document.getElementById('ship-total-shipping').value) || 0;
+            let cargo = parseFloat(document.getElementById('ship-total-cargo').value) || 0;
+            let comm = parseFloat(document.getElementById('ship-comm-val').value) || 0;
+            let total = shipping + cargo + comm;
+            document.getElementById('ship-grand-total').value = total > 0 ? total : '';
+        }
     }
+    window.calcGrandTotal = calcGrandTotal;
 
     function toggleTopBar(id) {
         let el = document.getElementById(id);
-        if (el) el.style.display = el.style.display === 'flex' ? 'none' : 'flex';
+        el.style.display = el.style.display === 'flex' ? 'none' : 'flex';
     }
     window.toggleTopBar = toggleTopBar;
     
@@ -1129,6 +1681,7 @@
         element.classList.add('active');
         renderSidebar(context);
     }
+    window.setSidebarTab = setSidebarTab;
 
     function getSortedCustomers() { return [...db.customers].sort((a, b) => { return parseInt((a.code||'0').match(/\d+/)?.[0]||0) - parseInt((b.code||'0').match(/\d+/)?.[0]||0); }); }
 
@@ -1138,9 +1691,9 @@
         let tab = context === 'cust' ? currentSidebarTab : currentSidebarTabLog; 
         
         const container = document.getElementById(containerId);
+        if(!container) return;
         const searchInput = document.getElementById(searchId);
         const searchTerm = searchInput ? searchInput.value.trim().toLowerCase() : '';
-        if(!container) return;
         container.innerHTML = '';
         
         let sortedCust = getSortedCustomers().filter(c => c.type === tab);
@@ -1173,6 +1726,7 @@
             container.appendChild(div);
         });
     }
+    window.renderSidebar = renderSidebar;
 
     function populateDropdowns() {
         let sortedCust = getSortedCustomers();
@@ -1186,31 +1740,49 @@
             list.forEach(c => {
                 let opt = document.createElement('option');
                 opt.value = c.id;
+                opt.text = c.name + (c.code ? ` (${c.code})` : '');
                 logCustList.appendChild(opt);
             });
         }
-
-        const purSupplierList = document.getElementById('pur-supplier-list');
-        if (purSupplierList) {
-            purSupplierList.innerHTML = '';
+        
+        const invSuppList = document.getElementById('inv-supplier-list');
+        if(invSuppList) {
+            invSuppList.innerHTML = '';
             sortedCust.filter(c => c.type === 'supplier').forEach(c => {
-                let text = `${c.name} ${c.code ? `(کد:${c.code})` : ''} ${c.wechat ? `(ویچت:${c.wechat})` : ''}`;
                 let opt = document.createElement('option');
                 opt.value = c.id;
-                opt.text = text;
-                purSupplierList.appendChild(opt);
+                opt.text = c.name + (c.code ? ` (${c.code})` : '');
+                invSuppList.appendChild(opt);
             });
         }
 
-        ['ship-clearance-agent', 'ship-clearance-agent-iran'].forEach(id => {
-            const el = document.getElementById(id);
-            if(el) {
-                let v = el.value; el.innerHTML = '<option value="">-- انتخاب کنید --</option>';
-                let list = sortedCust.filter(c => c.type === 'clearance_agent');
-                list.forEach(c => { let opt = document.createElement('option'); opt.value = c.id; opt.innerText = c.id.split('(')[0]; el.appendChild(opt); });
-                if(v && list.find(x => x.id === v)) el.value = v;
-            }
-        });
+        const pendingInvList = document.getElementById('pending-inv-list');
+        if (pendingInvList && db.purchaseInvoices) {
+            pendingInvList.innerHTML = '';
+            db.purchaseInvoices.filter(i => i.status === 'pending').forEach(inv => {
+                let supp = db.customers.find(c=>c.id===inv.supplierId);
+                let text = `${inv.invoiceNo} | ${supp?supp.name:inv.supplierId} | ${inv.totalAmount} یوان [ID:${inv.id}]`;
+                let opt = document.createElement('option');
+                opt.value = text;
+                pendingInvList.appendChild(opt);
+            });
+        }
+
+        const clrDubaiList = document.getElementById('ship-clearance-agent-list');
+        if (clrDubaiList) {
+            clrDubaiList.innerHTML = '';
+            sortedCust.filter(c => c.type === 'clearance_agent').forEach(c => {
+                let opt = document.createElement('option'); opt.value = c.id; opt.text = c.name + (c.code ? ` (${c.code})` : ''); clrDubaiList.appendChild(opt);
+            });
+        }
+        
+        const clrIranList = document.getElementById('ship-clearance-agent-iran-list');
+        if (clrIranList) {
+            clrIranList.innerHTML = '';
+            sortedCust.filter(c => c.type === 'clearance_agent').forEach(c => {
+                let opt = document.createElement('option'); opt.value = c.id; opt.text = c.name + (c.code ? ` (${c.code})` : ''); clrIranList.appendChild(opt);
+            });
+        }
 
         const shipLineList = document.getElementById('ship-line-list');
         if (shipLineList) {
@@ -1220,6 +1792,7 @@
             });
         }
 
+        // Active, Delivered, and Report Filters
         ['flt-act-cust-list', 'flt-del-cust-list', 'flt-rep-cust-list'].forEach(id => {
             let el = document.getElementById(id);
             if(el) {
@@ -1240,32 +1813,27 @@
             }
         });
     }
+    window.populateDropdowns = populateDropdowns;
 
     function quickAddCustomer() { document.getElementById('new-cust-type').value = 'customer'; openModal('customerModal'); }
     function quickAddSupplier() { document.getElementById('new-cust-type').value = 'supplier'; openModal('customerModal'); }
     function quickAddClearance() { document.getElementById('new-cust-type').value = 'clearance_agent'; openModal('customerModal'); }
+    window.quickAddCustomer = quickAddCustomer;
+    window.quickAddSupplier = quickAddSupplier;
+    window.quickAddClearance = quickAddClearance;
 
-    let isSavingCustomer = false;
     function saveNewCustomer() {
-        if (isSavingCustomer) return;
-        isSavingCustomer = true;
-        
         let fname = document.getElementById('new-cust-fullname').value.trim();
         let code = document.getElementById('new-cust-code').value.trim();
         let wechat = document.getElementById('new-cust-wechat').value.trim();
         let type = document.getElementById('new-cust-type').value;
         
-        if (!fname) {
-            isSavingCustomer = false;
-            return showMsg('خطا', 'نام شخص/شرکت الزامی است.');
-        }
+        if (!fname) return showMsg('خطا', 'نام شخص/شرکت الزامی است.');
         
         if (db.customers.find(c => c.name.toLowerCase() === fname.toLowerCase())) {
-            isSavingCustomer = false;
             return showMsg('خطا', 'این نام شخص یا شرکت قبلاً در سیستم ثبت شده است.');
         }
         if (code && db.customers.find(c => c.code === code)) {
-            isSavingCustomer = false;
             return showMsg('خطا', 'این کد اختصاصی قبلاً در سیستم ثبت شده است.');
         }
 
@@ -1284,27 +1852,25 @@
         saveToLocal(); populateDropdowns(); renderSidebar('cust'); renderSidebar('log'); updateUI();
         
         closeModal('customerModal'); 
-        setTimeout(() => { 
-            showMsg('موفقیت', 'پرونده با موفقیت ثبت شد.'); 
-            isSavingCustomer = false;
-        }, 100);
+        setTimeout(() => { showMsg('موفقیت', 'پرونده با موفقیت ثبت شد.'); }, 100);
     }
     window.saveNewCustomer = saveNewCustomer;
 
     function openEditCustomerModal() {
-        if (!activeCustomerId) return;
         let cust = db.customers.find(c => c.id === activeCustomerId);
         if (!cust) return;
-        
-        document.getElementById('edit-cust-fullname').value = cust.name || '';
+        document.getElementById('edit-cust-fullname').value = cust.name;
         document.getElementById('edit-cust-code').value = cust.code || '';
         document.getElementById('edit-cust-wechat').value = cust.wechat || '';
         
-        // Clear init balance inputs
-        document.getElementById('edit-init-cny').value = '';
-        document.getElementById('edit-init-usd').value = '';
-        document.getElementById('edit-init-aed').value = '';
-        document.getElementById('edit-init-irt').value = '';
+        // Find existing INIT balances
+        ['cny', 'usd', 'aed', 'irt'].forEach(curr => {
+            document.getElementById(`edit-init-${curr}`).value = '';
+            let initJ = db.journal.find(j => j.cust === cust.id && j.relatedShipmentId === 'INIT' && j.currency === curr.toUpperCase());
+            if (initJ) {
+                document.getElementById(`edit-init-${curr}`).value = initJ.type === 'debit' ? initJ.amount : -initJ.amount;
+            }
+        });
         
         openModal('editCustomerModal');
     }
@@ -1323,8 +1889,10 @@
             cust.code = newCode;
             cust.wechat = newWechat;
             
+            // Remove old INITs
             db.journal = db.journal.filter(j => !(j.cust === cust.id && j.relatedShipmentId === 'INIT'));
             
+            // Add new INITs
             ['cny', 'usd', 'aed', 'irt'].forEach(curr => {
                 let val = parseFloat(document.getElementById(`edit-init-${curr}`).value) || 0;
                 if (val !== 0) {
@@ -1345,6 +1913,7 @@
             updateUI();
         }
     }
+    window.saveEditedCustomer = saveEditedCustomer;
 
     function deleteActiveCustomer() {
         if (!activeCustomerId) return;
@@ -1365,27 +1934,29 @@
         };
         openModal('confirmModal');
     }
+    window.deleteActiveCustomer = deleteActiveCustomer;
 
     function openProfileTransaction() {
         document.getElementById('prof-log-date').value = SYSTEM_DATE;
         document.getElementById('prof-log-desc').value = '';
         document.getElementById('prof-log-amount').value = '';
         let btn = document.getElementById('btn-save-trx-direct');
-        if(btn) btn.disabled = false;
+        btn.disabled = false;
         openModal('profileFinModal');
     }
+    window.openProfileTransaction = openProfileTransaction;
 
     function saveProfileTransaction() {
         let btn = document.getElementById('btn-save-trx-direct');
-        if(btn) btn.disabled = true;
+        btn.disabled = true;
 
         if(!activeCustomerId) {
-            if(btn) btn.disabled = false;
+            btn.disabled = false;
             return;
         }
         let amount = parseFloat(document.getElementById('prof-log-amount').value) || 0;
         if(amount <= 0) {
-            if(btn) btn.disabled = false;
+            btn.disabled = false;
             return showMsg('خطا', 'مبلغ نامعتبر است.');
         }
         addJournalEntry({
@@ -1395,9 +1966,10 @@
             currency: document.getElementById('prof-log-currency').value, relatedShipmentId: 'MANUAL'
         });
         closeModal('profileFinModal'); 
-        if(btn) btn.disabled = false;
+        btn.disabled = false;
         showMsg('موفقیت', 'تراکنش با موفقیت ثبت شد.');
     }
+    window.saveProfileTransaction = saveProfileTransaction;
 
     function addJournalEntry(entryObj = null) {
         let jId = 'J' + (db.idCounter++);
@@ -1441,85 +2013,25 @@
         db.journal.push(entryObj);
         recalcBalances(); saveToLocal(); updateUI();
     }
+    window.addJournalEntry = addJournalEntry;
 
     function editJournalEntry(id) {
         let j = db.journal.find(x => x.id === id);
         if(!j) return;
         
-        if (j.relatedShipmentId === 'INIT' || j.desc === 'تراز اولیه') {
-            document.getElementById('edit-init-cust-id').value = j.cust;
-            
-            let inits = db.journal.filter(x => x.cust === j.cust && (x.relatedShipmentId === 'INIT' || x.desc === 'تراز اولیه'));
-            let vals = { CNY: '', USD: '', AED: '', IRT: '' };
-            
-            inits.forEach(entry => {
-                let val = entry.type === 'debit' ? entry.amount : -entry.amount;
-                vals[entry.currency] = val;
-            });
-            
-            document.getElementById('edit-init-bal-cny').value = vals.CNY;
-            document.getElementById('edit-init-bal-usd').value = vals.USD;
-            document.getElementById('edit-init-bal-aed').value = vals.AED;
-            document.getElementById('edit-init-bal-irt').value = vals.IRT;
-            
-            openModal('editInitBalModal');
-        } else {
-            document.getElementById('edit-id').value = id;
-            document.getElementById('edit-date').value = j.date;
-            document.getElementById('edit-desc').value = j.desc;
-            document.getElementById('edit-amount').value = j.amount;
-            
-            if(document.getElementById('edit-type')) document.getElementById('edit-type').value = j.type;
-            if(document.getElementById('edit-currency')) document.getElementById('edit-currency').value = j.currency;
-
-            openModal('editModal');
+        if (j.relatedShipmentId && j.relatedShipmentId !== 'MANUAL' && j.relatedShipmentId !== 'INIT') {
+            return showMsg("اخطار", "این تراکنش به یک Shipment مرتبط است و باید از طریق ویرایش همان Shipment اصلاح شود.");
         }
+
+        document.getElementById('edit-id').value = id;
+        document.getElementById('edit-date').value = j.date;
+        document.getElementById('edit-desc').value = j.desc;
+        document.getElementById('edit-amount').value = j.amount;
+        document.getElementById('edit-currency').value = j.currency;
+        document.getElementById('edit-type').value = j.type;
+        openModal('editModal');
     }
     window.editJournalEntry = editJournalEntry;
-
-    function saveInitBalEdit() {
-        let custId = document.getElementById('edit-init-cust-id').value;
-        if (!custId) return;
-        
-        let existingInits = db.journal.filter(j => j.cust === custId && (j.relatedShipmentId === 'INIT' || j.desc === 'تراز اولیه'));
-        let initDate = existingInits.length > 0 ? existingInits[0].date : SYSTEM_DATE;
-
-        db.journal = db.journal.filter(j => !(j.cust === custId && (j.relatedShipmentId === 'INIT' || j.desc === 'تراز اولیه')));
-        
-        let currs = [
-            { code: 'CNY', val: document.getElementById('edit-init-bal-cny').value },
-            { code: 'USD', val: document.getElementById('edit-init-bal-usd').value },
-            { code: 'AED', val: document.getElementById('edit-init-bal-aed').value },
-            { code: 'IRT', val: document.getElementById('edit-init-bal-irt').value }
-        ];
-
-        currs.forEach(c => {
-            if (c.val !== '' && c.val !== null) {
-                let numVal = parseFloat(c.val);
-                if (!isNaN(numVal) && numVal !== 0) {
-                    db.journal.push({
-                        id: 'J' + (db.idCounter++),
-                        date: initDate,
-                        cust: custId,
-                        desc: 'تراز اولیه',
-                        category: 'finance',
-                        type: numVal > 0 ? 'debit' : 'credit',
-                        amount: Math.abs(numVal),
-                        currency: c.code,
-                        isSystem: true,
-                        relatedShipmentId: 'INIT'
-                    });
-                }
-            }
-        });
-
-        recalcBalances();
-        saveToLocal();
-        updateUI();
-        closeModal('editInitBalModal');
-        showMsg('موفقیت', 'تراز اولیه با موفقیت ویرایش شد.');
-    }
-    window.saveInitBalEdit = saveInitBalEdit;
 
     function saveEdit() {
         let id = document.getElementById('edit-id').value;
@@ -1528,10 +2040,8 @@
         j.date = document.getElementById('edit-date').value;
         j.desc = document.getElementById('edit-desc').value;
         j.amount = parseFloat(document.getElementById('edit-amount').value) || 0;
-        
-        if(document.getElementById('edit-type')) j.type = document.getElementById('edit-type').value;
-        if(document.getElementById('edit-currency')) j.currency = document.getElementById('edit-currency').value;
-
+        j.currency = document.getElementById('edit-currency').value;
+        j.type = document.getElementById('edit-type').value;
         recalcBalances(); saveToLocal(); updateUI(); closeModal('editModal');
         showMsg('موفقیت', 'تراکنش با موفقیت ویرایش شد.');
     }
@@ -1541,7 +2051,7 @@
         let j = db.journal.find(x => x.id === id);
         if (!j) return;
         if (j.relatedShipmentId && j.relatedShipmentId !== 'MANUAL' && j.relatedShipmentId !== 'INIT') {
-            return showMsg("اخطار", "این تراکنش به Shipment مرتبط است و باید از طریق تب بارهای در حال ارسال و با حذف کل Shipment پاک شود.");
+            return showMsg("اخطار", "این تراکنش به Shipment مرتبط است و باید از طریق حذف Shipment پاک شود.");
         }
         document.getElementById('confirm-title').innerText = 'تاییدیه حذف تراکنش';
         document.getElementById('confirm-body').innerText = `آیا از حذف این تراکنش مالی اطمینان دارید؟ این عمل قابل بازگشت نیست.`;
@@ -1553,6 +2063,7 @@
         };
         openModal('confirmModal');
     }
+    window.deleteTransaction = deleteTransaction;
 
     function recalcBalances() {
         db.customers.forEach(c => c.balances = { CNY: 0, USD: 0, AED: 0, IRT: 0 });
@@ -1566,11 +2077,13 @@
             }
         });
     }
+    window.recalcBalances = recalcBalances;
 
     function toggleShipmentFields() {
         let method = document.getElementById('ship-transport-method').value;
         let typeGrp = document.getElementById('group-ship-type');
         let typeVal = document.getElementById('ship-type').value;
+        let dest = document.getElementById('ship-dest').value;
 
         if (method === 'sea') {
             typeGrp.style.display = 'flex';
@@ -1578,27 +2091,101 @@
             typeGrp.style.display = 'none';
         }
 
-        let isFCL = method === 'sea' && typeVal.startsWith('FCL');
+        let isGeneral = (method === 'sea' && typeVal === 'LCL');
+        let isAir = method === 'air';
+
+        // Air Logic
+        let airTrans = document.getElementById('air-transport-by').value;
         
-        document.getElementById('fwd-lcl-fields').style.display = isFCL ? 'none' : 'grid';
-        document.getElementById('fwd-fcl-fields').style.display = isFCL ? 'grid' : 'none';
+        document.getElementById('air-settings-group').style.display = isAir ? 'grid' : 'none';
         
-        document.getElementById('cust-lcl-fields').style.display = isFCL ? 'none' : 'grid';
-        document.getElementById('cust-fcl-fields').style.display = isFCL ? 'grid' : 'none';
+        let showFwdMain = !isGeneral || (isAir && airTrans === 'us');
+        let showCustMain = !isGeneral || (isAir && airTrans === 'us');
+
+        document.getElementById('forwarder-main-section').style.display = (isAir && airTrans === 'cust') ? 'none' : 'block';
+        
+        document.getElementById('fwd-lcl-fields').style.display = (isGeneral && !isAir) ? 'grid' : 'none';
+        document.getElementById('fwd-fcl-fields').style.display = showFwdMain ? 'grid' : 'none';
+        
+        // Dynamic hiding within Fwd FCL/Air
+        if (showFwdMain) {
+            document.getElementById('grp-fwd-fcl-cost').style.display = isAir ? 'none' : 'flex';
+            document.getElementById('grp-fwd-air-freight').style.display = isAir ? 'flex' : 'none';
+            document.getElementById('fwd-fcl-vol-grp').style.display = isAir ? 'flex' : 'none';
+            document.getElementById('fwd-fcl-net-grp').style.display = isAir ? 'none' : 'flex';
+            
+            document.getElementById('fwd-fcl-labor-grp').style.display = isAir ? 'none' : 'flex';
+            document.getElementById('fwd-fcl-forklift-grp').style.display = isAir ? 'none' : 'flex';
+            document.getElementById('fwd-fcl-wh-grp').style.display = isAir ? 'none' : 'flex';
+            document.getElementById('fwd-fcl-zirmizi-grp').style.display = isAir ? 'none' : 'flex';
+            document.getElementById('fwd-fcl-telex-grp').style.display = isAir ? 'none' : 'flex';
+            document.getElementById('fwd-fcl-insure-grp').style.display = isAir ? 'none' : 'flex';
+            document.getElementById('fwd-fcl-other-grp').style.display = isAir ? 'none' : 'flex';
+            document.getElementById('fwd-fcl-other-desc-grp').style.display = isAir ? 'none' : 'flex';
+        }
+
+        // Pricing model toggle
+        let pricing = document.getElementById('ship-pricing-model').value;
+        let isDubaiSea = method === 'sea' && dest === 'Dubai';
+        if (isDubaiSea) {
+            document.getElementById('pricing-model-container').style.display = 'none';
+            pricing = 'detailed'; // Force detailed for Dubai Sea
+        } else {
+            document.getElementById('pricing-model-container').style.display = 'grid';
+        }
+
+        if(pricing === 'total') {
+            document.getElementById('pricing-detailed-section').style.display = 'none';
+            document.getElementById('pricing-total-section').style.display = 'block';
+            document.getElementById('grp-sum-ship-cost').style.display = 'none';
+            document.getElementById('grp-comm-percent').style.display = 'none';
+            document.getElementById('grp-comm-val').style.display = 'none';
+            document.getElementById('grand-total-cny-group').style.display = 'none';
+        } else {
+            document.getElementById('pricing-detailed-section').style.display = 'block';
+            document.getElementById('pricing-total-section').style.display = 'none';
+            document.getElementById('grp-sum-ship-cost').style.display = 'flex';
+            document.getElementById('grp-comm-percent').style.display = 'flex';
+            document.getElementById('grp-comm-val').style.display = 'flex';
+            document.getElementById('grand-total-cny-group').style.display = 'flex';
+            
+            document.getElementById('cust-lcl-fields').style.display = (isGeneral && !isAir) ? 'grid' : 'none';
+            document.getElementById('cust-fcl-fields').style.display = showCustMain ? 'grid' : 'none';
+
+            if (showCustMain) {
+                document.getElementById('grp-ship-fcl-cost').style.display = isAir ? 'none' : 'flex';
+                document.getElementById('grp-ship-air-freight').style.display = isAir ? 'flex' : 'none';
+                document.getElementById('ship-fcl-vol-grp').style.display = isAir ? 'flex' : 'none';
+                document.getElementById('ship-fcl-net-grp').style.display = isAir ? 'none' : 'flex';
+                
+                document.getElementById('ship-fcl-labor-grp').style.display = isAir ? 'none' : 'flex';
+                document.getElementById('ship-fcl-forklift-grp').style.display = isAir ? 'none' : 'flex';
+                document.getElementById('ship-fcl-wh-grp').style.display = isAir ? 'none' : 'flex';
+                document.getElementById('ship-fcl-zirmizi-grp').style.display = isAir ? 'none' : 'flex';
+                document.getElementById('ship-fcl-telex-grp').style.display = isAir ? 'none' : 'flex';
+                document.getElementById('ship-fcl-insure-grp').style.display = isAir ? 'none' : 'flex';
+                document.getElementById('ship-fcl-other-grp').style.display = isAir ? 'none' : 'flex';
+                document.getElementById('ship-fcl-other-desc-grp').style.display = isAir ? 'none' : 'flex';
+            }
+        }
 
         let fwdCurr = document.getElementById('fwd-fcl-curr').value;
-        document.getElementById('fwd-usd-rate-grp').style.display = fwdCurr === 'USD' ? 'flex' : 'none';
+        document.getElementById('fwd-usd-rate-grp').style.display = (!isAir && fwdCurr === 'USD') ? 'flex' : 'none';
         let shipCurr = document.getElementById('ship-fcl-curr').value;
-        document.getElementById('ship-usd-rate-grp').style.display = shipCurr === 'USD' ? 'flex' : 'none';
+        document.getElementById('ship-usd-rate-grp').style.display = (!isAir && shipCurr === 'USD') ? 'flex' : 'none';
 
         toggleClearanceFields();
     }
+    window.toggleShipmentFields = toggleShipmentFields;
 
     function toggleClearanceFields() {
         let method = document.getElementById('ship-transport-method').value;
         const type = method === 'sea' ? document.getElementById('ship-type').value : 'General';
         const dest = document.getElementById('ship-dest').value;
         
+        let isAir = method === 'air';
+        let airClear = document.getElementById('air-clearance-by').value;
+
         const toggleDubaiGroup = document.getElementById('clearance-dubai-toggle-section');
         const toggleDubai = document.getElementById('ship-clear-dubai-toggle');
         const secDubai = document.getElementById('clearance-section');
@@ -1609,19 +2196,34 @@
         const secIran = document.getElementById('clearance-iran-section');
         const fieldsIran = document.getElementById('clearance-iran-fields');
 
-        let isFCL = method === 'sea' && type.startsWith('FCL');
+        const toggleLclIranGroup = document.getElementById('clearance-lcl-iran-toggle-section');
+        const lclIranType = document.getElementById('ship-lcl-iran-clearance-type').value;
 
-        if (isFCL && dest === 'Dubai') { 
+        const airClearSection = document.getElementById('air-clearance-section');
+
+        let isSeaFCL = method === 'sea' && type.startsWith('FCL');
+        let isSeaLCLIran = method === 'sea' && type === 'LCL' && dest === 'Iran';
+
+        // Reset all
+        toggleDubaiGroup.style.display = 'none'; secDubai.style.display = 'none'; fieldsDubai.style.display = 'none';
+        toggleIranGroup.style.display = 'none'; secIran.style.display = 'none'; fieldsIran.style.display = 'none';
+        toggleLclIranGroup.style.display = 'none'; airClearSection.style.display = 'none';
+        
+        document.getElementById('lbl-grand-cny').innerText = 'بدهی مشتری (مجموع):';
+        document.getElementById('grand-total-irt-group').style.display = 'none';
+
+        if (isAir && airClear === 'us') {
+            airClearSection.style.display = 'block';
+        }
+        else if (isSeaFCL && dest === 'Dubai') { 
             toggleDubaiGroup.style.display = 'block';
             if (toggleDubai.checked) {
                 secDubai.style.display = 'block'; fieldsDubai.style.display = 'grid'; 
-            } else {
-                secDubai.style.display = 'none'; fieldsDubai.style.display = 'none'; 
             }
             toggleIranGroup.style.display = 'none'; secIran.style.display = 'none'; fieldsIran.style.display = 'none';
             toggleIran.checked = false;
         } 
-        else if (isFCL && dest === 'Iran') {
+        else if ((isSeaFCL || method==='land' || method==='train') && dest === 'Iran') {
             toggleDubaiGroup.style.display = 'none'; secDubai.style.display = 'none'; fieldsDubai.style.display = 'none'; 
             toggleDubai.checked = false;
             
@@ -1632,13 +2234,28 @@
                 secIran.style.display = 'none'; fieldsIran.style.display = 'none';
             }
         }
+        else if (isSeaLCLIran) {
+            toggleLclIranGroup.style.display = 'block';
+            document.getElementById('lbl-grand-cny').innerText = 'بدهی مشتری (یوان):';
+            document.getElementById('grand-total-irt-group').style.display = 'flex';
+            if(lclIranType === 'yekja') {
+                document.getElementById('lcl-iran-yekja-fields').style.display = 'grid';
+                document.getElementById('lcl-iran-tarkibi-fields').style.display = 'none';
+            } else {
+                document.getElementById('lcl-iran-yekja-fields').style.display = 'none';
+                document.getElementById('lcl-iran-tarkibi-fields').style.display = 'grid';
+            }
+        }
         else { 
             toggleDubaiGroup.style.display = 'none'; secDubai.style.display = 'none'; fieldsDubai.style.display = 'none'; 
             toggleDubai.checked = false;
             toggleIranGroup.style.display = 'none'; secIran.style.display = 'none'; fieldsIran.style.display = 'none';
             toggleIran.checked = false;
         }
+
+        calcGrandTotal();
     }
+    window.toggleClearanceFields = toggleClearanceFields;
 
     function editShipment(shipId) {
         let ship = db.shipments.find(s => s.id === shipId);
@@ -1646,7 +2263,7 @@
         editingShipmentId = shipId;
         
         activeLogisticsCustomerId = ship.cust;
-        document.getElementById('log-active-cust-name').innerText = ship.cust;
+        document.getElementById('log-active-cust-name').innerText = db.customers.find(c=>c.id===ship.cust)?.name || ship.cust;
         
         document.getElementById('ship-code').value = ship.id;
         document.getElementById('ship-date').value = ship.date;
@@ -1656,21 +2273,46 @@
         document.getElementById('ship-mark').value = ship.mark || '';
         document.getElementById('ship-line').value = ship.forwarder || '';
         
-        if (ship.isFCL) {
+        document.getElementById('air-transport-by').value = ship.airTransportBy || 'us';
+        document.getElementById('air-clearance-by').value = ship.airClearanceBy || 'us';
+        document.getElementById('air-clearance-amt').value = ship.airClearAmt || '';
+        document.getElementById('air-clearance-curr').value = ship.airClearCurr || 'CNY';
+        document.getElementById('ship-air-freight').value = ship.shipAirFreight || '';
+        
+        document.getElementById('ship-pricing-model').value = ship.pricingModel || 'detailed';
+        document.getElementById('ship-total-delivery-type').value = ship.totalDeliveryType || 'full';
+        document.getElementById('ship-total-delivery-loc').value = ship.totalDeliveryLoc || '';
+        document.getElementById('ship-total-cny').value = ship.totalCny || '';
+        document.getElementById('ship-total-irt').value = ship.totalIrt || '';
+        document.getElementById('ship-total-desc').value = ship.totalDesc || '';
+        
+        document.getElementById('ship-lcl-iran-clearance-type').value = ship.lclIranType || 'yekja';
+        document.getElementById('ship-lcl-iran-total-irt').value = ship.lclIranTotalIrt || '';
+        document.getElementById('ship-lcl-iran-freight-cny').value = ship.lclIranFreightCny || '';
+        document.getElementById('ship-lcl-iran-clear-irt').value = ship.lclIranClearIrt || '';
+
+        let isGeneral = (ship.transportMethod === 'sea' && ship.type === 'LCL');
+        
+        if (!isGeneral) {
             document.getElementById('fwd-fcl-cost').value = ship.fclFwdCost || '';
             document.getElementById('fwd-fcl-curr').value = ship.fclFwdCurr || 'CNY';
             document.getElementById('fwd-fcl-usd-rate').value = ship.fclFwdUsdRate || '';
+            document.getElementById('fwd-air-freight').value = ship.fclFwdAirFreight || '';
             document.getElementById('fwd-fcl-int').value = ship.fclFwdInt || '';
             document.getElementById('fwd-fcl-telex').value = ship.fclFwdTelex || '';
             document.getElementById('fwd-fcl-cartons').value = ship.fclFwdCartons || '';
+            document.getElementById('fwd-fcl-vol').value = ship.fclFwdVol || '';
             document.getElementById('fwd-fcl-net').value = ship.fclFwdNet || '';
             document.getElementById('fwd-fcl-gross').value = ship.fclFwdGross || '';
             document.getElementById('fwd-fcl-labor').value = ship.fclFwdLabor || '';
             document.getElementById('fwd-fcl-forklift').value = ship.fclFwdForklift || '';
             document.getElementById('fwd-fcl-pack').value = ship.fclFwdPack || '';
             document.getElementById('fwd-fcl-wh').value = ship.fclFwdWh || '';
+            document.getElementById('fwd-fcl-zirmizi').value = ship.fclFwdZirmizi || '';
+            document.getElementById('fwd-fcl-insure').value = ship.fclFwdInsure || '';
             document.getElementById('fwd-fcl-other').value = ship.fclFwdOther || '';
             document.getElementById('fwd-fcl-other-desc').value = ship.fclFwdOtherDesc || '';
+            document.getElementById('fwd-fcl-desc').value = ship.fwdFclDesc || '';
 
             document.getElementById('ship-fcl-cost').value = ship.fclShipCost || '';
             document.getElementById('ship-fcl-curr').value = ship.fclShipCurr || 'CNY';
@@ -1678,23 +2320,27 @@
             document.getElementById('ship-fcl-int').value = ship.fclShipInt || '';
             document.getElementById('ship-fcl-telex').value = ship.fclShipTelex || '';
             document.getElementById('ship-fcl-cartons').value = ship.fclShipCartons || '';
+            document.getElementById('ship-fcl-vol').value = ship.fclShipVol || '';
             document.getElementById('ship-fcl-net').value = ship.fclShipNet || '';
             document.getElementById('ship-fcl-gross').value = ship.fclShipGross || '';
             document.getElementById('ship-fcl-labor').value = ship.fclShipLabor || '';
             document.getElementById('ship-fcl-forklift').value = ship.fclShipForklift || '';
             document.getElementById('ship-fcl-pack').value = ship.fclShipPack || '';
             document.getElementById('ship-fcl-wh').value = ship.fclShipWh || '';
+            document.getElementById('ship-fcl-zirmizi').value = ship.fclShipZirmizi || '';
+            document.getElementById('ship-fcl-insure').value = ship.fclShipInsure || '';
             document.getElementById('ship-fcl-other').value = ship.fclShipOther || '';
             document.getElementById('ship-fcl-other-desc').value = ship.fclShipOtherDesc || '';
+            document.getElementById('ship-fcl-desc').value = ship.shipFclDesc || '';
         } else {
             document.getElementById('ship-cbm').value = ship.cbm || '';
             document.getElementById('fwd-cbm').value = ship.fwdCbm || '';
+            document.getElementById('ship-cartons').value = ship.cartons || '';
             document.getElementById('fwd-cartons').value = ship.fwdCartons || '';
+            document.getElementById('ship-weight').value = ship.weight || '';
             document.getElementById('fwd-weight').value = ship.fwdWeight || '';
             
             document.getElementById('ship-client-rate').value = ship.clientRate || '';
-            document.getElementById('ship-cartons').value = ship.cartons || '';
-            document.getElementById('ship-weight').value = ship.weight || '';
             document.getElementById('ship-cost-int').value = ship.costInt || '';
             document.getElementById('ship-cost-pack').value = ship.costPack || '';
             document.getElementById('ship-cost-wh').value = ship.costWh || '';
@@ -1718,9 +2364,11 @@
         
         document.getElementById('ship-comm-percent').value = ship.commPercent || '';
         document.getElementById('ship-comm-val').value = ship.commVal || '';
+        document.getElementById('ship-grand-total-curr').value = ship.grandTotalCurr || 'CNY';
 
-        currentPurchases = [...(ship.purchases || [])];
-        renderPurchasesList();
+        // Load connected invoices for editing
+        currentShipmentInvoices = db.purchaseInvoices.filter(i => i.relatedShipmentId === shipId);
+        renderAttachedInvoices();
         
         toggleShipmentFields(); 
         calcTotalShipping(); 
@@ -1731,6 +2379,7 @@
         document.getElementById('btn-cancel-shipment-edit').style.display = 'block';
         navTo('page-intransit', document.querySelectorAll('.menu-btn')[2]);
     }
+    window.editShipment = editShipment;
 
     function cancelShipmentEdit() {
         editingShipmentId = null;
@@ -1744,34 +2393,50 @@
             'ship-cost-int', 'ship-cost-pack', 'ship-cost-wh', 'ship-cost-fork', 'fwd-my-rate', 'fwd-cost-pack', 'fwd-cost-wh', 'fwd-cost-fork', 
             'ship-clearance-amt', 'ship-comm-percent', 'ship-comm-val', 'ship-clearance-agent-iran', 'ship-clearance-amt-iran', 
             'ship-clearance-transit-iran', 'ship-clearance-other-iran', 'ship-clearance-other-desc-iran', 'ship-clearance-total-iran', 
-            'fwd-fcl-cost', 'fwd-fcl-usd-rate', 'fwd-fcl-int', 'fwd-fcl-telex', 'fwd-fcl-cartons', 'fwd-fcl-net', 'fwd-fcl-gross', 'fwd-fcl-labor', 'fwd-fcl-forklift', 'fwd-fcl-pack', 'fwd-fcl-wh', 'fwd-fcl-other', 'fwd-fcl-other-desc',
-            'ship-fcl-cost', 'ship-fcl-usd-rate', 'ship-fcl-int', 'ship-fcl-telex', 'ship-fcl-cartons', 'ship-fcl-net', 'ship-fcl-gross', 'ship-fcl-labor', 'ship-fcl-forklift', 'ship-fcl-pack', 'ship-fcl-wh', 'ship-fcl-other', 'ship-fcl-other-desc',
-            'ship-total-shipping', 'fwd-total-cost', 'sum-ship-cost', 'ship-grand-total', 'ship-clearance-agent'
+            'fwd-fcl-cost', 'fwd-fcl-usd-rate', 'fwd-air-freight', 'fwd-fcl-int', 'fwd-fcl-telex', 'fwd-fcl-cartons', 'fwd-fcl-vol', 'fwd-fcl-net', 'fwd-fcl-gross', 'fwd-fcl-labor', 'fwd-fcl-forklift', 'fwd-fcl-pack', 'fwd-fcl-wh', 'fwd-fcl-other', 'fwd-fcl-other-desc', 'fwd-fcl-zirmizi', 'fwd-fcl-insure', 'fwd-fcl-desc',
+            'ship-fcl-cost', 'ship-fcl-usd-rate', 'ship-air-freight', 'ship-fcl-int', 'ship-fcl-telex', 'ship-fcl-cartons', 'ship-fcl-vol', 'ship-fcl-net', 'ship-fcl-gross', 'ship-fcl-labor', 'ship-fcl-forklift', 'ship-fcl-pack', 'ship-fcl-wh', 'ship-fcl-other', 'ship-fcl-other-desc', 'ship-fcl-zirmizi', 'ship-fcl-insure', 'ship-fcl-desc',
+            'ship-total-shipping', 'fwd-total-cost', 'sum-ship-cost', 'ship-grand-total', 'ship-clearance-agent',
+            'ship-total-cny', 'ship-total-irt', 'ship-total-desc', 'ship-lcl-iran-total-irt', 'ship-lcl-iran-freight-cny', 'ship-lcl-iran-clear-irt', 'air-clearance-amt', 'ship-invoice-selector'
         ];
         fieldsToClear.forEach(id => { if(document.getElementById(id)) document.getElementById(id).value = ''; });
         
         document.getElementById('ship-code').value = `AT-${String(db.shipmentCounter).padStart(4, '0')}`;
+        document.getElementById('air-transport-by').value = 'us';
+        document.getElementById('air-clearance-by').value = 'us';
         
-        currentPurchases = []; renderPurchasesList(); toggleShipmentFields();
+        currentShipmentInvoices = []; renderAttachedInvoices(); toggleShipmentFields();
     }
+    window.cancelShipmentEdit = cancelShipmentEdit;
 
     function deleteShipment(shipId) {
         document.getElementById('confirm-title').innerText = 'تاییدیه حذف شیپمنت';
-        document.getElementById('confirm-body').innerText = `آیا واقعاً می‌خواهید شیپمنت "${shipId}" را حذف کنید؟ تمام تراکنش‌های مالی مرتبط با این بار به طور کامل پاک خواهند شد!`;
+        document.getElementById('confirm-body').innerText = `آیا واقعاً می‌خواهید شیپمنت "${shipId}" را حذف کنید؟ تمام تراکنش‌های مالی مرتبط با این بار به طور کامل از حساب مشتری، فورواردر و تامین‌کنندگان پاک خواهند شد!`;
         let btn = document.getElementById('confirm-yes-btn');
         btn.innerText = 'بله، حذف کن';
         btn.onclick = () => {
+            // Unlink invoices
+            db.purchaseInvoices.forEach(i => {
+                if (i.relatedShipmentId === shipId) {
+                    i.status = 'pending';
+                    i.relatedShipmentId = null;
+                }
+            });
+            
             db.shipments = db.shipments.filter(s => s.id !== shipId);
             db.journal = db.journal.filter(j => j.relatedShipmentId !== shipId);
+            
             recalcBalances();
             saveToLocal();
             closeModal('confirmModal');
             updateUI();
+            populateDropdowns();
+            renderInvoiceSidebar();
             updateAnnualStats();
-            showMsg('موفقیت', 'شیپمنت و تمام تراکنش‌های مالی مرتبط با آن حذف شدند.');
+            showMsg('موفقیت', 'شیپمنت و تمام تراکنش‌های مالی مرتبط با آن با موفقیت حذف شدند. فاکتورهای متصل آزاد شدند.');
         };
         openModal('confirmModal');
     }
+    window.deleteShipment = deleteShipment;
 
     function registerShipment() {
         let btnSubmit = document.getElementById('btn-submit-shipment');
@@ -1786,58 +2451,71 @@
         let typeVal = document.getElementById('ship-type').value;
         if (method === 'sea' && !typeVal) errors.push("نوع بار انتخاب نشده است.");
 
-        let lineRaw = document.getElementById('ship-line').value.trim();
-        let lineObj = db.customers.find(c => c.type === 'forwarder' && (c.id === lineRaw || c.name === lineRaw || c.code === lineRaw));
-        let line = lineObj ? lineObj.id : '';
-        if (!line) errors.push("شرکت حمل (فورواردر) معتبر انتخاب نشده است.");
+        let line = null;
+        let isAirTransByCust = method === 'air' && document.getElementById('air-transport-by').value === 'cust';
+        if (!isAirTransByCust) {
+            let lineRaw = document.getElementById('ship-line').value;
+            let lineObj = db.customers.find(c => c.id === lineRaw || c.name === lineRaw);
+            line = lineObj ? lineObj.id : null;
+            if (!line) errors.push("شرکت حمل انتخاب نشده است.");
+        }
         
-        let shipTotalStr = document.getElementById('ship-total-shipping').value;
-        if (shipTotalStr === "") errors.push("هزینه ارسال مشتری وارد نشده است.");
+        let pricingModel = document.getElementById('ship-pricing-model').value;
+        let isDubaiSea = method === 'sea' && document.getElementById('ship-dest').value === 'Dubai';
+        if (isDubaiSea) pricingModel = 'detailed';
+
+        let isSeaLclIran = (method === 'sea' && typeVal === 'LCL' && document.getElementById('ship-dest').value === 'Iran');
+        let lclIranType = document.getElementById('ship-lcl-iran-clearance-type').value;
+
+        if (pricingModel === 'detailed' && !isSeaLclIran && !isAirTransByCust) {
+            let shipTotalStr = document.getElementById('ship-total-shipping').value;
+            if (shipTotalStr === "") errors.push("هزینه ارسال مشتری وارد نشده است.");
+            let commPercent = document.getElementById('ship-comm-percent').value;
+            let commVal = document.getElementById('ship-comm-val').value;
+            if (commPercent === "" && commVal === "") errors.push("کمیسیون وارد نشده است.");
+        }
         
-        if (currentPurchases.length === 0) errors.push("تأمین‌کننده انتخاب نشده است (حداقل یک فاکتور).");
-        
-        let purTotalSum = currentPurchases.reduce((acc, p) => acc + (p.total || 0), 0);
-        if (purTotalSum === 0) errors.push("مبلغ کل خرید وارد نشده است.");
-        
-        let commPercent = document.getElementById('ship-comm-percent').value;
-        let commVal = document.getElementById('ship-comm-val').value;
-        if (commPercent === "" && commVal === "") errors.push("کمیسیون وارد نشده است.");
+        if (currentShipmentInvoices.length === 0) errors.push("تأمین‌کننده انتخاب نشده است (حداقل یک فاکتور خرید لازم است).");
+        let purTotalSum = currentShipmentInvoices.reduce((acc, inv) => acc + (inv.totalAmount || 0), 0);
+        if (purTotalSum === 0 && currentShipmentInvoices.length > 0) errors.push("مبلغ کل خرید در فاکتورها صفر است.");
         
         let dest = document.getElementById('ship-dest').value;
-        let isFCL = method === 'sea' && typeVal.startsWith('FCL');
+        let isGeneral = (method === 'sea' && typeVal === 'LCL');
+        let isAir = method === 'air';
+        let airClearByUs = isAir && document.getElementById('air-clearance-by').value === 'us';
         
-        if (isFCL) {
+        if (!isGeneral && !isAirTransByCust) {
             let fwdOther = parseFloat(document.getElementById('fwd-fcl-other').value) || 0;
             let fwdOtherDesc = document.getElementById('fwd-fcl-other-desc').value.trim();
-            if (fwdOther > 0 && !fwdOtherDesc) errors.push("توضیحات سایر هزینه‌های فورواردر الزامی است.");
+            if (fwdOther > 0 && !fwdOtherDesc) errors.push("لطفاً مشخص کنید سایر هزینه‌های فورواردر بابت چه چیزی بوده است.");
             
-            let custOther = parseFloat(document.getElementById('ship-fcl-other').value) || 0;
-            let custOtherDesc = document.getElementById('ship-fcl-other-desc').value.trim();
-            if (custOther > 0 && !custOtherDesc) errors.push("توضیحات سایر هزینه‌های مشتری الزامی است.");
+            if (pricingModel === 'detailed' && !isSeaLclIran) {
+                let custOther = parseFloat(document.getElementById('ship-fcl-other').value) || 0;
+                let custOtherDesc = document.getElementById('ship-fcl-other-desc').value.trim();
+                if (custOther > 0 && !custOtherDesc) errors.push("لطفاً مشخص کنید سایر هزینه‌های مشتری بابت چه چیزی بوده است.");
+            }
         }
 
-        let isDubaiClearance = isFCL && dest === 'Dubai' && document.getElementById('ship-clear-dubai-toggle').checked;
+        let isDubaiClearance = method === 'sea' && typeVal.startsWith('FCL') && dest === 'Dubai' && document.getElementById('ship-clear-dubai-toggle').checked;
         if (isDubaiClearance) {
-            let agentRaw = document.getElementById('ship-clearance-agent').value.trim();
-            let agentObj = db.customers.find(c => c.type === 'clearance_agent' && (c.id === agentRaw || c.name === agentRaw || c.code === agentRaw));
-            let agent = agentObj ? agentObj.id : '';
-            if (!agent) errors.push("ترخیص‌کار دبی معتبر انتخاب نشده است.");
+            let agentRaw = document.getElementById('ship-clearance-agent').value;
+            let agentObj = db.customers.find(c => c.id === agentRaw || c.name === agentRaw);
+            if (!agentObj) errors.push("ترخیص‌کار دبی معتبر نیست.");
             let amt = document.getElementById('ship-clearance-amt').value;
             if (amt === "" || parseFloat(amt) === 0) errors.push("مبلغ ترخیص دبی وارد نشده است.");
         }
 
-        let isIranClearance = isFCL && dest === 'Iran' && document.getElementById('ship-clear-iran-toggle').checked;
+        let isIranClearance = (method === 'sea' && typeVal.startsWith('FCL') || method === 'land' || method === 'train') && dest === 'Iran' && document.getElementById('ship-clear-iran-toggle').checked;
         if (isIranClearance) {
-            let agentIranRaw = document.getElementById('ship-clearance-agent-iran').value.trim();
-            let agentIranObj = db.customers.find(c => c.type === 'clearance_agent' && (c.id === agentIranRaw || c.name === agentIranRaw || c.code === agentIranRaw));
-            let agentIran = agentIranObj ? agentIranObj.id : '';
-            if (!agentIran) errors.push("ترخیص‌کار ایران معتبر انتخاب نشده است.");
+            let agentIranRaw = document.getElementById('ship-clearance-agent-iran').value;
+            let agentIranObj = db.customers.find(c => c.id === agentIranRaw || c.name === agentIranRaw);
+            if (!agentIranObj) errors.push("نام ترخیص‌کار وارد نشده است.");
             let amtIran = document.getElementById('ship-clearance-amt-iran').value;
             if (amtIran === "" || parseFloat(amtIran) === 0) errors.push("مبلغ ترخیص ایران وارد نشده است.");
             
             let otherIran = parseFloat(document.getElementById('ship-clearance-other-iran').value) || 0;
             let descIran = document.getElementById('ship-clearance-other-desc-iran').value.trim();
-            if (otherIran > 0 && !descIran) errors.push("توضیحات سایر هزینه‌های ترخیص ایران الزامی است.");
+            if (otherIran > 0 && !descIran) errors.push("لطفاً مشخص کنید سایر هزینه‌های ترخیص ایران بابت چه چیزی بوده است.");
         }
 
         if (errors.length > 0) {
@@ -1846,6 +2524,7 @@
         }
 
         const cust = activeLogisticsCustomerId;
+        const custName = db.customers.find(c=>c.id===cust)?.name || cust;
         let code = editingShipmentId;
         if (!code) {
             code = `AT-${String(db.shipmentCounter).padStart(4, '0')}`;
@@ -1857,8 +2536,6 @@
         }
 
         const date = document.getElementById('ship-date').value;
-        let grandTotal = parseFloat(document.getElementById('ship-grand-total').value) || 0;
-        let grandCurr = document.getElementById('ship-grand-total-curr') ? document.getElementById('ship-grand-total-curr').value : 'CNY';
         let totalForwarderCredit = parseFloat(document.getElementById('fwd-total-cost').value) || 0;
 
         let clearDubaiChecked = false;
@@ -1866,9 +2543,8 @@
         let clearAmt = '';
         if(isDubaiClearance) {
             clearDubaiChecked = true;
-            let agentRaw = document.getElementById('ship-clearance-agent').value.trim();
-            let agentObj = db.customers.find(c => c.type === 'clearance_agent' && (c.id === agentRaw || c.name === agentRaw || c.code === agentRaw));
-            clearAgent = agentObj ? agentObj.id : '';
+            let aObj = db.customers.find(c => c.id === document.getElementById('ship-clearance-agent').value || c.name === document.getElementById('ship-clearance-agent').value);
+            clearAgent = aObj.id;
             clearAmt = document.getElementById('ship-clearance-amt').value;
         }
 
@@ -1882,24 +2558,44 @@
 
         if (isIranClearance) {
             clearIranChecked = true;
-            let agentIranRaw = document.getElementById('ship-clearance-agent-iran').value.trim();
-            let agentIranObj = db.customers.find(c => c.type === 'clearance_agent' && (c.id === agentIranRaw || c.name === agentIranRaw || c.code === agentIranRaw));
-            clearAgentIran = agentIranObj ? agentIranObj.id : '';
+            let aIranObj = db.customers.find(c => c.id === document.getElementById('ship-clearance-agent-iran').value || c.name === document.getElementById('ship-clearance-agent-iran').value);
+            clearAgentIran = aIranObj.id;
             clearAmtIran = document.getElementById('ship-clearance-amt-iran').value;
             clearTransitIran = document.getElementById('ship-clearance-transit-iran').value;
             clearOtherIran = document.getElementById('ship-clearance-other-iran').value;
             clearOtherDescIran = document.getElementById('ship-clearance-other-desc-iran').value;
             clearTotalIran = parseFloat(document.getElementById('ship-clearance-total-iran').value) || 0;
         }
+        
+        let grandTotal = parseFloat(document.getElementById('ship-grand-total').value) || 0; 
+        let grandCurr = document.getElementById('ship-grand-total-curr').value;
 
         let shipObj = { 
-            id: code, cust: cust, transportMethod: method, type: (method === 'sea' ? typeVal : 'General'), dest: dest, date: date, isFCL: isFCL,
+            id: code, cust: cust, transportMethod: method, type: (method === 'sea' ? typeVal : 'General'), dest: dest, date: date, isFCL: !isGeneral,
             mark: document.getElementById('ship-mark').value, status: 'active', 
-            purchases: [...currentPurchases], totalCargo: parseFloat(document.getElementById('ship-total-cargo').value) || 0, 
+            totalCargo: parseFloat(document.getElementById('ship-total-cargo').value) || 0, 
             commVal: parseFloat(document.getElementById('ship-comm-val').value) || 0, totalShipping: parseFloat(document.getElementById('ship-total-shipping').value) || 0, grandTotal: grandTotal, grandTotalCurr: grandCurr,
             fwdTotal: totalForwarderCredit, forwarder: line, destCostYuan: 0,
+            pricingModel: pricingModel,
             commPercent: document.getElementById('ship-comm-percent').value,
             
+            airTransportBy: document.getElementById('air-transport-by').value,
+            airClearanceBy: document.getElementById('air-clearance-by').value,
+            airClearAmt: document.getElementById('air-clearance-amt').value,
+            airClearCurr: document.getElementById('air-clearance-curr').value,
+            shipAirFreight: document.getElementById('ship-air-freight').value,
+            
+            lclIranType: lclIranType,
+            lclIranTotalIrt: document.getElementById('ship-lcl-iran-total-irt').value,
+            lclIranFreightCny: document.getElementById('ship-lcl-iran-freight-cny').value,
+            lclIranClearIrt: document.getElementById('ship-lcl-iran-clear-irt').value,
+
+            totalDeliveryType: document.getElementById('ship-total-delivery-type').value,
+            totalDeliveryLoc: document.getElementById('ship-total-delivery-loc').value,
+            totalCny: document.getElementById('ship-total-cny').value,
+            totalIrt: document.getElementById('ship-total-irt').value,
+            totalDesc: document.getElementById('ship-total-desc').value,
+
             cbm: document.getElementById('ship-cbm').value,
             fwdCbm: document.getElementById('fwd-cbm').value,
             weight: document.getElementById('ship-weight').value,
@@ -1916,35 +2612,44 @@
             fwdCartons: document.getElementById('fwd-cartons').value,
             fwdWeight: document.getElementById('fwd-weight').value,
 
-            fclFwdCost: isFCL ? document.getElementById('fwd-fcl-cost').value : '',
-            fclFwdCurr: isFCL ? document.getElementById('fwd-fcl-curr').value : 'CNY',
-            fclFwdUsdRate: isFCL ? document.getElementById('fwd-fcl-usd-rate').value : '',
-            fclFwdInt: isFCL ? document.getElementById('fwd-fcl-int').value : '',
-            fclFwdTelex: isFCL ? document.getElementById('fwd-fcl-telex').value : '',
-            fclFwdCartons: isFCL ? document.getElementById('fwd-fcl-cartons').value : '',
-            fclFwdNet: isFCL ? document.getElementById('fwd-fcl-net').value : '',
-            fclFwdGross: isFCL ? document.getElementById('fwd-fcl-gross').value : '',
-            fclFwdLabor: isFCL ? document.getElementById('fwd-fcl-labor').value : '',
-            fclFwdForklift: isFCL ? document.getElementById('fwd-fcl-forklift').value : '',
-            fclFwdPack: isFCL ? document.getElementById('fwd-fcl-pack').value : '',
-            fclFwdWh: isFCL ? document.getElementById('fwd-fcl-wh').value : '',
-            fclFwdOther: isFCL ? document.getElementById('fwd-fcl-other').value : '',
-            fclFwdOtherDesc: isFCL ? document.getElementById('fwd-fcl-other-desc').value : '',
+            fclFwdCost: document.getElementById('fwd-fcl-cost').value,
+            fclFwdCurr: document.getElementById('fwd-fcl-curr').value,
+            fclFwdUsdRate: document.getElementById('fwd-fcl-usd-rate').value,
+            fclFwdAirFreight: document.getElementById('fwd-air-freight').value,
+            fclFwdInt: document.getElementById('fwd-fcl-int').value,
+            fclFwdTelex: document.getElementById('fwd-fcl-telex').value,
+            fclFwdCartons: document.getElementById('fwd-fcl-cartons').value,
+            fclFwdVol: document.getElementById('fwd-fcl-vol').value,
+            fclFwdNet: document.getElementById('fwd-fcl-net').value,
+            fclFwdGross: document.getElementById('fwd-fcl-gross').value,
+            fclFwdLabor: document.getElementById('fwd-fcl-labor').value,
+            fclFwdForklift: document.getElementById('fwd-fcl-forklift').value,
+            fclFwdPack: document.getElementById('fwd-fcl-pack').value,
+            fclFwdWh: document.getElementById('fwd-fcl-wh').value,
+            fclFwdZirmizi: document.getElementById('fwd-fcl-zirmizi').value,
+            fclFwdInsure: document.getElementById('fwd-fcl-insure').value,
+            fclFwdOther: document.getElementById('fwd-fcl-other').value,
+            fclFwdOtherDesc: document.getElementById('fwd-fcl-other-desc').value,
+            fwdFclDesc: document.getElementById('fwd-fcl-desc').value,
 
-            fclShipCost: isFCL ? document.getElementById('ship-fcl-cost').value : '',
-            fclShipCurr: isFCL ? document.getElementById('ship-fcl-curr').value : 'CNY',
-            fclShipUsdRate: isFCL ? document.getElementById('ship-fcl-usd-rate').value : '',
-            fclShipInt: isFCL ? document.getElementById('ship-fcl-int').value : '',
-            fclShipTelex: isFCL ? document.getElementById('ship-fcl-telex').value : '',
-            fclShipCartons: isFCL ? document.getElementById('ship-fcl-cartons').value : '',
-            fclShipNet: isFCL ? document.getElementById('ship-fcl-net').value : '',
-            fclShipGross: isFCL ? document.getElementById('ship-fcl-gross').value : '',
-            fclShipLabor: isFCL ? document.getElementById('ship-fcl-labor').value : '',
-            fclShipForklift: isFCL ? document.getElementById('ship-fcl-forklift').value : '',
-            fclShipPack: isFCL ? document.getElementById('ship-fcl-pack').value : '',
-            fclShipWh: isFCL ? document.getElementById('ship-fcl-wh').value : '',
-            fclShipOther: isFCL ? document.getElementById('ship-fcl-other').value : '',
-            fclShipOtherDesc: isFCL ? document.getElementById('ship-fcl-other-desc').value : '',
+            fclShipCost: document.getElementById('ship-fcl-cost').value,
+            fclShipCurr: document.getElementById('ship-fcl-curr').value,
+            fclShipUsdRate: document.getElementById('ship-fcl-usd-rate').value,
+            fclShipInt: document.getElementById('ship-fcl-int').value,
+            fclShipTelex: document.getElementById('ship-fcl-telex').value,
+            fclShipCartons: document.getElementById('ship-fcl-cartons').value,
+            fclShipVol: document.getElementById('ship-fcl-vol').value,
+            fclShipNet: document.getElementById('ship-fcl-net').value,
+            fclShipGross: document.getElementById('ship-fcl-gross').value,
+            fclShipLabor: document.getElementById('ship-fcl-labor').value,
+            fclShipForklift: document.getElementById('ship-fcl-forklift').value,
+            fclShipPack: document.getElementById('ship-fcl-pack').value,
+            fclShipWh: document.getElementById('ship-fcl-wh').value,
+            fclShipZirmizi: document.getElementById('ship-fcl-zirmizi').value,
+            fclShipInsure: document.getElementById('ship-fcl-insure').value,
+            fclShipOther: document.getElementById('ship-fcl-other').value,
+            fclShipOtherDesc: document.getElementById('ship-fcl-other-desc').value,
+            shipFclDesc: document.getElementById('ship-fcl-desc').value,
 
             clearDubaiChecked, clearAgent, clearAmt, clearCurr: 'AED',
             clearIranChecked, clearAgentIran, clearAmtIran, clearTransitIran, clearOtherIran, clearOtherDescIran, clearTotalIran
@@ -1953,426 +2658,103 @@
         if (editingShipmentId) {
             db.shipments = db.shipments.filter(s => s.id !== editingShipmentId);
             db.journal = db.journal.filter(j => j.relatedShipmentId !== editingShipmentId);
+            
+            // Unlink all previously linked invoices for this shipment
+            db.purchaseInvoices.forEach(i => {
+                if (i.relatedShipmentId === editingShipmentId) {
+                    i.status = 'pending';
+                    i.relatedShipmentId = null;
+                }
+            });
         } else {
             db.shipmentCounter++;
         }
 
         db.shipments.push(shipObj);
 
-        addJournalEntry({ date, cust, desc: `Shipment با کد ${code} برای مشتری ${cust.split('(')[0]} ارسال شد.`, category: 'logistic', type: 'event', amount: 0, currency: 'CNY', isSystem: true, relatedShipmentId: code });
-
-        if(grandTotal > 0) addJournalEntry({ date, cust, desc: `مشتری ${cust.split('(')[0]} بابت Shipment ${code} به مبلغ ${grandTotal} ${grandCurr} بدهکار شد.`, category: 'finance', type: 'debit', amount: grandTotal, currency: grandCurr, isSystem: true, relatedShipmentId: code });
-        
-        if(totalForwarderCredit > 0) addJournalEntry({ date, cust: line, desc: `بابت حمل Shipment ${code} مبلغ ${totalForwarderCredit} CNY برای شرکت حمل ${line.split('(')[0]} ثبت شد.`, category: 'finance', type: 'credit', amount: totalForwarderCredit, currency: 'CNY', isSystem: true, relatedShipmentId: code });
-
-        currentPurchases.forEach(p => {
-            if (p.total > 0) addJournalEntry({ date, cust: p.supplierId, desc: `بابت Shipment ${code} مبلغ ${p.total} CNY برای تأمین‌کننده ${p.supplierName} ثبت شد.`, category: 'finance', type: 'credit', amount: p.total, currency: 'CNY', isSystem: true, relatedShipmentId: code, dueDate: p.due });
-            if (p.paid > 0) addJournalEntry({ date, cust: p.supplierId, desc: `پرداخت علی‌الحساب فاکتور ${p.invNo} بابت Shipment ${code}`, category: 'finance', type: 'debit', amount: p.paid, currency: 'CNY', isSystem: true, relatedShipmentId: code });
-        });
-
-        if (clearDubaiChecked && clearAmt) {
-            addJournalEntry({ date, cust: clearAgent, desc: `بابت ترخیص Shipment ${code} مبلغ ${clearAmt} AED برای ترخیص‌کار ${clearAgent.split('(')[0]} ثبت شد.`, category: 'finance', type: 'credit', amount: parseFloat(clearAmt), currency: 'AED', isSystem: true, relatedShipmentId: code });
-        }
-        
-        if (clearIranChecked && clearTotalIran > 0) {
-            addJournalEntry({ date, cust, desc: `مشتری ${cust.split('(')[0]} بابت هزینه ترخیص Shipment ${code} به مبلغ ${clearTotalIran} IRT بدهکار شد.`, category: 'finance', type: 'debit', amount: clearTotalIran, currency: 'IRT', isSystem: true, relatedShipmentId: code });
-            addJournalEntry({ date, cust: clearAgentIran, desc: `بابت ترخیص Shipment ${code} مبلغ ${clearTotalIran} IRT برای ترخیص‌کار ${clearAgentIran.split('(')[0]} ثبت شد.`, category: 'finance', type: 'credit', amount: clearTotalIran, currency: 'IRT', isSystem: true, relatedShipmentId: code });
-        }
-
-        saveToLocal();
-        cancelShipmentEdit();
-        updateUI(); updateAnnualStats();
-        
-        btnSubmit.disabled = false;
-        showMsg("ثبت موفقیت‌آمیز", "محموله با موفقیت ثبت شد.", () => {
-            navTo('page-active-shipments', document.querySelectorAll('.menu-btn')[3]);
-        });
-    }
-
-    function processDelivered(shipId) {
-        let ship = db.shipments.find(s => s.id === shipId);
-        if(!ship) return;
-        ship.status = 'delivered'; 
-        ship.deliveredDate = SYSTEM_DATE;
-        saveToLocal(); updateUI();
-    }
-
-    function updateAnnualStats() {
-        let year = new Date(SYSTEM_DATE).getFullYear();
-        let lclCbm = 0, cont20 = 0, cont40 = 0, weight = 0;
-        db.shipments.forEach(s => {
-            if (new Date(s.date).getFullYear() === year) {
-                if (s.type === 'LCL' || s.type === 'General') lclCbm += parseFloat(s.cbm) || 0;
-                if (s.type === 'FCL_20') cont20 += 1;
-                if (s.type === 'FCL_40') cont40 += 1;
-                let w = parseFloat(s.weight) || parseFloat(s.fclShipGross) || 0;
-                weight += w;
-            }
-        });
-        let s20 = document.getElementById('stat-20'); if(s20) s20.innerText = cont20;
-        let s40 = document.getElementById('stat-40'); if(s40) s40.innerText = cont40;
-        let scbm = document.getElementById('stat-cbm'); if(scbm) scbm.innerText = lclCbm.toFixed(2);
-        let skg = document.getElementById('stat-kg'); if(skg) skg.innerText = weight;
-    }
-
-    function generateMonthlyReport() {
-        let m = document.getElementById('report-month').value;
-        if (!m) return;
-        
-        let profit = 0, cbm = 0, kg = 0, cont = 0;
-        let custStats = {};
-
-        db.shipments.forEach(s => {
-            if (s.date.startsWith(m) || (s.deliveredDate && s.deliveredDate.startsWith(m))) {
-                if (s.status === 'delivered') profit += s.netProfit || 0;
-                if (s.date.startsWith(m)) {
-                    let sCbm = parseFloat(s.cbm) || 0;
-                    cbm += sCbm;
-                    kg += parseFloat(s.weight) || parseFloat(s.fclShipGross) || 0;
-                    if (s.type && s.type.startsWith('FCL')) cont += 1;
-
-                    if (!custStats[s.cust]) custStats[s.cust] = { count: 0, cbm: 0 };
-                    custStats[s.cust].count += 1;
-                    custStats[s.cust].cbm += sCbm;
-                }
-            }
-        });
-
-        let pEl = document.getElementById('rep-profit'); if(pEl) pEl.innerText = profit.toLocaleString();
-        let cEl = document.getElementById('rep-cbm'); if(cEl) cEl.innerText = cbm.toFixed(2);
-        let kEl = document.getElementById('rep-kg'); if(kEl) kEl.innerText = kg.toLocaleString();
-        let contEl = document.getElementById('rep-cont'); if(contEl) contEl.innerText = cont;
-
-        let sortedCusts = Object.entries(custStats).sort((a,b) => b[1].cbm - a[1].cbm);
-        let tbody = document.getElementById('rep-customers-tbody'); 
-        if(tbody) {
-            tbody.innerHTML = '';
-            sortedCusts.forEach((entry, idx) => {
-                tbody.innerHTML += `<tr><td>${idx+1}</td><td>${entry[0]}</td><td>${entry[1].count}</td><td style="direction:ltr;">${entry[1].cbm.toFixed(2)}</td></tr>`;
-            });
-        }
-    }
-
-    function renderArchiveMonths() {
-        const c = document.getElementById('archive-months-container'); 
-        if(c) {
-            c.innerHTML = '';
-            let months = [...new Set(db.journal.map(j => j.date.substring(0, 7)))].sort().reverse();
-            
-            let select = document.getElementById('report-month'); 
-            if(select) select.innerHTML = '';
-            
-            months.forEach(m => {
-                let b = document.createElement('button'); b.className = 'archive-btn'; b.innerText = `پوشه ${m}`;
-                b.onclick = (e) => { 
-                    document.querySelectorAll('.archive-btn').forEach(btn=>btn.classList.remove('active')); e.target.classList.add('active');
-                    renderArchiveDays(m); 
-                }; 
-                c.appendChild(b);
-                if(select) {
-                    let opt = document.createElement('option'); opt.value = m; opt.innerText = m; select.appendChild(opt);
-                }
-            });
-            let daysC = document.getElementById('archive-days-container'); if(daysC) daysC.innerHTML = ''; 
-            let dataC = document.getElementById('archive-data-container'); if(dataC) dataC.innerHTML = '';
-            if(months.length > 0) generateMonthlyReport();
-        }
-    }
-
-    function renderArchiveDays(month) {
-        const c = document.getElementById('archive-days-container'); 
-        if(c) {
-            c.innerHTML = '';
-            let days = [...new Set(db.journal.filter(j => j.date.startsWith(month)).map(j => j.date))].sort().reverse();
-            days.forEach(d => {
-                let b = document.createElement('button'); b.className = 'archive-btn'; b.innerText = `روز ${d}`;
-                b.onclick = (e) => {
-                    document.querySelectorAll('#archive-days-container .archive-btn').forEach(btn=>btn.classList.remove('active')); e.target.classList.add('active');
-                    renderArchiveData(d);
-                }; c.appendChild(b);
-            });
-            let dataC = document.getElementById('archive-data-container'); if(dataC) dataC.innerHTML = '';
-        }
-    }
-
-    function renderArchiveData(date) {
-        const c = document.getElementById('archive-data-container');
-        if(c) {
-            let html = `<table><thead><tr><th>تاریخ</th><th>طرف حساب</th><th>شرح تراکنش</th><th>مبلغ و ارز</th></tr></thead><tbody>`;
-            db.journal.filter(j => j.date === date).forEach(j => {
-                let typeStr = j.type === 'debit' ? 'بدهکار' : 'بستانکار';
-                let colorStr = j.type === 'debit' ? 'color:#dc2626;' : 'color:#059669;';
-                if (j.category === 'logistic') { typeStr = 'لجستیک'; colorStr = 'color:gray;'; }
-                html += `<tr><td>${j.date}</td><td>${j.cust}</td><td>${j.desc}</td><td style="font-weight:bold; direction:ltr; ${colorStr}">${j.amount} ${j.currency} (${typeStr})</td></tr>`;
-            });
-            c.innerHTML = html + `</tbody></table>`;
-        }
-    }
-
-    function clearFilters(type) {
-        let prefix = type === 'act' ? 'filter-act-' : 'filter-del-';
-        ['cust', 'fwd', 'date', 'code', 'cbm', 'weight'].forEach(id => {
-            let el = document.getElementById(prefix+id);
-            if(el) el.value = '';
-        });
-        updateUI();
-    }
-
-    function getActiveFilters(type) {
-        let prefix = type === 'act' ? 'filter-act-' : 'filter-del-';
-        let f = { cust:'', fwd:'', date:'', code:'', cbm:'', weight:'' };
-        ['cust', 'fwd', 'date', 'code', 'cbm', 'weight'].forEach(id => {
-            let el = document.getElementById(prefix+id);
-            if(el) f[id] = el.value.trim().toLowerCase();
-        });
-        return f;
-    }
-
-    function applyShipmentFilters(s, f) {
-        let cName = (db.customers.find(c=>c.id===s.cust)?.name||s.cust).toLowerCase();
-        if (f.cust && !cName.includes(f.cust)) return false;
-        
-        let fwdName = (s.forwarder ? (db.customers.find(c=>c.id===s.forwarder)?.name||s.forwarder) : '').toLowerCase();
-        if (f.fwd && !fwdName.includes(f.fwd)) return false;
-        
-        if (f.date && s.date !== f.date) return false;
-        if (f.code && !s.id.toLowerCase().includes(f.code)) return false;
-        
-        let isGeneral = (s.transportMethod !== 'sea' || s.type === 'LCL');
-        if(s.transportMethod === 'air' && s.airTransportBy === 'us') isGeneral = false;
-        
-        let cCbm = isGeneral ? (s.cbm||'') : '-';
-        if (f.cbm && cCbm !== f.cbm) return false;
-        
-        let w = isGeneral ? (s.weight||'') : (s.fclShipGross||'');
-        if (f.weight && w !== f.weight) return false;
-        
-        return true;
-    }
-
-    function updateUI() {
-        const actTbody = document.getElementById('active-shipments-tbody'); 
-        if(actTbody) actTbody.innerHTML = '';
-        const tbDel = document.getElementById('delivered-tbody'); 
-        if(tbDel) tbDel.innerHTML = '';
-        
-        let actFilters = getActiveFilters('act');
-        let delFilters = getActiveFilters('del');
-
-        db.shipments.forEach(s => {
-            let fwdName = s.forwarder ? (db.customers.find(c=>c.id===s.forwarder)?.name||s.forwarder).split('(')[0] : '-';
-            let cName = (db.customers.find(c=>c.id===s.cust)?.name||s.cust).split('(')[0];
-            
-            let isGeneral = (s.transportMethod !== 'sea' || s.type === 'LCL');
-            if(s.transportMethod === 'air' && s.airTransportBy === 'us') isGeneral = false;
-            
-            let cCbm = isGeneral ? (s.cbm||'-') : '-';
-            let cCartons = isGeneral ? (s.cartons||'0') : (s.fclShipCartons||'0');
-
-            if (s.status === 'active' && actTbody) {
-                if (!applyShipmentFilters(s, actFilters)) return;
-
-                let limit = 30; // default
-                if (s.dest === 'Iran') { limit = (s.transportMethod === 'sea' && s.type === 'LCL') || s.type === 'General' ? 75 : 45; }
-                else if (s.dest === 'Dubai') { limit = 30; }
-
-                let diffTime = new Date(SYSTEM_DATE) - new Date(s.date);
-                let daysElapsed = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-                let remDays = limit - daysElapsed;
-                let badge = remDays < 0 ? `<span class="badge badge-alert">هشدار (${Math.abs(remDays)} روز تأخیر)</span>` : `<span class="badge badge-safe">عادی (${remDays} روز مانده)</span>`;
-                
-                let check20 = (s.transportMethod === 'sea' && s.type === 'FCL_20') ? '✓' : '-';
-                let check40 = (s.transportMethod === 'sea' && s.type === 'FCL_40') ? '✓' : '-';
-                
-                actTbody.innerHTML += `<tr>
-                    <td>${s.date}</td>
-                    <td style="direction:ltr;">${s.id}</td>
-                    <td>${cName}</td>
-                    <td>${fwdName}</td>
-                    <td>${cCartons}</td>
-                    <td style="direction:ltr;">${cCbm}</td>
-                    <td>${badge}</td>
-                    <td><button class="btn btn-warning btn-small" onclick="editShipment('${s.id}')">✏️ ویرایش</button></td>
-                    <td><button class="btn btn-danger btn-small" onclick="deleteShipment('${s.id}')">✖ حذف</button></td>
-                    <td><button class="btn btn-success btn-small" onclick="processDelivered('${s.id}')">تحویل شد ✔</button></td>
-                </tr>`;
-            } else if (s.status === 'delivered' && tbDel) {
-                if (!applyShipmentFilters(s, delFilters)) return;
-                
-                let valStr = `${s.grandTotal||0} ${s.grandTotalCurr||'CNY'}`;
-                
-                tbDel.innerHTML += `<tr>
-                    <td>${cName}</td>
-                    <td style="direction:ltr;">${s.id}</td>
-                    <td>${fwdName}</td>
-                    <td>${cCartons}</td>
-                    <td style="direction:ltr;">${cCbm}</td>
-                    <td style="direction:ltr;">${valStr}</td>
-                    <td>${s.deliveredDate}</td>
-                </tr>`;
-            }
-        });
-
-        // Update Ledger and Global
-        let global = { CNY: 0, USD: 0, AED: 0, IRT: 0 };
-        db.customers.forEach(c => { global.CNY += c.balances.CNY; global.USD += c.balances.USD; global.AED += c.balances.AED; global.IRT += c.balances.IRT; });
-        ['cny', 'usd', 'aed', 'irt'].forEach(curr => {
-            let val = global[curr.toUpperCase()]; let el = document.getElementById(`glb-${curr}`);
-            if(el) {
-                el.innerText = (val > 0 ? '+' : '') + val.toLocaleString(); el.style.color = val > 0 ? '#86efac' : (val < 0 ? '#fca5a5' : 'white');
-            }
-        });
-
-        const jTbody = document.getElementById('journal-tbody'); 
-        if(jTbody) jTbody.innerHTML = '';
-        [...db.journal].reverse().forEach(j => {
-            if(jTbody) jTbody.innerHTML += `<tr><td>${j.date}</td><td>${db.customers.find(c=>c.id===j.cust)?.name||j.cust}</td><td><span class="badge badge-safe">${j.category === 'finance' ? 'مالی' : 'لجستیک'}</span></td><td>${j.desc}</td><td class="text-debit">${j.type === 'debit'?j.amount:''}</td><td class="text-credit">${j.type === 'credit'?j.amount:''}</td></tr>`;
-        });
-
-        if (activeCustomerId) {
-            const custObj = db.customers.find(c => c.id === activeCustomerId);
-            if (custObj) {
-                let actTitle = document.getElementById('active-cust-title');
-                if(actTitle) actTitle.innerText = `پرونده: ${custObj.name}`;
-                
-                ['btn-add-trx-cust', 'btn-edit-cust', 'btn-delete-cust'].forEach(id => {
-                    let el = document.getElementById(id);
-                    if(el) el.style.display = 'block';
-                });
-                
-                let dash = document.getElementById('cust-currency-dash');
-                if(dash) dash.style.display = 'grid';
-                let tabC = document.getElementById('cust-tabs-card');
-                if(tabC) tabC.style.display = 'block';
-
-                ['cny', 'usd', 'aed', 'irt'].forEach(curr => {
-                    let val = custObj.balances[curr.toUpperCase()]; 
-                    let el = document.getElementById(`bal-${curr}`);
-                    if(el) {
-                        el.innerText = (val > 0 ? '+' : '') + val.toLocaleString(); 
-                        el.style.color = val > 0 ? '#dc2626' : (val < 0 ? '#059669' : '#1f2937'); 
-                    }
-                });
-
-                let thRow = document.getElementById('ledger-th-row');
-                if (thRow) {
-                    if (custObj.type === 'supplier') {
-                        thRow.innerHTML = `<th>تاریخ</th><th>شرح</th><th>بدهکار (+)</th><th>بستانکار (-)</th><th>مانده</th><th>موعد پرداخت</th><th>عملیات</th>`;
-                    } else {
-                        thRow.innerHTML = `<th>تاریخ</th><th>شرح</th><th>بدهکار (+)</th><th>بستانکار (-)</th><th>مانده</th><th>عملیات</th>`;
-                    }
-                }
-
-                const clTbody = document.getElementById('cust-ledger-tbody'); 
-                if(clTbody) {
-                    clTbody.innerHTML = '';
-                    let runningBal = { CNY:0, USD:0, AED:0, IRT:0 };
-                    let rowsHtml = [];
-                    let entries = db.journal.filter(j => j.cust === activeCustomerId).sort((a,b) => new Date(a.date) - new Date(b.date));
-                    
-                    entries.forEach(j => {
-                        let balStr = '-';
-                        if (j.category === 'finance') {
-                            if (j.type === 'debit') runningBal[j.currency] += j.amount;
-                            if (j.type === 'credit') runningBal[j.currency] -= j.amount;
-                            let balVal = runningBal[j.currency];
-                            balStr = `<span style="direction:ltr; font-weight:bold; color:${balVal > 0 ? '#dc2626' : '#059669'}">${(balVal>0?'+':'')}${balVal.toLocaleString()} ${currFa[j.currency] || j.currency}</span>`;
-                        }
-                        
-                        let debStr = j.type === 'debit' && j.amount > 0 ? j.amount.toLocaleString() : '-';
-                        let credStr = j.type === 'credit' && j.amount > 0 ? j.amount.toLocaleString() : '-';
-                        let descStr = j.category === 'logistic' ? `<span class="badge badge-safe">رویداد</span> ${j.desc}` : j.desc;
-                        let delBtn = `<button class="btn btn-small btn-danger" onclick="deleteTransaction('${j.id}')">✖ حذف</button>`;
-                        
-                        let extraCol = custObj.type === 'supplier' ? `<td>${j.dueDate || '-'}</td>` : '';
-
-                        rowsHtml.push(`<tr><td>${j.date}</td><td style="font-size:11px;">${descStr}</td><td class="text-debit">${debStr}</td><td class="text-credit">${credStr}</td><td>${balStr}</td>${extraCol}<td><button class="btn btn-small btn-warning" onclick="editJournalEntry('${j.id}')">✏️ ویرایش</button> ${delBtn}</td></tr>`);
+        // --- Link Invoices & Journal Entries ---
+        currentShipmentInvoices.forEach(invObj => {
+            let inv = db.purchaseInvoices.find(i => i.id === invObj.id);
+            if(inv) {
+                inv.status = 'sent';
+                inv.relatedShipmentId = code;
+                let sName = db.customers.find(c=>c.id===inv.supplierId)?.name || inv.supplierId;
+                if (inv.totalAmount > 0) {
+                    addJournalEntry({ 
+                        date, cust: inv.supplierId, desc: `بابت Shipment ${code} مربوط به مشتری ${custName} مبلغ ${inv.totalAmount} یوان برای تأمین‌کننده ${sName} ثبت شد.`, 
+                        category: 'finance', type: 'credit', amount: inv.totalAmount, currency: 'CNY', isSystem: true, 
+                        relatedShipmentId: code, relatedInvoiceId: inv.id, dueDate: inv.date 
                     });
-                    
-                    rowsHtml.reverse().forEach(row => clTbody.innerHTML += row);
                 }
             }
-        } else {
-            let actTitle = document.getElementById('active-cust-title');
-            if (actTitle) actTitle.innerText = 'لطفا یک پرونده از لیست انتخاب کنید';
-            ['btn-add-trx-cust', 'btn-edit-cust', 'btn-delete-cust', 'cust-currency-dash', 'cust-tabs-card'].forEach(id => {
-                let el = document.getElementById(id);
-                if(el) el.style.display = 'none';
-            });
+        });
+
+        let repCartons = (isGeneral) ? shipObj.cartons : shipObj.fclShipCartons;
+        let repCbm = (isGeneral) ? shipObj.cbm : '-';
+        if (isAir && !isAirTransByCust) { repCartons = shipObj.fclShipCartons; repCbm = shipObj.fclShipVol; }
+        
+        let repVal = grandTotal; let repCurr = grandCurr;
+        let valStr = `${repVal} ${currFa[repCurr]||repCurr}`;
+        
+        if (pricingModel === 'total') {
+            let tCny = parseFloat(shipObj.totalCny)||0;
+            let tIrt = parseFloat(shipObj.totalIrt)||0;
+            if (tCny>0 && tIrt>0) valStr = `${tCny} یوان و ${tIrt} تومان`;
+            else if (tCny>0) valStr = `${tCny} یوان`;
+            else if (tIrt>0) valStr = `${tIrt} تومان`;
+        } else if (isSeaLclIran) {
+            let tCny = 0; let tIrt = 0;
+            if (lclIranType === 'yekja') {
+                tCny = (parseFloat(shipObj.totalCargo)||0) + (parseFloat(shipObj.commVal)||0);
+                tIrt = parseFloat(shipObj.lclIranTotalIrt)||0;
+            } else {
+                tCny = (parseFloat(shipObj.totalCargo)||0) + (parseFloat(shipObj.commVal)||0) + (parseFloat(shipObj.lclIranFreightCny)||0);
+                tIrt = parseFloat(shipObj.lclIranClearIrt)||0;
+            }
+            if (tCny>0 && tIrt>0) valStr = `${tCny} یوان و ${tIrt} تومان`;
+            else if (tCny>0) valStr = `${tCny} یوان`;
+            else if (tIrt>0) valStr = `${tIrt} تومان`;
+        } else if (isAir) {
+            valStr = '';
+            let totalCny = 0; let totalIrt = 0;
+            if (!isAirTransByCust) totalCny += parseFloat(shipObj.shipAirFreight) || 0;
+            if (airClearByUs) {
+                let amt = parseFloat(shipObj.airClearAmt) || 0;
+                if(shipObj.airClearCurr === 'CNY') totalCny += amt;
+                if(shipObj.airClearCurr === 'IRT') totalIrt += amt;
+            }
+            totalCny += (parseFloat(shipObj.totalCargo)||0) + (parseFloat(shipObj.commVal)||0);
+            if (totalCny>0 && totalIrt>0) valStr = `${totalCny} یوان و ${totalIrt} تومان`;
+            else if (totalCny>0) valStr = `${totalCny} یوان`;
+            else if (totalIrt>0) valStr = `${totalIrt} تومان`;
         }
-    }
-
-    function toggleLogFields() { 
-        const logCategory = document.getElementById('log-category');
-        const isFin = logCategory ? logCategory.value === 'finance' : true; 
-        document.querySelectorAll('.fin-field').forEach(el => el.style.display = isFin ? 'flex' : 'none'); 
-        document.querySelectorAll('.log-field').forEach(el => el.style.display = !isFin ? 'flex' : 'none'); 
-        populateDropdowns(); 
-    }
-
-    function openModal(id) { 
-        const el = document.getElementById(id);
-        if(el) el.style.display = 'flex'; 
-    }
-
-    function closeModal(id) { 
-        const el = document.getElementById(id);
-        if(el) el.style.display = 'none'; 
-    }
-
-    function switchCustTab(tabId, btnElement) { 
-        document.querySelectorAll('.cust-tab').forEach(t => t.style.display = 'none'); 
-        document.getElementById(tabId).style.display = 'block'; 
-        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active')); 
-        btnElement.classList.add('active'); 
-    }
-
-    function showMsg(title, body, callback=null) { 
-        const titleEl = document.getElementById('msg-title');
-        const bodyEl = document.getElementById('msg-body');
-        if(titleEl) titleEl.innerText = title; 
-        if(bodyEl) bodyEl.innerText = body; 
-        let btn = document.getElementById('msg-ok-btn');
-        if(btn) {
-            btn.onclick = () => { closeModal('msgModal'); if(callback) callback(); };
-        }
-        openModal('msgModal'); 
-    }
-
-    let isSidebarVisible = true;
-    function toggleSidebar() { 
-        isSidebarVisible = !isSidebarVisible; 
-        const sb = document.getElementById('cust-sidebar'); 
-        if(sb) sb.style.display = isSidebarVisible ? 'block' : 'none'; 
-    }
-
-    window.onload = function() {
-        loadFromLocal();
         
-        let sd = document.getElementById('system-date');
-        if(sd) sd.innerText = SYSTEM_DATE;
-        let ld = document.getElementById('log-date');
-        if(ld) ld.value = SYSTEM_DATE;
-        let shd = document.getElementById('ship-date');
-        if(shd) shd.value = SYSTEM_DATE;
-        let pd = document.getElementById('pur-due');
-        if(pd) pd.value = SYSTEM_DATE;
-        let pld = document.getElementById('prof-log-date');
-        if(pld) pld.value = SYSTEM_DATE;
+        addJournalEntry({ date, cust, desc: `Shipment ${code}، تعداد ${repCartons||0} کارتن، حجم ${repCbm||0} CBM، به ارزش ${valStr} ارسال شد.`, category: 'logistic', type: 'event', amount: 0, currency: 'CNY', isSystem: true, relatedShipmentId: code });
 
-        if(db.customers.length > 0) activeCustomerId = getSortedCustomers()[0].id;
-        
-        populateDropdowns(); 
-        renderSidebar('cust'); 
-        renderSidebar('log'); 
-        
-        toggleShipmentFields(); 
-        toggleClearanceFields();
-        
-        updateUI(); 
-        toggleLogFields(); 
-        updateAnnualStats();
-    };
-</script>
-</body>
-</html>
+        if (pricingModel === 'total' && !isDubaiSea) {
+            let tCny = parseFloat(shipObj.totalCny)||0;
+            let tIrt = parseFloat(shipObj.totalIrt)||0;
+            if(tCny > 0) addJournalEntry({ date, cust, desc: `بابت Shipment ${code}، تعداد ${repCartons||0} کارتن، حجم ${repCbm||0} CBM، به ارزش ${tCny} یوان بدهکار شد.`, category: 'finance', type: 'debit', amount: tCny, currency: 'CNY', isSystem: true, relatedShipmentId: code });
+            if(tIrt > 0) addJournalEntry({ date, cust, desc: `بابت Shipment ${code}، تعداد ${repCartons||0} کارتن، حجم ${repCbm||0} CBM، به ارزش ${tIrt} تومان بدهکار شد.`, category: 'finance', type: 'debit', amount: tIrt, currency: 'IRT', isSystem: true, relatedShipmentId: code });
+        } else if (isSeaLclIran) {
+            let tCny = 0; let tIrt = 0;
+            if (lclIranType === 'yekja') {
+                tCny = (parseFloat(shipObj.totalCargo)||0) + (parseFloat(shipObj.commVal)||0);
+                tIrt = parseFloat(shipObj.lclIranTotalIrt)||0;
+                if(tCny > 0) addJournalEntry({ date, cust, desc: `بابت خرید کالا و کمیسیون Shipment ${code}، تعداد ${repCartons||0} کارتن، حجم ${repCbm||0} CBM، به ارزش ${tCny} یوان بدهکار شد.`, category: 'finance', type: 'debit', amount: tCny, currency: 'CNY', isSystem: true, relatedShipmentId: code });
+                if(tIrt > 0) addJournalEntry({ date, cust, desc: `بابت ترخیص و تحویل Shipment ${code}، تعداد ${repCartons||0} کارتن، حجم ${repCbm||0} CBM، به ارزش ${tIrt} تومان بدهکار شد.`, category: 'finance', type: 'debit', amount: tIrt, currency: 'IRT', isSystem: true, relatedShipmentId: code });
+            } else {
+                tCny = (parseFloat(shipObj.totalCargo)||0) + (parseFloat(shipObj.commVal)||0) + (parseFloat(shipObj.lclIranFreightCny)||0);
+                tIrt = parseFloat(shipObj.lclIranClearIrt)||0;
+                if(tCny > 0) addJournalEntry({ date, cust, desc: `بابت خرید کالا، کمیسیون و حمل Shipment ${code}، تعداد ${repCartons||0} کارتن، حجم ${repCbm||0} CBM، به ارزش ${tCny} یوان بدهکار شد.`, category: 'finance', type: 'debit', amount: tCny, currency: 'CNY', isSystem: true, relatedShipmentId: code });
+                if(tIrt > 0) addJournalEntry({ date, cust, desc: `بابت ترخیص Shipment ${code}، تعداد ${repCartons||0} کارتن، حجم ${repCbm||0} CBM، به ارزش ${tIrt} تومان بدهکار شد.`, category: 'finance', type: 'debit', amount: tIrt, currency: 'IRT', isSystem: true, relatedShipmentId: code });
+            }
+        } else if (isAir) {
+            let purCny = (parseFloat(shipObj.totalCargo)||0) + (parseFloat(shipObj.commVal)||0);
+            if (!isAirTransByCust) purCny += parseFloat(shipObj.shipAirFreight) || 0;
+            if(purCny > 0) addJournalEntry({ date, cust, desc: `بابت Shipment ${code}، تعداد ${repCartons||0} کارتن، حجم ${repCbm||0} CBM، به ارزش ${purCny} یوان بدهکار شد.`, category: 'finance', type: 'debit', amount: purCny, currency: 'CNY', isSystem: true, relatedShipmentId: code });
+
+            if (airClearByUs) {
+                let amt = parseFloat(shipObj.airClearAmt) || 0;
+                let c = shipObj.airClearCurr;
+                if(amt > 0) addJournalEntry({ date, cust, desc: `بابت ترخیص Shipment ${code
