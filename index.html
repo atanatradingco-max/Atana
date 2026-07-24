@@ -1016,14 +1016,14 @@
         let shipping = parseFloat(document.getElementById('ship-total-shipping').value) || 0;
         let cargo = parseFloat(document.getElementById('ship-total-cargo').value) || 0;
         let comm = parseFloat(document.getElementById('ship-comm-val').value) || 0;
-        let total = shipping + cargo + comm;
-        document.getElementById('ship-grand-total').value = total > 0 ? total : '';
+        document.getElementById('ship-grand-total').value = shipping + cargo + comm;
     }
 
     function toggleTopBar(id) {
         let el = document.getElementById(id);
-        if(el) el.style.display = el.style.display === 'flex' ? 'none' : 'flex';
+        if (el) el.style.display = el.style.display === 'flex' ? 'none' : 'flex';
     }
+    window.toggleTopBar = toggleTopBar;
     
     function setSidebarTab(tabName, context, element) {
         if (context === 'cust') currentSidebarTab = tabName;
@@ -1145,18 +1145,28 @@
     function quickAddSupplier() { document.getElementById('new-cust-type').value = 'supplier'; openModal('customerModal'); }
     function quickAddClearance() { document.getElementById('new-cust-type').value = 'clearance_agent'; openModal('customerModal'); }
 
+    let isSavingCustomer = false;
     function saveNewCustomer() {
+        if (isSavingCustomer) return;
+        isSavingCustomer = true;
+        
         let fname = document.getElementById('new-cust-fullname').value.trim();
         let code = document.getElementById('new-cust-code').value.trim();
         let wechat = document.getElementById('new-cust-wechat').value.trim();
         let type = document.getElementById('new-cust-type').value;
         
-        if (!fname) return showMsg('خطا', 'نام شخص/شرکت الزامی است.');
+        if (!fname) {
+            isSavingCustomer = false;
+            return showMsg('خطا', 'نام شخص/شرکت الزامی است.');
+        }
         
+        // Fixed Duplication Validation Logic
         if (db.customers.find(c => c.name.toLowerCase() === fname.toLowerCase())) {
+            isSavingCustomer = false;
             return showMsg('خطا', 'این نام شخص یا شرکت قبلاً در سیستم ثبت شده است.');
         }
         if (code && db.customers.find(c => c.code === code)) {
+            isSavingCustomer = false;
             return showMsg('خطا', 'این کد اختصاصی قبلاً در سیستم ثبت شده است.');
         }
 
@@ -1167,52 +1177,21 @@
         
         ['cny', 'usd', 'aed', 'irt'].forEach(curr => {
             let val = parseFloat(document.getElementById('init-'+curr).value) || 0;
-            if (val !== 0) addJournalEntry({ cust: idName, date: SYSTEM_DATE, desc: 'تراز اولیه', category: 'finance', type: val > 0 ? 'debit' : 'credit', amount: Math.abs(val), currency: curr.toUpperCase(), isSystem: true, relatedShipmentId: 'INIT' });
+            if (val !== 0) addJournalEntry({ cust: idName, date: SYSTEM_DATE, desc: 'تراز اولیه', category: 'finance', type: val > 0 ? 'debit' : 'credit', amount: Math.abs(val), currency: curr.toUpperCase(), isSystem: true, shipmentRef: 'INIT' });
             document.getElementById('init-'+curr).value = '';
         });
 
         document.getElementById('new-cust-fullname').value = ''; document.getElementById('new-cust-code').value = ''; document.getElementById('new-cust-wechat').value = '';
         saveToLocal(); populateDropdowns(); renderSidebar('cust'); renderSidebar('log'); updateUI();
         
+        // Form is cleared, modal is closed, then message
         closeModal('customerModal'); 
-        setTimeout(() => { showMsg('موفقیت', 'پرونده با موفقیت ثبت شد.'); }, 100);
+        setTimeout(() => { 
+            showMsg('موفقیت', 'پرونده با موفقیت ثبت شد.'); 
+            isSavingCustomer = false;
+        }, 100);
     }
-
-    function saveEditedCustomer() {
-        let newName = document.getElementById('edit-cust-fullname').value.trim();
-        let newCode = document.getElementById('edit-cust-code').value.trim();
-        let newWechat = document.getElementById('edit-cust-wechat').value.trim();
-        
-        if (!newName) return showMsg('خطا', 'نام الزامی است.');
-
-        let cust = db.customers.find(c => c.id === activeCustomerId);
-        if (cust) {
-            cust.name = newName;
-            cust.code = newCode;
-            cust.wechat = newWechat;
-            
-            db.journal = db.journal.filter(j => !(j.cust === cust.id && j.relatedShipmentId === 'INIT'));
-            
-            ['cny', 'usd', 'aed', 'irt'].forEach(curr => {
-                let val = parseFloat(document.getElementById(`edit-init-${curr}`).value) || 0;
-                if (val !== 0) {
-                    db.journal.push({
-                        id: 'J' + (db.idCounter++), date: SYSTEM_DATE, cust: cust.id, desc: 'تراز اولیه', 
-                        category: 'finance', type: val > 0 ? 'debit' : 'credit', amount: Math.abs(val), 
-                        currency: curr.toUpperCase(), isSystem: true, relatedShipmentId: 'INIT'
-                    });
-                }
-            });
-            
-            recalcBalances();
-            saveToLocal();
-            closeModal('editCustomerModal'); 
-            populateDropdowns(); 
-            renderSidebar('cust'); 
-            renderSidebar('log'); 
-            updateUI();
-        }
-    }
+    window.saveNewCustomer = saveNewCustomer;
 
     function deleteActiveCustomer() {
         if (!activeCustomerId) return;
